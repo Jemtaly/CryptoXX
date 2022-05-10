@@ -1,0 +1,17 @@
+Language: Cpp
+BasedOnStyle: Google
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+AccessModifierOffset: -4
+IndentCaseLabels: false
+ColumnLimit: 0
+BreakBeforeBraces: Attach
+NamespaceIndentation: All
+RemoveBracesLLVM: true
+AllowShortIfStatementsOnASingleLine: false
+MaxEmptyLinesToKeep: 0
+SeparateDefinitionBlocks: Never
+DerivePointerAlignment: false
+ReferenceAlignment: Right
+PointerAlignment: Right
