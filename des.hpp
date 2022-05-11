@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "crypto.hpp"
-class DES : public Crypto<uint64_t, 1> {
+class DES : public Crypto<8> {
 	static uint8_t const E[48];
 	static uint8_t const IP[64];
 	static uint8_t const FP[64];
@@ -25,35 +25,34 @@ class DES : public Crypto<uint64_t, 1> {
 		return vout;
 	}
 	static uint64_t F(uint64_t const &r, uint64_t const &k) {
-		uint64_t Er = permutation(r, E);
-		uint64_t B = Er ^ k;
-		uint64_t R = S_boxes_0[B >> 42] << 28 | S_boxes_1[B >> 36 & 0x3f] << 24 | S_boxes_2[B >> 30 & 0x3f] << 20 | S_boxes_3[B >> 24 & 0x3f] << 16 | S_boxes_4[B >> 18 & 0x3f] << 12 | S_boxes_5[B >> 12 & 0x3f] << 8 | S_boxes_6[B >> 6 & 0x3f] << 4 | S_boxes_7[B & 0x3f];
-		return permutation(R, P);
+		uint64_t x = permutation(r, E) ^ k;
+		uint64_t f = S_boxes_0[x >> 42] << 28 | S_boxes_1[x >> 36 & 0x3f] << 24 | S_boxes_2[x >> 30 & 0x3f] << 20 | S_boxes_3[x >> 24 & 0x3f] << 16 | S_boxes_4[x >> 18 & 0x3f] << 12 | S_boxes_5[x >> 12 & 0x3f] << 8 | S_boxes_6[x >> 6 & 0x3f] << 4 | S_boxes_7[x & 0x3f];
+		return permutation(f, P);
 	}
-	uint64_t subkeys[16];
+	uint64_t rk[16];
 public:
-	DES(uint64_t const &k) {
-		uint64_t t = permutation(k, PC_1);
+	DES(uint8_t const *const &mk) {
+		uint64_t t = permutation(*(uint64_t *)mk, PC_1);
 		uint64_t l = t >> 28, r = t & 0xfffffff;
 		for (int i = 0; i < 16; i++) {
 			l = l << shift[i] & 0xfffffff | l >> (28 - shift[i]);
 			r = r << shift[i] & 0xfffffff | r >> (28 - shift[i]);
-			subkeys[i] = permutation(l << 28 | r, PC_2);
+			rk[i] = permutation(l << 28 | r, PC_2);
 		}
 	}
-	void encrypt(uint64_t const *const &p, uint64_t *const &c) const {
-		uint64_t t = permutation(*p, IP);
+	void encrypt(uint8_t const *const &p, uint8_t *const &c) const {
+		uint64_t t = permutation(*(uint64_t *)p, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
 		for (int i = 0; i < 16; i++)
-			t = r, r = F(r, subkeys[i]) ^ l, l = t;
-		*c = permutation(r << 32 | l, FP);
+			t = r, r = F(r, rk[i]) ^ l, l = t;
+		*(uint64_t *)c = permutation(r << 32 | l, FP);
 	}
-	void decrypt(uint64_t const *const &c, uint64_t *const &p) const {
-		uint64_t t = permutation(*c, IP);
+	void decrypt(uint8_t const *const &c, uint8_t *const &p) const {
+		uint64_t t = permutation(*(uint64_t *)c, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
 		for (int i = 0; i < 16; i++)
-			t = r, r = F(r, subkeys[15 - i]) ^ l, l = t;
-		*p = permutation(r << 32 | l, FP);
+			t = r, r = F(r, rk[15 - i]) ^ l, l = t;
+		*(uint64_t *)p = permutation(r << 32 | l, FP);
 	}
 };
 uint8_t const DES::E[48] = {

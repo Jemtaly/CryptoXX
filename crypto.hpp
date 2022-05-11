@@ -1,50 +1,47 @@
 #pragma once
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-template <typename data_t, size_t count>
+template <size_t bs>
 class Crypto {
 public:
-	virtual void encrypt(data_t const *const &p, data_t *const &c) const {
-		memcpy(c, p, sizeof(data_t[count]));
-	}
-	virtual void decrypt(data_t const *const &c, data_t *const &p) const {
-		memcpy(p, c, sizeof(data_t[count]));
-	}
+	virtual void encrypt(uint8_t const *const &p, uint8_t *const &c) const = 0;
+	virtual void decrypt(uint8_t const *const &c, uint8_t *const &p) const = 0;
 	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) {
 		size_t rec;
-		data_t p[count], c[count];
-		while ((rec = fread(p, 1, sizeof(data_t[count]), ifp)) == sizeof(data_t[count])) {
+		uint8_t p[bs], c[bs];
+		while ((rec = fread(p, 1, bs, ifp)) == bs) {
 			encrypt(p, c);
-			fwrite(c, sizeof(data_t[count]), 1, ofp);
+			fwrite(c, bs, 1, ofp);
 		}
-		((uint8_t *)p)[sizeof(data_t[count]) - 1] = sizeof(data_t[count]) - rec;
+		p[bs - 1] = bs - rec;
 		encrypt(p, c);
-		fwrite(c, sizeof(data_t[count]), 1, ofp);
+		fwrite(c, bs, 1, ofp);
 	}
 	void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) {
-		data_t c[count], p[count];
-		fread(c, sizeof(data_t[count]), 1, ifp);
+		uint8_t c[bs], p[bs];
+		fread(c, bs, 1, ifp);
 		decrypt(c, p);
-		while (fread(c, sizeof(data_t[count]), 1, ifp)) {
-			fwrite(p, sizeof(data_t[count]), 1, ofp);
+		while (fread(c, bs, 1, ifp)) {
+			fwrite(p, bs, 1, ofp);
 			decrypt(c, p);
 		}
-		fwrite(p, 1, sizeof(data_t[count]) - ((uint8_t *)p)[sizeof(data_t[count]) - 1], ofp);
+		fwrite(p, 1, bs - p[bs - 1], ofp);
 	}
-	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, data_t const *const &iv) {
+	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) {
 		size_t rec;
-		data_t ctr[count], res[count], data[count];
-		memcpy(ctr, iv, sizeof(data_t[count]));
-		while ((rec = fread(data, 1, sizeof(data_t[count]), ifp)) == sizeof(data_t[count])) {
+		uint8_t ctr[bs], res[bs], data[bs];
+		memcpy(ctr, iv, bs);
+		while ((rec = fread(data, 1, bs, ifp)) == bs) {
 			encrypt(ctr, res);
-			for (size_t i = 0; i < count; i++)
+			for (size_t i = 0; i < bs; i++)
 				data[i] ^= res[i];
-			fwrite(data, sizeof(data_t[count]), 1, ofp);
-			for (size_t i = 0; i < count && ++ctr[i] == 0; i++)
+			fwrite(data, bs, 1, ofp);
+			for (size_t i = 0; i < bs && ++ctr[i] == 0; i++)
 				;
 		}
 		encrypt(ctr, res);
-		for (size_t i = 0; i < count; i++)
+		for (size_t i = 0; i < bs; i++)
 			data[i] ^= res[i];
 		fwrite(data, 1, rec, ofp);
 	}

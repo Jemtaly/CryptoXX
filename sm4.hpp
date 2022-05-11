@@ -11,7 +11,7 @@ static constexpr std::array<uint32_t, 256> S_boxes_init(std::array<uint8_t, 256>
 	}
 	return S_boxes_n;
 }
-class SM4 : public Crypto<uint32_t, 4> {
+class SM4 : public Crypto<16> {
 	static constexpr std::array<uint32_t, 4> FK = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
 	};
@@ -49,34 +49,40 @@ class SM4 : public Crypto<uint32_t, 4> {
 	static constexpr std::array<uint32_t, 256> S_boxes_3 = S_boxes_init(S_box, 3);
 	uint32_t rk[32];
 public:
-	SM4(uint32_t const *const &mk) {
-		uint32_t t[36] = {mk[0] ^ FK[0], mk[1] ^ FK[1], mk[2] ^ FK[2], mk[3] ^ FK[3]};
+	SM4(uint8_t const *const &mk) {
+		uint32_t t[36] = {
+			((uint32_t *)mk)[0] ^ FK[0], ((uint32_t *)mk)[1] ^ FK[1], ((uint32_t *)mk)[2] ^ FK[2], ((uint32_t *)mk)[3] ^ FK[3],
+		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ CK[i];
 			uint32_t b = S_box[a & 0xff] | S_box[a >> 010 & 0xff] << 010 | S_box[a >> 020 & 0xff] << 020 | S_box[a >> 030] << 030;
 			rk[i] = t[i + 4] = t[i] ^ b ^ ROL(b, 13) ^ ROL(b, 23);
 		}
 	}
-	void encrypt(uint32_t const *const &p, uint32_t *const &c) const {
-		uint32_t t[36] = {p[0], p[1], p[2], p[3]};
+	void encrypt(uint8_t const *const &p, uint8_t *const &c) const {
+		uint32_t t[36] = {
+			((uint32_t *)p)[0], ((uint32_t *)p)[1], ((uint32_t *)p)[2], ((uint32_t *)p)[3],
+		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i];
 			t[i + 4] = t[i] ^ S_boxes_0[a & 0xff] ^ S_boxes_1[a >> 010 & 0xff] ^ S_boxes_2[a >> 020 & 0xff] ^ S_boxes_3[a >> 030];
 		}
-		c[0] = t[35];
-		c[1] = t[34];
-		c[2] = t[33];
-		c[3] = t[32];
+		((uint32_t *)c)[0] = t[35];
+		((uint32_t *)c)[1] = t[34];
+		((uint32_t *)c)[2] = t[33];
+		((uint32_t *)c)[3] = t[32];
 	}
-	void decrypt(uint32_t const *const &c, uint32_t *const &p) const {
-		uint32_t t[36] = {c[0], c[1], c[2], c[3]};
+	void decrypt(uint8_t const *const &c, uint8_t *const &p) const {
+		uint32_t t[36] = {
+			((uint32_t *)c)[0], ((uint32_t *)c)[1], ((uint32_t *)c)[2], ((uint32_t *)c)[3],
+		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i];
 			t[i + 4] = t[i] ^ S_boxes_0[a & 0xff] ^ S_boxes_1[a >> 010 & 0xff] ^ S_boxes_2[a >> 020 & 0xff] ^ S_boxes_3[a >> 030];
 		}
-		p[0] = t[35];
-		p[1] = t[34];
-		p[2] = t[33];
-		p[3] = t[32];
+		((uint32_t *)p)[0] = t[35];
+		((uint32_t *)p)[1] = t[34];
+		((uint32_t *)p)[2] = t[33];
+		((uint32_t *)p)[3] = t[32];
 	}
 };

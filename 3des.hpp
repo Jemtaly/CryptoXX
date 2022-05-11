@@ -1,18 +1,18 @@
 #pragma once
 #include <stdint.h>
 #include "des.hpp"
-class TDES : public Crypto<uint64_t, 1> {
-	DES des1, des2, des3;
+class TDES : public Crypto<8> {
+	DES des_a, des_b, des_c;
 public:
-	TDES(uint64_t const &k1, uint64_t const &k2, uint64_t const &k3) : des1(k1), des2(k2), des3(k3) {}
-	void encrypt(uint64_t const *const &p, uint64_t *const &c) const {
-		des1.encrypt(p, c);
-		des2.decrypt(c, c);
-		des3.encrypt(c, c);
+	TDES(uint8_t const *const &k) : des_a(k), des_b(k + 010), des_c(k + 020) {}
+	void encrypt(uint8_t const *const &p, uint8_t *const &c) const {
+		des_a.encrypt(p, c);
+		des_b.decrypt(c, c);
+		des_c.encrypt(c, c);
 	}
-	void decrypt(uint64_t const *const &c, uint64_t *const &p) const {
-		des3.decrypt(c, p);
-		des2.encrypt(p, p);
-		des1.decrypt(p, p);
+	void decrypt(uint8_t const *const &c, uint8_t *const &p) const {
+		des_c.decrypt(c, p);
+		des_b.encrypt(p, p);
+		des_a.decrypt(p, p);
 	}
 };
