@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 #include <array>
 #include "crypto.hpp"
@@ -167,7 +168,7 @@ public:
 		for (int i = 4; i < 44; ++i) {
 			uint32_t a = (*rk)[i - 1];
 			if (i % 4 == 0)
-				a = S_box[a >> 010 & 0xff] | S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 ^ Rcon[i / 4];
+				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 4];
 			(*rk)[i] = (*rk)[i - 4] ^ a;
 		}
 	}
@@ -215,8 +216,8 @@ public:
 	} {
 		for (int i = 6; i < 52; ++i) {
 			uint32_t a = (*rk)[i - 1];
-			if (i % 6 == 0) 
-				a = S_box[a >> 010 & 0xff] | S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 ^ Rcon[i / 6];
+			if (i % 6 == 0)
+				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 6];
 			(*rk)[i] = (*rk)[i - 6] ^ a;
 		}
 	}
@@ -264,8 +265,8 @@ public:
 	} {
 		for (int i = 8; i < 60; ++i) {
 			uint32_t a = (*rk)[i - 1];
-			if (i % 8 == 0) 
-				a = S_box[a >> 010 & 0xff] | S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 ^ Rcon[i / 8];
+			if (i % 8 == 0)
+				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 8];
 			else if (i % 8 == 4)
 				a = S_box[a & 0xff] | S_box[a >> 010 & 0xff] << 010 | S_box[a >> 020 & 0xff] << 020 | S_box[a >> 030] << 030;
 			(*rk)[i] = (*rk)[i - 8] ^ a;
