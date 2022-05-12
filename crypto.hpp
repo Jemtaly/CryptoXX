@@ -5,6 +5,7 @@
 template <size_t bs>
 class Crypto {
 public:
+	virtual ~Crypto() {}
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) {
