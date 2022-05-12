@@ -8,7 +8,7 @@ public:
 	virtual ~Crypto() {}
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
-	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) {
+	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) const {
 		size_t record;
 		uint8_t src[bs], dst[bs];
 		while ((record = fread(src, 1, bs, ifp)) == bs) {
@@ -19,7 +19,7 @@ public:
 		encrypt(src, dst);
 		fwrite(dst, bs, 1, ofp);
 	}
-	void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) {
+	void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) const {
 		uint8_t src[bs], dst[bs];
 		fread(src, bs, 1, ifp);
 		decrypt(src, dst);
@@ -27,10 +27,10 @@ public:
 			fwrite(dst, bs, 1, ofp);
 			decrypt(src, dst);
 		}
-		size_t tail = bs - dst[bs - 1];
-		fwrite(dst, 1, tail, ofp);
+		size_t record = bs - dst[bs - 1];
+		fwrite(dst, 1, record, ofp);
 	}
-	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) {
+	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) const {
 		size_t record;
 		uint8_t ctr[bs], res[bs], tmp[bs];
 		memcpy(ctr, iv, bs);
@@ -47,7 +47,7 @@ public:
 			tmp[i] ^= res[i];
 		fwrite(tmp, 1, record, ofp);
 	}
-	size_t ECB_encrypt(uint8_t const *const &src, uint8_t *const &dst, size_t const &size) {
+	size_t ECB_encrypt(uint8_t const *const &src, uint8_t *const &dst, size_t const &size) const {
 		size_t tail = size % bs, front = size - tail;
 		for (size_t n = 0; n < front; n += bs)
 			encrypt(src + n, dst + n);
@@ -57,7 +57,7 @@ public:
 		encrypt(tmp, dst + front);
 		return front + bs;
 	}
-	size_t ECB_decrypt(uint8_t const *const &src, uint8_t *const &dst, size_t const &size) {
+	size_t ECB_decrypt(uint8_t const *const &src, uint8_t *const &dst, size_t const &size) const {
 		size_t front = size - bs;
 		for (size_t n = 0; n < front; n += bs)
 			decrypt(src + n, dst + n);
@@ -67,7 +67,7 @@ public:
 		memcpy(tmp, dst + front, tail);
 		return front + tail;
 	}
-	void CTR_xxcrypt(uint8_t const *const &src, uint8_t *const &dst, uint8_t const *const &iv, size_t const &size) {
+	void CTR_xxcrypt(uint8_t const *const &src, uint8_t *const &dst, uint8_t const *const &iv, size_t const &size) const {
 		size_t tail = size % bs, front = size - tail;
 		uint8_t ctr[bs], res[bs];
 		memcpy(ctr, iv, bs);
