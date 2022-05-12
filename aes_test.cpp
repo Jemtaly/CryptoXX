@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 		if (argv[i][0] == '-')
 			if (argv[i][1] == 'k' and argv[i][2] == '\0')
 				if ((rec & REC_KEY) == 0 and i + 1 < argc) {
-					strncpy((char *)key, argv[++i], 16);
+					strncpy((char *)key, argv[++i], 32);
 					rec |= REC_KEY;
 				} else
 					rec |= REC_FLS;
