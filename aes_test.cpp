@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 		if (argv[i][0] == '-')
 			if (argv[i][1] == 'k' and argv[i][2] == '\0')
 				if ((rec & REC_KEY) == 0 and i + 1 < argc) {
-					strncpy((char *)key, argv[++i], 32);
+					strncpy((char *)key, argv[++i], 16);
 					rec |= REC_KEY;
 				} else
 					rec |= REC_FLS;
@@ -72,15 +72,17 @@ int main(int argc, char *argv[]) {
 			rec |= REC_FLS;
 	if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 or (rec & REC_KEY) == 0 or (rec & REC_FLS) != 0) {
 		fprintf(stderr, "usage: %s [-4 | -6 | -8] -k KEY (-c CIV | -e | -d) [-i IFILENAME] [-o OFILENAME]\n", argv[0]);
-		fclose(ifp);
-		fclose(ofp);
+		if ((rec & REC_IFP) != 0)
+			fclose(ifp);
+		if ((rec & REC_OFP) != 0)
+			fclose(ofp);
 		return 1;
 	}
 	if ((rec & REC_IFP) == 0)
 		ifp = stdin;
 	if ((rec & REC_OFP) == 0)
 		ofp = stdout;
-	AES* paes;
+	AES *paes;
 	if ((rec & (REC_192 | REC_256)) == 0)
 		paes = new AES128(key);
 	else if ((rec & REC_192) != 0)
