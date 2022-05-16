@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <array>
-#include "crypto.hpp"
+#include "block.hpp"
 #define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
 static constexpr std::array<uint32_t, 256> S_boxes_init(std::array<uint8_t, 256> const &S_box, int const &n) noexcept {
 	std::array<uint32_t, 256> S_boxes_n = {};
@@ -11,7 +11,7 @@ static constexpr std::array<uint32_t, 256> S_boxes_init(std::array<uint8_t, 256>
 	}
 	return S_boxes_n;
 }
-class SM4 : public Crypto<16> {
+class SM4 : public BlockCipher<16> {
 	static constexpr std::array<uint32_t, 4> FK = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
 	};

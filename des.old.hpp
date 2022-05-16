@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
-#include "crypto.hpp"
-class DES : public Crypto<8> {
+#include "block.hpp"
+class DES : public BlockCipher<8> {
 	static uint8_t const E[48];
 	static uint8_t const IP[64];
 	static uint8_t const FP[64];

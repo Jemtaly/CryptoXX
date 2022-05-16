@@ -1,8 +1,8 @@
 #pragma once
 #include <stdint.h>
-#include "crypto.hpp"
+#include "block.hpp"
 #define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
-class SM4 : public Crypto<16> {
+class SM4 : public BlockCipher<16> {
 	static uint32_t const FK[4];
 	static uint32_t const CK[32];
 	static uint8_t const S_box[256];
