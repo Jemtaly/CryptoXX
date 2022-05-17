@@ -82,20 +82,20 @@ int main(int argc, char *argv[]) {
 		ifp = stdin;
 	if ((rec & REC_OFP) == 0)
 		ofp = stdout;
-	FileXxcryptRoot *pfx;
+	BlockCipherRoot *pbc;
 	if ((rec & (REC_192 | REC_256)) == 0)
-		pfx = new FileXxcrypt<AES128>(key);
+		pbc = new AES128(key);
 	else if ((rec & REC_192) != 0)
-		pfx = new FileXxcrypt<AES192>(key);
+		pbc = new AES192(key);
 	else if ((rec & REC_256) != 0)
-		pfx = new FileXxcrypt<AES256>(key);
+		pbc = new AES256(key);
 	if ((rec & REC_CTR) != 0)
-		pfx->CTR_xxcrypt(ifp, ofp, civ);
+		pbc->CTR_xxcrypt(ifp, ofp, civ);
 	else if ((rec & REC_DEC) != 0)
-		pfx->ECB_decrypt(ifp, ofp);
+		pbc->ECB_decrypt(ifp, ofp);
 	else if ((rec & REC_ENC) != 0)
-		pfx->ECB_encrypt(ifp, ofp);
+		pbc->ECB_encrypt(ifp, ofp);
 	fclose(ifp);
 	fclose(ofp);
-	delete pfx;
+	delete pbc;
 }

@@ -3,17 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #define BLS sizeof(typename BC::block_t)
-template <size_t blocksize>
-class BlockCipher {
+class BlockCipherRoot {
 public:
-	typedef uint8_t block_t[blocksize];
-	virtual ~BlockCipher() = default;
-	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
-	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
-};
-class FileXxcryptRoot {
-public:
-	virtual ~FileXxcryptRoot() = default;
+	virtual ~BlockCipherRoot() = default;
 	virtual void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) const = 0;
 	virtual void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) const = 0;
 	virtual void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) const = 0;
@@ -33,45 +25,46 @@ public:
 	virtual ~CTRXxcryptRoot() = default;
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) = 0;
 };
-template <class BC>
-class FileXxcrypt : public FileXxcryptRoot, protected BC {
+template <size_t bls>
+class BlockCipher : public BlockCipherRoot {
 public:
-	template <class... vals_t>
-	FileXxcrypt(vals_t const &...vals) : BC(vals...) {}
+	typedef uint8_t block_t[bls];
+	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
+	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) const {
 		size_t num;
-		typename BC::block_t src, dst;
-		while ((num = fread(src, 1, BLS, ifp)) == BLS) {
-			this->encrypt(src, dst);
-			fwrite(dst, BLS, 1, ofp);
+		block_t src, dst;
+		while ((num = fread(src, 1, bls, ifp)) == bls) {
+			encrypt(src, dst);
+			fwrite(dst, bls, 1, ofp);
 		}
-		src[BLS - 1] = BLS - num;
-		this->encrypt(src, dst);
-		fwrite(dst, BLS, 1, ofp);
+		memset(src + num, bls - num, bls - num);
+		encrypt(src, dst);
+		fwrite(dst, bls, 1, ofp);
 	}
 	void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) const {
-		typename BC::block_t src, dst;
-		fread(src, BLS, 1, ifp);
-		this->decrypt(src, dst);
-		while (fread(src, BLS, 1, ifp)) {
-			fwrite(dst, BLS, 1, ofp);
-			this->decrypt(src, dst);
+		block_t src, dst;
+		fread(src, bls, 1, ifp);
+		decrypt(src, dst);
+		while (fread(src, bls, 1, ifp)) {
+			fwrite(dst, bls, 1, ofp);
+			decrypt(src, dst);
 		}
-		fwrite(dst, 1, BLS - dst[BLS - 1], ofp);
+		fwrite(dst, 1, bls - dst[bls - 1], ofp);
 	}
 	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) const {
 		size_t num;
-		typename BC::block_t ctr, res, tmp;
-		memcpy(ctr, iv, BLS);
-		while ((num = fread(tmp, 1, BLS, ifp)) == BLS) {
-			this->encrypt(ctr, res);
-			for (size_t i = 0; i < BLS; i++)
+		block_t ctr, res, tmp;
+		memcpy(ctr, iv, bls);
+		while ((num = fread(tmp, 1, bls, ifp)) == bls) {
+			encrypt(ctr, res);
+			for (size_t i = 0; i < bls; i++)
 				tmp[i] ^= res[i];
-			fwrite(tmp, BLS, 1, ofp);
-			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
+			fwrite(tmp, bls, 1, ofp);
+			for (size_t i = 0; i < bls && ++ctr[i] == 0; i++)
 				;
 		}
-		this->encrypt(ctr, res);
+		encrypt(ctr, res);
 		for (size_t i = 0; i < num; i++)
 			tmp[i] ^= res[i];
 		fwrite(tmp, 1, num, ofp);
@@ -98,7 +91,7 @@ public:
 		rec += end - src;
 		src += end - src;
 		if (padding) {
-			mem[BLS - 1] = BLS - rec;
+			memset(mem + rec, BLS - rec, BLS - rec);
 			this->encrypt(mem, dst);
 			rec -= rec;
 			dst += BLS;
