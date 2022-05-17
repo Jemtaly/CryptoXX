@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#define bls sizeof(typename BC::block_t)
+#define BLS sizeof(typename BC::block_t)
 template <size_t blocksize>
 class BlockCipher {
 public:
@@ -41,34 +41,34 @@ public:
 	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) const {
 		size_t num;
 		typename BC::block_t src, dst;
-		while ((num = fread(src, 1, bls, ifp)) == bls) {
+		while ((num = fread(src, 1, BLS, ifp)) == BLS) {
 			this->encrypt(src, dst);
-			fwrite(dst, bls, 1, ofp);
+			fwrite(dst, BLS, 1, ofp);
 		}
-		src[bls - 1] = bls - num;
+		src[BLS - 1] = BLS - num;
 		this->encrypt(src, dst);
-		fwrite(dst, bls, 1, ofp);
+		fwrite(dst, BLS, 1, ofp);
 	}
 	void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) const {
 		typename BC::block_t src, dst;
-		fread(src, bls, 1, ifp);
+		fread(src, BLS, 1, ifp);
 		this->decrypt(src, dst);
-		while (fread(src, bls, 1, ifp)) {
-			fwrite(dst, bls, 1, ofp);
+		while (fread(src, BLS, 1, ifp)) {
+			fwrite(dst, BLS, 1, ofp);
 			this->decrypt(src, dst);
 		}
-		fwrite(dst, 1, bls - dst[bls - 1], ofp);
+		fwrite(dst, 1, BLS - dst[BLS - 1], ofp);
 	}
 	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) const {
 		size_t num;
 		typename BC::block_t ctr, res, tmp;
-		memcpy(ctr, iv, bls);
-		while ((num = fread(tmp, 1, bls, ifp)) == bls) {
+		memcpy(ctr, iv, BLS);
+		while ((num = fread(tmp, 1, BLS, ifp)) == BLS) {
 			this->encrypt(ctr, res);
-			for (size_t i = 0; i < bls; i++)
+			for (size_t i = 0; i < BLS; i++)
 				tmp[i] ^= res[i];
-			fwrite(tmp, bls, 1, ofp);
-			for (size_t i = 0; i < bls && ++ctr[i] == 0; i++)
+			fwrite(tmp, BLS, 1, ofp);
+			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
 				;
 		}
 		this->encrypt(ctr, res);
@@ -85,23 +85,23 @@ public:
 	template <class... vals_t>
 	ECBEncrypt(vals_t const &...vals) : BC(vals...), rec(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) {
-		if (bls + src <= end + rec) {
-			memcpy(mem + rec, src, bls - rec);
+		if (BLS + src <= end + rec) {
+			memcpy(mem + rec, src, BLS - rec);
 			this->encrypt(mem, dst);
-			src += bls - rec;
-			dst += bls;
+			src += BLS - rec;
+			dst += BLS;
 			rec -= rec;
-			for (; bls + src <= end; src += bls, dst += bls)
+			for (; BLS + src <= end; src += BLS, dst += BLS)
 				this->encrypt(src, dst);
 		}
 		memcpy(mem + rec, src, end - src);
 		rec += end - src;
 		src += end - src;
 		if (padding) {
-			mem[bls - 1] = bls - rec;
+			mem[BLS - 1] = BLS - rec;
 			this->encrypt(mem, dst);
 			rec -= rec;
-			dst += bls;
+			dst += BLS;
 		}
 		return dst;
 	}
@@ -114,13 +114,13 @@ public:
 	template <class... vals_t>
 	ECBDecrypt(vals_t const &...vals) : BC(vals...), rec(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) {
-		if (bls + src < end + rec) {
-			memcpy(mem + rec, src, bls - rec);
+		if (BLS + src < end + rec) {
+			memcpy(mem + rec, src, BLS - rec);
 			this->decrypt(mem, dst);
-			src += bls - rec;
-			dst += bls;
+			src += BLS - rec;
+			dst += BLS;
 			rec -= rec;
-			for (; bls + src < end; src += bls, dst += bls)
+			for (; BLS + src < end; src += BLS, dst += BLS)
 				this->decrypt(src, dst);
 		}
 		memcpy(mem + rec, src, end - src);
@@ -129,7 +129,7 @@ public:
 		if (padding) {
 			this->decrypt(mem, dst);
 			rec -= rec;
-			dst += bls - dst[bls - 1];
+			dst += BLS - dst[BLS - 1];
 		}
 		return dst;
 	}
@@ -141,24 +141,24 @@ class CTRXxcrypt : public CTRXxcryptRoot, protected BC {
 public:
 	template <class... vals_t>
 	CTRXxcrypt(uint8_t const *const &iv, vals_t const &...vals) : BC(vals...), use(0) {
-		memcpy(ctr, iv, bls);
+		memcpy(ctr, iv, BLS);
 	}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
 		typename BC::block_t res;
-		if (bls + src <= end + use) {
+		if (BLS + src <= end + use) {
 			this->encrypt(ctr, res);
-			for (size_t i = use; i < bls; i++)
+			for (size_t i = use; i < BLS; i++)
 				dst[i - use] = src[i - use] ^ res[i];
-			for (size_t i = 0; i < bls && ++ctr[i] == 0; i++)
+			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
 				;
-			src += bls - use;
-			dst += bls - use;
+			src += BLS - use;
+			dst += BLS - use;
 			use -= use;
-			for (; bls + src <= end; src += bls, dst += bls) {
+			for (; BLS + src <= end; src += BLS, dst += BLS) {
 				this->encrypt(ctr, res);
-				for (size_t i = 0; i < bls; i++)
+				for (size_t i = 0; i < BLS; i++)
 					dst[i] = src[i] ^ res[i];
-				for (size_t i = 0; i < bls && ++ctr[i] == 0; i++)
+				for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
 					;
 			}
 		}
