@@ -40,19 +40,19 @@ public:
 			rk[i] = permutation(l << 28 | r, PC_2);
 		}
 	}
-	void encrypt(uint8_t const *const &p, uint8_t *const &c) const {
-		uint64_t t = permutation(*(uint64_t *)p, IP);
+	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+		uint64_t t = permutation(*(uint64_t *)src, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
 		for (int i = 0; i < 16; i++)
 			t = r, r = F(r, rk[i]) ^ l, l = t;
-		*(uint64_t *)c = permutation(r << 32 | l, FP);
+		*(uint64_t *)dst = permutation(r << 32 | l, FP);
 	}
-	void decrypt(uint8_t const *const &c, uint8_t *const &p) const {
-		uint64_t t = permutation(*(uint64_t *)c, IP);
+	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+		uint64_t t = permutation(*(uint64_t *)src, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
 		for (int i = 0; i < 16; i++)
 			t = r, r = F(r, rk[15 - i]) ^ l, l = t;
-		*(uint64_t *)p = permutation(r << 32 | l, FP);
+		*(uint64_t *)dst = permutation(r << 32 | l, FP);
 	}
 };
 uint8_t const DES::E[48] = {

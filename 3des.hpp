@@ -2,17 +2,17 @@
 #include <stdint.h>
 #include "des.hpp"
 class TDES : public BlockCipher<8> {
-	DES des_a, des_b, des_c;
+	DES D, E, S;
 public:
-	TDES(uint8_t const *const &k) : des_a(k), des_b(k + 010), des_c(k + 020) {}
-	void encrypt(uint8_t const *const &p, uint8_t *const &c) const {
-		des_a.encrypt(p, c);
-		des_b.decrypt(c, c);
-		des_c.encrypt(c, c);
+	TDES(uint8_t const *const &k, uint8_t const *const &e, uint8_t const *const &y) : D(k), E(e), S(y) {}
+	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+		D.encrypt(src, dst);
+		E.decrypt(dst, dst);
+		S.encrypt(dst, dst);
 	}
-	void decrypt(uint8_t const *const &c, uint8_t *const &p) const {
-		des_c.decrypt(c, p);
-		des_b.encrypt(p, p);
-		des_a.decrypt(p, p);
+	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+		S.decrypt(src, dst);
+		E.encrypt(dst, dst);
+		D.decrypt(dst, dst);
 	}
 };

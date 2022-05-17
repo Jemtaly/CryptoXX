@@ -26,31 +26,31 @@ public:
 			rk[i] = t[i + 4] = t[i] ^ b ^ ROL(b, 13) ^ ROL(b, 23);
 		}
 	}
-	void encrypt(uint8_t const *const &p, uint8_t *const &c) const {
+	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint32_t t[36] = {
-			((uint32_t *)p)[0], ((uint32_t *)p)[1], ((uint32_t *)p)[2], ((uint32_t *)p)[3],
+			((uint32_t *)src)[0], ((uint32_t *)src)[1], ((uint32_t *)src)[2], ((uint32_t *)src)[3],
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i]);
 			t[i + 4] = t[i] ^ b ^ ROL(b, 2) ^ ROL(b, 10) ^ ROL(b, 18) ^ ROL(b, 24);
 		}
-		((uint32_t *)c)[0] = t[35];
-		((uint32_t *)c)[1] = t[34];
-		((uint32_t *)c)[2] = t[33];
-		((uint32_t *)c)[3] = t[32];
+		((uint32_t *)dst)[0] = t[35];
+		((uint32_t *)dst)[1] = t[34];
+		((uint32_t *)dst)[2] = t[33];
+		((uint32_t *)dst)[3] = t[32];
 	}
-	void decrypt(uint8_t const *const &c, uint8_t *const &p) const {
+	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint32_t t[36] = {
-			((uint32_t *)c)[0], ((uint32_t *)c)[1], ((uint32_t *)c)[2], ((uint32_t *)c)[3],
+			((uint32_t *)src)[0], ((uint32_t *)src)[1], ((uint32_t *)src)[2], ((uint32_t *)src)[3],
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i]);
 			t[i + 4] = t[i] ^ b ^ ROL(b, 2) ^ ROL(b, 10) ^ ROL(b, 18) ^ ROL(b, 24);
 		}
-		((uint32_t *)p)[0] = t[35];
-		((uint32_t *)p)[1] = t[34];
-		((uint32_t *)p)[2] = t[33];
-		((uint32_t *)p)[3] = t[32];
+		((uint32_t *)dst)[0] = t[35];
+		((uint32_t *)dst)[1] = t[34];
+		((uint32_t *)dst)[2] = t[33];
+		((uint32_t *)dst)[3] = t[32];
 	}
 };
 uint32_t const SM4::FK[4] = {
