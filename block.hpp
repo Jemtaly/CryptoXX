@@ -31,7 +31,6 @@ public:
 class CTRXxcryptRoot {
 public:
 	virtual ~CTRXxcryptRoot() = default;
-	virtual void reset(uint8_t const *const &iv) = 0;
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) = 0;
 };
 template <class BC>
@@ -141,9 +140,7 @@ class CTRXxcrypt : public CTRXxcryptRoot, protected BC {
 	typename BC::block_t ctr;
 public:
 	template <class... vals_t>
-	CTRXxcrypt(vals_t const &...vals) : BC(vals...) {}
-	void reset(uint8_t const *const &iv) {
-		use = 0;
+	CTRXxcrypt(uint8_t const *const &iv, vals_t const &...vals) : BC(vals...), use(0) {
 		memcpy(ctr, iv, bls);
 	}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
