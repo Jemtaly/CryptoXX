@@ -71,7 +71,7 @@ public:
 	}
 };
 template <class BC>
-class ECBEncrypt : public ECBEncryptRoot, protected BC {
+class ECBEncrypt : public ECBEncryptRoot, BC {
 	size_t rec;
 	typename BC::block_t mem;
 public:
@@ -100,7 +100,7 @@ public:
 	}
 };
 template <class BC>
-class ECBDecrypt : public ECBDecryptRoot, protected BC {
+class ECBDecrypt : public ECBDecryptRoot, BC {
 	size_t rec;
 	typename BC::block_t mem;
 public:
@@ -128,7 +128,7 @@ public:
 	}
 };
 template <class BC>
-class CTRXxcrypt : public CTRXxcryptRoot, protected BC {
+class CTRXxcrypt : public CTRXxcryptRoot, BC {
 	size_t use;
 	typename BC::block_t ctr;
 public:
