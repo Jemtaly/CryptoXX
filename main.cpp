@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
 		ifp = stdin;
 	if ((rec & REC_OFP) == 0)
 		ofp = stdout;
-	BaseFileXxcrypt *pfx;
+	FileXxcryptRoot *pfx;
 	if ((rec & (REC_192 | REC_256)) == 0)
 		pfx = new FileXxcrypt<AES128>(key);
 	else if ((rec & REC_192) != 0)
