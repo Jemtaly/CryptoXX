@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "block.hpp"
 #define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
 class SM4 : public BlockCipher<16> {

@@ -1,9 +1,8 @@
 #pragma once
-#include <stdint.h>
 #include <array>
 #include "block.hpp"
 #define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
-static constexpr std::array<uint32_t, 256> S_boxes_init(std::array<uint8_t, 256> const &S_box, int const &n) noexcept {
+static constexpr std::array<uint32_t, 256> S_boxes_init(uint8_t const (&S_box)[256], int const &n) noexcept {
 	std::array<uint32_t, 256> S_boxes_n = {};
 	for (int i = 0; i < 256; i++) {
 		uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
@@ -12,10 +11,10 @@ static constexpr std::array<uint32_t, 256> S_boxes_init(std::array<uint8_t, 256>
 	return S_boxes_n;
 }
 class SM4 : public BlockCipher<16> {
-	static constexpr std::array<uint32_t, 4> FK = {
+	static constexpr uint32_t FK[4] = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
 	};
-	static constexpr std::array<uint32_t, 32> CK = {
+	static constexpr uint32_t CK[32] = {
 		0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269,
 		0x70777e85, 0x8c939aa1, 0xa8afb6bd, 0xc4cbd2d9,
 		0xe0e7eef5, 0xfc030a11, 0x181f262d, 0x343b4249,
@@ -25,7 +24,7 @@ class SM4 : public BlockCipher<16> {
 		0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209,
 		0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279,
 	};
-	static constexpr std::array<uint8_t, 256> S_box = {
+	static constexpr uint8_t S_box[256] = {
 		0xd6, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7, 0x16, 0xb6, 0x14, 0xc2, 0x28, 0xfb, 0x2c, 0x05,
 		0x2b, 0x67, 0x9a, 0x76, 0x2a, 0xbe, 0x04, 0xc3, 0xaa, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
 		0x9c, 0x42, 0x50, 0xf4, 0x91, 0xef, 0x98, 0x7a, 0x33, 0x54, 0x0b, 0x43, 0xed, 0xcf, 0xac, 0x62,
@@ -43,10 +42,10 @@ class SM4 : public BlockCipher<16> {
 		0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
 		0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
 	};
-	static constexpr std::array<uint32_t, 256> S_boxes_0 = S_boxes_init(S_box, 0);
-	static constexpr std::array<uint32_t, 256> S_boxes_1 = S_boxes_init(S_box, 1);
-	static constexpr std::array<uint32_t, 256> S_boxes_2 = S_boxes_init(S_box, 2);
-	static constexpr std::array<uint32_t, 256> S_boxes_3 = S_boxes_init(S_box, 3);
+	static constexpr auto S_boxes_0 = S_boxes_init(S_box, 0);
+	static constexpr auto S_boxes_1 = S_boxes_init(S_box, 1);
+	static constexpr auto S_boxes_2 = S_boxes_init(S_box, 2);
+	static constexpr auto S_boxes_3 = S_boxes_init(S_box, 3);
 	uint32_t rk[32];
 public:
 	SM4(uint8_t const *const &mk) {

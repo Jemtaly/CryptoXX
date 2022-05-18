@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "block.hpp"
 class DES : public BlockCipher<8> {
 	static uint8_t const E[48];

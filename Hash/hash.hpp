@@ -2,97 +2,61 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#define BS sizeof(typename H::block_t)
-#define SS sizeof(typename H::sizex_t)
-#define HS sizeof(typename H::hashx_t)
+#define BLS sizeof(typename H::blk_t)
 class HashRoot {
 public:
 	virtual ~HashRoot() = default;
-	virtual void hash(FILE *const &ifp, uint8_t *const &buff) const = 0;
+	virtual void hash(FILE *const &ifp, uint8_t *const &buf) const = 0;
 };
 class HashObjectRoot {
 public:
 	virtual ~HashObjectRoot() = default;
-	virtual void update(uint8_t const *data, uint8_t const *const &stop) = 0;
-	virtual size_t get(uint8_t *const &buff) = 0;
+	virtual void update(uint8_t const *src, uint8_t const *const &end) = 0;
+	virtual void obtain(uint8_t *const &buf) const = 0;
 };
-template <size_t hs, size_t bs, size_t ss>
+template <size_t bls, size_t rcs, size_t bfs>
 class Hash : public HashRoot {
 public:
-	typedef uint8_t hashx_t[hs];
-	typedef uint8_t block_t[bs];
-	typedef uint8_t sizex_t[ss];
-	virtual void init(uint8_t *const &buff) const = 0;
-	virtual void update(uint8_t const *const &data, uint8_t *const &buff) const = 0;
-	void hash(FILE *const &ifp, uint8_t *const &buff) const {
-		size_t rcrd;
-		block_t blck;
-		sizex_t size = {};
-		init(buff);
-		while ((rcrd = fread(blck, 1, bs, ifp)) == bs) {
-			if ((size[ss - 1] += bs * 8) < bs * 8)
-				for (size_t i = ss - 2; ++size[i] == 0; i--)
-					;
-			update(blck, buff);
-		}
-		if ((size[ss - 1] += rcrd * 8) < rcrd * 8)
-			for (size_t i = ss - 2; ++size[i] == 0; i--)
-				;
-		memset(blck + rcrd, 0, bs - rcrd);
-		blck[rcrd] = 0x80;
-		if (rcrd >= bs - ss) {
-			update(blck, buff);
-			memset(blck, 0, bs);
-		}
-		memcpy(blck + bs - ss, size, ss);
-		update(blck, buff);
+	typedef uint8_t blk_t[bls];
+	typedef uint8_t rec_t[rcs];
+	typedef uint8_t buf_t[bfs];
+	virtual void init(uint8_t *const &rec) const = 0;
+	virtual void load(uint8_t const *const &rci, uint8_t *const &rco, uint8_t const *const &blk) const = 0;
+	virtual void save(uint8_t const *const &rec, uint8_t *const &buf, uint8_t const *const &src, size_t const &len) const = 0;
+	void hash(FILE *const &ifp, uint8_t *const &buf) const {
+		size_t use;
+		blk_t blk;
+		rec_t rec;
+		init(rec);
+		while ((use = fread(blk, 1, bls, ifp)) == bls)
+			load(rec, rec, blk);
+		save(rec, buf, blk, use);
 	}
 };
-template <typename H>
+template <class H>
 class HashObject : public HashObjectRoot, H {
-	size_t rcrd;
-	typename H::block_t pers;
-	typename H::sizex_t size;
-	typename H::hashx_t hash;
+	size_t use;
+	typename H::blk_t mem;
+	typename H::rec_t rec;
 public:
-	HashObject() : rcrd(0), size{} {
-		H::init(hash);
+	template <class... vals_t>
+	HashObject(vals_t const &...vals) : H(vals...), use(0) {
+		this->init(rec);
 	}
-	void update(uint8_t const *data, uint8_t const *const &stop) {
-		if (BS + data <= rcrd + stop) {
-			memcpy(pers + rcrd, data, BS - rcrd);
-			if ((size[SS - 1] += BS * 8) < BS * 8)
-				for (size_t i = SS - 2; ++size[i] == 0; i--)
-					;
-			H::update(pers, hash);
-			data += BS - rcrd;
-			rcrd -= rcrd;
-			for (; data + BS <= stop; data += BS) {
-				if ((size[SS - 1] += BS * 8) < BS * 8)
-					for (size_t i = SS - 2; ++size[i] == 0; i--)
-						;
-				H::update(data, hash);
-			}
+	void update(uint8_t const *src, uint8_t const *const &end) {
+		if (BLS + src <= use + end) {
+			memcpy(mem + use, src, BLS - use);
+			this->load(rec, rec, mem);
+			src += BLS - use;
+			use -= use;
+			for (; src + BLS <= end; src += BLS)
+				this->load(rec, rec, src);
 		}
-		memcpy(pers + rcrd, data, stop - data);
-		rcrd += stop - data;
-		data += stop - data;
+		memcpy(mem + use, src, end - src);
+		use += end - src;
+		src += end - src;
 	}
-	size_t get(uint8_t *const &buff) {
-		typename H::block_t temp;
-		memcpy(temp, pers, rcrd);
-		memcpy(buff, hash, HS);
-		memset(temp + rcrd, 0, BS - rcrd);
-		temp[rcrd] = 0x80;
-		if ((size[SS - 1] += rcrd * 8) < rcrd * 8)
-			for (size_t i = SS - 2; ++size[i] == 0; i--)
-				;
-		if (rcrd >= BS - SS) {
-			H::update(temp, buff);
-			memset(temp, 0, BS);
-		}
-		memcpy(temp + BS - SS, size, SS);
-		H::update(temp, buff);
-		return HS;
+	void obtain(uint8_t *const &buf) const {
+		this->save(rec, buf, mem, use);
 	}
 };

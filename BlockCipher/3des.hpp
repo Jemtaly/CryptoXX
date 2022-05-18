@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "des.hpp"
 class TDES : public BlockCipher<8> {
 	DES D, E, S;

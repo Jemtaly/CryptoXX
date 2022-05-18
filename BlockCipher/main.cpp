@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,52 +16,52 @@ int main(int argc, char *argv[]) {
 	int rec = 0;
 	FILE *ifp = nullptr, *ofp = nullptr;
 	uint8_t key[32] = {}, civ[16] = {};
-	for (int i = 1; (rec & REC_FLS) == 0 && i < argc; i++)
+	for (int i = 1; (rec & REC_FLS) == 0 and i < argc; i++)
 		if (argv[i][0] == '-')
-			if (argv[i][1] == 'k' && argv[i][2] == '\0')
-				if ((rec & REC_KEY) == 0 && i + 1 < argc) {
+			if (argv[i][1] == 'k' and argv[i][2] == '\0')
+				if ((rec & REC_KEY) == 0 and i + 1 < argc) {
 					strncpy((char *)key, argv[++i], 32);
 					rec |= REC_KEY;
 				} else
 					rec |= REC_FLS;
-			else if (argv[i][1] == 'c' && argv[i][2] == '\0')
-				if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 && i + 1 < argc) {
+			else if (argv[i][1] == 'c' and argv[i][2] == '\0')
+				if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 and i + 1 < argc) {
 					strncpy((char *)civ, argv[++i], 16);
 					rec |= REC_CTR;
 				} else
 					rec |= REC_FLS;
-			else if (argv[i][1] == 'd' && argv[i][2] == '\0')
+			else if (argv[i][1] == 'd' and argv[i][2] == '\0')
 				if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0)
 					rec |= REC_DEC;
 				else
 					rec |= REC_FLS;
-			else if (argv[i][1] == 'e' && argv[i][2] == '\0')
+			else if (argv[i][1] == 'e' and argv[i][2] == '\0')
 				if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0)
 					rec |= REC_ENC;
 				else
 					rec |= REC_FLS;
-			else if (argv[i][1] == '4' && argv[i][2] == '\0')
+			else if (argv[i][1] == '4' and argv[i][2] == '\0')
 				if ((rec & (REC_128 | REC_192 | REC_256)) == 0)
 					rec |= REC_128;
 				else
 					rec |= REC_FLS;
-			else if (argv[i][1] == '6' && argv[i][2] == '\0')
+			else if (argv[i][1] == '6' and argv[i][2] == '\0')
 				if ((rec & (REC_128 | REC_192 | REC_256)) == 0)
 					rec |= REC_192;
 				else
 					rec |= REC_FLS;
-			else if (argv[i][1] == '8' && argv[i][2] == '\0')
+			else if (argv[i][1] == '8' and argv[i][2] == '\0')
 				if ((rec & (REC_128 | REC_192 | REC_256)) == 0)
 					rec |= REC_256;
 				else
 					rec |= REC_FLS;
-			else if (argv[i][1] == 'i' && argv[i][2] == '\0')
-				if ((rec & REC_IFP) == 0 && i + 1 < argc && (ifp = fopen(argv[++i], "rb")))
+			else if (argv[i][1] == 'i' and argv[i][2] == '\0')
+				if ((rec & REC_IFP) == 0 and i + 1 < argc and (ifp = fopen(argv[++i], "rb")))
 					rec |= REC_IFP;
 				else
 					rec |= REC_FLS;
-			else if (argv[i][1] == 'o' && argv[i][2] == '\0')
-				if ((rec & REC_OFP) == 0 && i + 1 < argc && (ofp = fopen(argv[++i], "wb")))
+			else if (argv[i][1] == 'o' and argv[i][2] == '\0')
+				if ((rec & REC_OFP) == 0 and i + 1 < argc and (ofp = fopen(argv[++i], "wb")))
 					rec |= REC_OFP;
 				else
 					rec |= REC_FLS;
@@ -70,7 +69,7 @@ int main(int argc, char *argv[]) {
 				rec |= REC_FLS;
 		else
 			rec |= REC_FLS;
-	if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 || (rec & REC_KEY) == 0 || (rec & REC_FLS) != 0) {
+	if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 or (rec & REC_KEY) == 0 or (rec & REC_FLS) != 0) {
 		fprintf(stderr, "usage: %s [-4 | -6 | -8] -k KEY (-c CIV | -e | -d) [-i IFILENAME] [-o OFILENAME]\n", argv[0]);
 		if ((rec & REC_IFP) != 0)
 			fclose(ifp);

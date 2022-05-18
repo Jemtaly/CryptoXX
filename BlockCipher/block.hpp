@@ -32,13 +32,13 @@ public:
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) const {
-		size_t num;
+		size_t use;
 		block_t src, dst;
-		while ((num = fread(src, 1, bls, ifp)) == bls) {
+		while ((use = fread(src, 1, bls, ifp)) == bls) {
 			encrypt(src, dst);
 			fwrite(dst, bls, 1, ofp);
 		}
-		memset(src + num, bls - num, bls - num);
+		memset(src + use, bls - use, bls - use);
 		encrypt(src, dst);
 		fwrite(dst, bls, 1, ofp);
 	}
@@ -52,11 +52,11 @@ public:
 		}
 		fwrite(dst, 1, bls - dst[bls - 1], ofp);
 	}
-	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) const {
-		size_t num;
+	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv0) const {
+		size_t use;
 		block_t ctr, res, tmp;
-		memcpy(ctr, iv, bls);
-		while ((num = fread(tmp, 1, bls, ifp)) == bls) {
+		memcpy(ctr, iv0, bls);
+		while ((use = fread(tmp, 1, bls, ifp)) == bls) {
 			encrypt(ctr, res);
 			for (size_t i = 0; i < bls; i++)
 				tmp[i] ^= res[i];
@@ -65,35 +65,35 @@ public:
 				;
 		}
 		encrypt(ctr, res);
-		for (size_t i = 0; i < num; i++)
+		for (size_t i = 0; i < use; i++)
 			tmp[i] ^= res[i];
-		fwrite(tmp, 1, num, ofp);
+		fwrite(tmp, 1, use, ofp);
 	}
 };
 template <class BC>
 class ECBEncrypt : public ECBEncryptRoot, BC {
-	size_t rec;
+	size_t use;
 	typename BC::block_t mem;
 public:
 	template <class... vals_t>
-	ECBEncrypt(vals_t const &...vals) : BC(vals...), rec(0) {}
+	ECBEncrypt(vals_t const &...vals) : BC(vals...), use(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) {
-		if (BLS + src <= end + rec) {
-			memcpy(mem + rec, src, BLS - rec);
+		if (BLS + src <= end + use) {
+			memcpy(mem + use, src, BLS - use);
 			this->encrypt(mem, dst);
-			src += BLS - rec;
+			src += BLS - use;
 			dst += BLS;
-			rec -= rec;
+			use -= use;
 			for (; BLS + src <= end; src += BLS, dst += BLS)
 				this->encrypt(src, dst);
 		}
-		memcpy(mem + rec, src, end - src);
-		rec += end - src;
+		memcpy(mem + use, src, end - src);
+		use += end - src;
 		src += end - src;
 		if (padding) {
-			memset(mem + rec, BLS - rec, BLS - rec);
+			memset(mem + use, BLS - use, BLS - use);
 			this->encrypt(mem, dst);
-			rec -= rec;
+			use -= use;
 			dst += BLS;
 		}
 		return dst;
@@ -101,27 +101,27 @@ public:
 };
 template <class BC>
 class ECBDecrypt : public ECBDecryptRoot, BC {
-	size_t rec;
+	size_t use;
 	typename BC::block_t mem;
 public:
 	template <class... vals_t>
-	ECBDecrypt(vals_t const &...vals) : BC(vals...), rec(0) {}
+	ECBDecrypt(vals_t const &...vals) : BC(vals...), use(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) {
-		if (BLS + src < end + rec) {
-			memcpy(mem + rec, src, BLS - rec);
+		if (BLS + src < end + use) {
+			memcpy(mem + use, src, BLS - use);
 			this->decrypt(mem, dst);
-			src += BLS - rec;
+			src += BLS - use;
 			dst += BLS;
-			rec -= rec;
+			use -= use;
 			for (; BLS + src < end; src += BLS, dst += BLS)
 				this->decrypt(src, dst);
 		}
-		memcpy(mem + rec, src, end - src);
-		rec += end - src;
+		memcpy(mem + use, src, end - src);
+		use += end - src;
 		src += end - src;
 		if (padding) {
 			this->decrypt(mem, dst);
-			rec -= rec;
+			use -= use;
 			dst += BLS - dst[BLS - 1];
 		}
 		return dst;
