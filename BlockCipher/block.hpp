@@ -10,58 +10,58 @@ public:
 	virtual void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) const = 0;
 	virtual void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv) const = 0;
 };
-class ECBEncryptRoot {
+class ECBEncrypterRoot {
 public:
-	virtual ~ECBEncryptRoot() = default;
+	virtual ~ECBEncrypterRoot() = default;
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) = 0;
 };
-class ECBDecryptRoot {
+class ECBDecrypterRoot {
 public:
-	virtual ~ECBDecryptRoot() = default;
+	virtual ~ECBDecrypterRoot() = default;
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) = 0;
 };
-class CTRXxcryptRoot {
+class CTRXxcrypterRoot {
 public:
-	virtual ~CTRXxcryptRoot() = default;
+	virtual ~CTRXxcrypterRoot() = default;
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) = 0;
 };
-template <size_t bls>
+template <size_t ibs>
 class BlockCipher : public BlockCipherRoot {
 public:
-	typedef uint8_t block_t[bls];
+	typedef uint8_t block_t[ibs];
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	void ECB_encrypt(FILE *const &ifp, FILE *const &ofp) const {
 		size_t use;
 		block_t src, dst;
-		while ((use = fread(src, 1, bls, ifp)) == bls) {
+		while ((use = fread(src, 1, ibs, ifp)) == ibs) {
 			encrypt(src, dst);
-			fwrite(dst, bls, 1, ofp);
+			fwrite(dst, ibs, 1, ofp);
 		}
-		memset(src + use, bls - use, bls - use);
+		memset(src + use, ibs - use, ibs - use);
 		encrypt(src, dst);
-		fwrite(dst, bls, 1, ofp);
+		fwrite(dst, ibs, 1, ofp);
 	}
 	void ECB_decrypt(FILE *const &ifp, FILE *const &ofp) const {
 		block_t src, dst;
-		fread(src, bls, 1, ifp);
+		fread(src, ibs, 1, ifp);
 		decrypt(src, dst);
-		while (fread(src, bls, 1, ifp)) {
-			fwrite(dst, bls, 1, ofp);
+		while (fread(src, ibs, 1, ifp)) {
+			fwrite(dst, ibs, 1, ofp);
 			decrypt(src, dst);
 		}
-		fwrite(dst, 1, bls - dst[bls - 1], ofp);
+		fwrite(dst, 1, ibs - dst[ibs - 1], ofp);
 	}
 	void CTR_xxcrypt(FILE *const &ifp, FILE *const &ofp, uint8_t const *const &iv0) const {
 		size_t use;
 		block_t ctr, res, tmp;
-		memcpy(ctr, iv0, bls);
-		while ((use = fread(tmp, 1, bls, ifp)) == bls) {
+		memcpy(ctr, iv0, ibs);
+		while ((use = fread(tmp, 1, ibs, ifp)) == ibs) {
 			encrypt(ctr, res);
-			for (size_t i = 0; i < bls; i++)
+			for (size_t i = 0; i < ibs; i++)
 				tmp[i] ^= res[i];
-			fwrite(tmp, bls, 1, ofp);
-			for (size_t i = 0; i < bls && ++ctr[i] == 0; i++)
+			fwrite(tmp, ibs, 1, ofp);
+			for (size_t i = 0; i < ibs && ++ctr[i] == 0; i++)
 				;
 		}
 		encrypt(ctr, res);
@@ -71,49 +71,49 @@ public:
 	}
 };
 template <class BC>
-class ECBEncrypt : public ECBEncryptRoot, BC {
+class ECBEncrypter : public ECBEncrypterRoot, BC {
 	size_t use;
 	typename BC::block_t mem;
 public:
 	template <class... vals_t>
-	ECBEncrypt(vals_t const &...vals) : BC(vals...), use(0) {}
+	ECBEncrypter(vals_t const &...vals) : BC(vals...), use(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) {
-		if (BLS + src <= end + use) {
-			memcpy(mem + use, src, BLS - use);
+		if (IBS + src <= end + use) {
+			memcpy(mem + use, src, IBS - use);
 			this->encrypt(mem, dst);
-			src += BLS - use;
-			dst += BLS;
+			src += IBS - use;
+			dst += IBS;
 			use -= use;
-			for (; BLS + src <= end; src += BLS, dst += BLS)
+			for (; IBS + src <= end; src += IBS, dst += IBS)
 				this->encrypt(src, dst);
 		}
 		memcpy(mem + use, src, end - src);
 		use += end - src;
 		src += end - src;
 		if (padding) {
-			memset(mem + use, BLS - use, BLS - use);
+			memset(mem + use, IBS - use, IBS - use);
 			this->encrypt(mem, dst);
 			use -= use;
-			dst += BLS;
+			dst += IBS;
 		}
 		return dst;
 	}
 };
 template <class BC>
-class ECBDecrypt : public ECBDecryptRoot, BC {
+class ECBDecrypter : public ECBDecrypterRoot, BC {
 	size_t use;
 	typename BC::block_t mem;
 public:
 	template <class... vals_t>
-	ECBDecrypt(vals_t const &...vals) : BC(vals...), use(0) {}
+	ECBDecrypter(vals_t const &...vals) : BC(vals...), use(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &padding) {
-		if (BLS + src < end + use) {
-			memcpy(mem + use, src, BLS - use);
+		if (IBS + src < end + use) {
+			memcpy(mem + use, src, IBS - use);
 			this->decrypt(mem, dst);
-			src += BLS - use;
-			dst += BLS;
+			src += IBS - use;
+			dst += IBS;
 			use -= use;
-			for (; BLS + src < end; src += BLS, dst += BLS)
+			for (; IBS + src < end; src += IBS, dst += IBS)
 				this->decrypt(src, dst);
 		}
 		memcpy(mem + use, src, end - src);
@@ -122,36 +122,36 @@ public:
 		if (padding) {
 			this->decrypt(mem, dst);
 			use -= use;
-			dst += BLS - dst[BLS - 1];
+			dst += IBS - dst[IBS - 1];
 		}
 		return dst;
 	}
 };
 template <class BC>
-class CTRXxcrypt : public CTRXxcryptRoot, BC {
+class CTRXxcrypter : public CTRXxcrypterRoot, BC {
 	size_t use;
 	typename BC::block_t ctr;
 public:
 	template <class... vals_t>
-	CTRXxcrypt(uint8_t const *const &iv, vals_t const &...vals) : BC(vals...), use(0) {
-		memcpy(ctr, iv, BLS);
+	CTRXxcrypter(uint8_t const *const &iv, vals_t const &...vals) : BC(vals...), use(0) {
+		memcpy(ctr, iv, IBS);
 	}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
 		typename BC::block_t res;
-		if (BLS + src <= end + use) {
+		if (IBS + src <= end + use) {
 			this->encrypt(ctr, res);
-			for (size_t i = use; i < BLS; i++)
+			for (size_t i = use; i < IBS; i++)
 				dst[i - use] = src[i - use] ^ res[i];
-			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
+			for (size_t i = 0; i < IBS && ++ctr[i] == 0; i++)
 				;
-			src += BLS - use;
-			dst += BLS - use;
+			src += IBS - use;
+			dst += IBS - use;
 			use -= use;
-			for (; BLS + src <= end; src += BLS, dst += BLS) {
+			for (; IBS + src <= end; src += IBS, dst += IBS) {
 				this->encrypt(ctr, res);
-				for (size_t i = 0; i < BLS; i++)
+				for (size_t i = 0; i < IBS; i++)
 					dst[i] = src[i] ^ res[i];
-				for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
+				for (size_t i = 0; i < IBS && ++ctr[i] == 0; i++)
 					;
 			}
 		}
