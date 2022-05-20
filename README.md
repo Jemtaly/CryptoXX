@@ -18,5 +18,5 @@ clang++ main.cpp -std=c++2a -Os -o main.exe
 ./main.exe -i out.txt -k ABCDEFGHABCDEFGH -d
 # Decrypt out.txt and output to command line.
 ./main.exe -6 -k XXXXXXXXXXXXXXXXXXXXXXXX -c IVIVIVIVIVIVIVIV
-# Read from command line and encrypt/decrypt in CTR mode with the AES-128 algorithm.
+# Read from command line and encrypt/decrypt in CTR mode with the AES-192 algorithm.
 ```
