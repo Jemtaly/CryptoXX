@@ -16,4 +16,4 @@ DerivePointerAlignment: false
 ReferenceAlignment: Right
 PointerAlignment: Right
 QualifierAlignment: Custom
-QualifierOrder: ['inline', 'static', 'constexpr', 'type', 'const']
+QualifierOrder: ['static', 'constexpr', 'inline', 'type', 'const']
