@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-static constexpr std::array<uint32_t, 256> coef_mult(uint32_t const &n) noexcept {
+constexpr std::array<uint32_t, 256> coef_mult(uint32_t const &n) noexcept {
 	std::array<uint32_t, 256> coef_mult_n = {};
 	for (int j = 0; j < 256; j++)
 		for (int i = 0; i < 4; i++) {
