@@ -2,7 +2,7 @@
 #include <array>
 #include "block.hpp"
 #define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
-constexpr std::array<uint32_t, 256> S_boxes_init(uint8_t const (&S_box)[256], int const &n) noexcept {
+constexpr std::array<uint32_t, 256> S_boxes_init(uint8_t const (&S_box)[256], int const &n) {
 	std::array<uint32_t, 256> S_boxes_n = {};
 	for (int i = 0; i < 256; i++) {
 		uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;

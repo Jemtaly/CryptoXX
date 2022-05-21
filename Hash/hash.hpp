@@ -4,7 +4,6 @@
 #include <string.h>
 #define IBS sizeof(typename HF::blk_t)
 #define OBS sizeof(typename HF::buf_t)
-#define STS sizeof(typename HF::sta_t)
 class HashFunctionRoot {
 public:
 	virtual ~HashFunctionRoot() = default;

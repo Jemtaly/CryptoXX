@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-constexpr std::array<uint32_t, 256> coef_mult(uint32_t const &n) noexcept {
+constexpr std::array<uint32_t, 256> M_boxes_init(uint32_t const &n) {
 	std::array<uint32_t, 256> coef_mult_n = {};
 	for (int j = 0; j < 256; j++)
 		for (int i = 0; i < 4; i++) {
@@ -57,14 +57,14 @@ protected:
 	static constexpr uint8_t Rcon[16] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 	};
-	static constexpr auto E_boxes_0 = coef_mult(0x03010102);
-	static constexpr auto E_boxes_1 = coef_mult(0x01010203);
-	static constexpr auto E_boxes_2 = coef_mult(0x01020301);
-	static constexpr auto E_boxes_3 = coef_mult(0x02030101);
-	static constexpr auto D_boxes_0 = coef_mult(0x0b0d090e);
-	static constexpr auto D_boxes_1 = coef_mult(0x0d090e0b);
-	static constexpr auto D_boxes_2 = coef_mult(0x090e0b0d);
-	static constexpr auto D_boxes_3 = coef_mult(0x0e0b0d09);
+	static constexpr auto E_boxes_0 = M_boxes_init(0x03010102);
+	static constexpr auto E_boxes_1 = M_boxes_init(0x01010203);
+	static constexpr auto E_boxes_2 = M_boxes_init(0x01020301);
+	static constexpr auto E_boxes_3 = M_boxes_init(0x02030101);
+	static constexpr auto D_boxes_0 = M_boxes_init(0x0b0d090e);
+	static constexpr auto D_boxes_1 = M_boxes_init(0x0d090e0b);
+	static constexpr auto D_boxes_2 = M_boxes_init(0x090e0b0d);
+	static constexpr auto D_boxes_3 = M_boxes_init(0x0e0b0d09);
 	static void mix_columns_enc(uint8_t *const &state) {
 		((uint32_t *)state)[0] = E_boxes_0[state[0x0]] ^ E_boxes_1[state[0x1]] ^ E_boxes_2[state[0x2]] ^ E_boxes_3[state[0x3]];
 		((uint32_t *)state)[1] = E_boxes_0[state[0x4]] ^ E_boxes_1[state[0x5]] ^ E_boxes_2[state[0x6]] ^ E_boxes_3[state[0x7]];
