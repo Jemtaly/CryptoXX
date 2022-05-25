@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "aes.hpp"
+#define BUFSIZE 1024
 #define REC_FLS 1
 #define REC_OFP 2
 #define REC_IFP 4
@@ -81,20 +82,43 @@ int main(int argc, char *argv[]) {
 		ifp = stdin;
 	if ((rec & REC_OFP) == 0)
 		ofp = stdout;
-	BlockCipherRoot *pbc;
-	if ((rec & (REC_192 | REC_256)) == 0)
-		pbc = new AES128(key);
-	else if ((rec & REC_192) != 0)
-		pbc = new AES192(key);
-	else if ((rec & REC_256) != 0)
-		pbc = new AES256(key);
-	if ((rec & REC_CTR) != 0)
-		pbc->CTR_xxcrypt(ifp, ofp, civ);
-	else if ((rec & REC_DEC) != 0)
-		pbc->ECB_decrypt(ifp, ofp);
-	else if ((rec & REC_ENC) != 0)
-		pbc->ECB_encrypt(ifp, ofp);
+	BlockCipherFlow *pEnc;
+	BlockCipherFlow *pDec;
+	StreamCipherFlow *pCTR;
+	if ((rec & (REC_192 | REC_256)) == 0) {
+		pEnc = new Encrypter<AES128>(key);
+		pDec = new Decrypter<AES128>(key);
+		pCTR = new CTRCrypter<AES128>(civ, key);
+	} else if ((rec & REC_192) != 0) {
+		pEnc = new Encrypter<AES192>(key);
+		pDec = new Decrypter<AES192>(key);
+		pCTR = new CTRCrypter<AES192>(civ, key);
+	} else if ((rec & REC_256) != 0) {
+		pEnc = new Encrypter<AES256>(key);
+		pDec = new Decrypter<AES256>(key);
+		pCTR = new CTRCrypter<AES256>(civ, key);
+	}
+	if ((rec & REC_CTR) != 0) {
+		uint8_t buf[BUFSIZE];
+		while (fwrite(buf, 1, pCTR->update(buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp), buf) - (uint8_t *)buf, ofp))
+			;
+	} else if ((rec & REC_ENC) != 0) {
+		size_t read;
+		uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
+		while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE)
+			fwrite(dst, 1, pEnc->update(src, (uint8_t *)src + BUFSIZE, dst, false) - (uint8_t *)dst, ofp);
+		fwrite(dst, 1, pEnc->update(src, (uint8_t *)src + read, dst, true) - (uint8_t *)dst, ofp);
+	} else if ((rec & REC_DEC) != 0) {
+		size_t read;
+		uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
+		while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE)
+			fwrite(dst, 1, pDec->update(src, (uint8_t *)src + BUFSIZE, dst, false) - (uint8_t *)dst, ofp);
+		fwrite(dst, 1, pDec->update(src, (uint8_t *)src + read, dst, true) - (uint8_t *)dst, ofp);
+	}
 	fclose(ifp);
 	fclose(ofp);
-	delete pbc;
+	delete pEnc;
+	delete pDec;
+	delete pCTR;
+	return 0;
 }

@@ -1,5 +1,4 @@
-#include <stdint.h>
-#include <string.h>
+#pragma once
 #include <array>
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
@@ -9,11 +8,7 @@
 #define FF10(x, y, z) ((x) & (y) | (x) & (z) | (y) & (z))
 #define GG00(x, y, z) ((x) ^ (y) ^ (z))
 #define GG10(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
-struct SM3State {
-	uint32_t rec[8];
-	uint64_t countr;
-};
-class SM3 : public HashFunction<64, 32, SM3State> {
+class SM3 : public Hash<64, 32> {
 	static constexpr auto K = [](uint32_t const &TT00, uint32_t const &TT10) {
 		std::array<uint32_t, 64> K = {};
 		for (int j = 0; j < 16; j++)
@@ -77,30 +72,31 @@ class SM3 : public HashFunction<64, 32, SM3State> {
 		rec[6] ^= G;
 		rec[7] ^= H;
 	}
+	uint32_t rec[8];
+	uint64_t countr;
 public:
-	void init(SM3State &sta) const {
-		sta.rec[0] = 0x7380166F;
-		sta.rec[1] = 0x4914B2B9;
-		sta.rec[2] = 0x172442D7;
-		sta.rec[3] = 0xDA8A0600;
-		sta.rec[4] = 0xA96F30BC;
-		sta.rec[5] = 0x163138AA;
-		sta.rec[6] = 0xE38DEE4D;
-		sta.rec[7] = 0xB0FB0E4E;
-		sta.countr = 0;
+	SM3() : rec{
+		0x7380166F,
+		0x4914B2B9,
+		0x172442D7,
+		0xDA8A0600,
+		0xA96F30BC,
+		0x163138AA,
+		0xE38DEE4D,
+		0xB0FB0E4E,
+	}, countr(0) {}
+	void push(uint8_t const *const &blk) const {
+		compress(rec, blk);
+		countr += 64;
 	}
-	void push(SM3State &sta, uint8_t const *const &blk) const {
-		compress(sta.rec, blk);
-		sta.countr += 64;
-	}
-	void cast(SM3State const &sta, uint8_t *const &buf, uint8_t const *const &fin, size_t const &len) const {
+	void cast(uint8_t const *const &fin, size_t const &len, uint8_t *const &buf) const {
 		uint8_t blk[64];
 		memcpy(blk, fin, len);
 		memset(blk + len, 0, 64 - len);
 		blk[len] = 0x80;
 		uint32_t rectmp[8];
-		memcpy(rectmp, sta.rec, 32);
-		uint64_t ctrtmp = sta.countr + 8 * len;
+		memcpy(rectmp, rec, 32);
+		uint64_t ctrtmp = countr + 8 * len;
 		uint8_t *u8ctmp = (uint8_t *)&ctrtmp;
 		if (len >= 56) {
 			compress(rectmp, blk);
