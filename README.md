@@ -8,7 +8,7 @@ A modern, high speed and convenient cryptographic library implemented in C++. Cu
 
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
-cd CryptoXX/BlockCipher
+cd CryptoXX/block
 clang++ main.cpp -std=c++2a -Os -o main.exe
 ```
 
