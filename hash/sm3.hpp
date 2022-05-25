@@ -76,18 +76,12 @@ class SM3 : public Hash<64, 32> {
 	uint64_t countr;
 public:
 	SM3() : rec{
-		0x7380166F,
-		0x4914B2B9,
-		0x172442D7,
-		0xDA8A0600,
-		0xA96F30BC,
-		0x163138AA,
-		0xE38DEE4D,
-		0xB0FB0E4E,
+		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
+		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
 	}, countr(0) {}
-	void push(uint8_t const *const &blk) const {
+	void push(uint8_t const *const &blk) {
 		compress(rec, blk);
-		countr += 64;
+		countr += 512;
 	}
 	void cast(uint8_t const *const &fin, size_t const &len, uint8_t *const &buf) const {
 		uint8_t blk[64];
@@ -101,26 +95,16 @@ public:
 		if (len >= 56) {
 			compress(rectmp, blk);
 			memset(blk, 0, 56);
-			blk[63] = u8ctmp[0];
-			blk[62] = u8ctmp[1];
-			blk[61] = u8ctmp[2];
-			blk[60] = u8ctmp[3];
-			blk[59] = u8ctmp[4];
-			blk[58] = u8ctmp[5];
-			blk[57] = u8ctmp[6];
-			blk[56] = u8ctmp[7];
-			compress(rectmp, blk);
-		} else {
-			blk[63] = u8ctmp[0];
-			blk[62] = u8ctmp[1];
-			blk[61] = u8ctmp[2];
-			blk[60] = u8ctmp[3];
-			blk[59] = u8ctmp[4];
-			blk[58] = u8ctmp[5];
-			blk[57] = u8ctmp[6];
-			blk[56] = u8ctmp[7];
-			compress(rectmp, blk);
 		}
+		blk[63] = u8ctmp[0];
+		blk[62] = u8ctmp[1];
+		blk[61] = u8ctmp[2];
+		blk[60] = u8ctmp[3];
+		blk[59] = u8ctmp[4];
+		blk[58] = u8ctmp[5];
+		blk[57] = u8ctmp[6];
+		blk[56] = u8ctmp[7];
+		compress(rectmp, blk);
 		for (int j = 0; j < 8; j++) {
 			buf[j << 2] = rectmp[j] >> 030;
 			buf[j << 2 | 1] = rectmp[j] >> 020;

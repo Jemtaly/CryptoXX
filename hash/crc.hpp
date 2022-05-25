@@ -26,7 +26,7 @@ public:
 			}
 		}
 	}
-	void push(uint8_t const *const &blk) const {
+	void push(uint8_t const *const &blk) {
 		uint8_t const(&xxx)[sz8] = box[sta[0] ^ blk[0]];
 		for (size_t i = 0; i < sz8 - 1; i++)
 			sta[i] = sta[i + 1] ^ xxx[i];
