@@ -1,3 +1,4 @@
+#pragma once
 #include "stream.hpp"
 class RC4 : public StreamCipher {
 	uint8_t x, y, m[256];
