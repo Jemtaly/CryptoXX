@@ -1,6 +1,4 @@
 #pragma once
-#include <array>
-#include <stdio.h>
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
 class MD5 : public Hash<64, 16> {
@@ -39,40 +37,36 @@ class MD5 : public Hash<64, 16> {
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)blk;
 		for (int i = 0; i < 16; i++) {
-			uint32_t f = (b & c) | (~b & d);
-			uint32_t temp = d;
+			uint32_t sum = a + (b & c | ~b & d) + k[i] + w[i];
+			uint32_t tmp = d;
 			d = c;
 			c = b;
-			uint32_t sum = a + f + k[i] + w[i];
 			b += ROL32(sum, r[i]);
-			a = temp;
+			a = tmp;
 		}
 		for (int i = 16; i < 32; i++) {
-			uint32_t f = (d & b) | (~d & c);
-			uint32_t temp = d;
+			uint32_t sum = a + (d & b | ~d & c) + k[i] + w[5 * i + 1 & 0xf];
+			uint32_t tmp = d;
 			d = c;
 			c = b;
-			uint32_t sum = a + f + k[i] + w[5 * i + 1 & 0xf];
 			b += ROL32(sum, r[i]);
-			a = temp;
+			a = tmp;
 		}
 		for (int i = 32; i < 48; i++) {
-			uint32_t f = b ^ c ^ d;
-			uint32_t temp = d;
+			uint32_t sum = a + (c ^ b ^ d) + k[i] + w[3 * i + 5 & 0xf];
+			uint32_t tmp = d;
 			d = c;
 			c = b;
-			uint32_t sum = a + f + k[i] + w[3 * i + 5 & 0xf];
 			b += ROL32(sum, r[i]);
-			a = temp;
+			a = tmp;
 		}
 		for (int i = 48; i < 64; i++) {
-			uint32_t f = c ^ (b | ~d);
-			uint32_t temp = d;
+			uint32_t sum = a + (c ^ (b | ~d)) + k[i] + w[7 * i & 0xf];
+			uint32_t tmp = d;
 			d = c;
 			c = b;
-			uint32_t sum = a + f + k[i] + w[7 * i & 0xf];
 			b += ROL32(sum, r[i]);
-			a = temp;
+			a = tmp;
 		}
 		h[0] += a;
 		h[1] += b;
@@ -80,28 +74,29 @@ class MD5 : public Hash<64, 16> {
 		h[3] += d;
 	}
 	uint32_t h[4];
-	uint64_t countr;
+	uint64_t cntr;
 public:
-	MD5() : h{0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476}, countr(0) {}
+	MD5() : h{
+		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
+	}, cntr(0) {}
 	void push(uint8_t const *const &blk) {
 		compress(h, blk);
-		countr += 512;
+		cntr += 512;
 	}
 	void cast(uint8_t const *const &fin, size_t const &len, uint8_t *const &buf) const {
 		uint8_t blk[64];
 		memcpy(blk, fin, len);
 		memset(blk + len, 0, 64 - len);
 		blk[len] = 0x80;
-		uint32_t *t = (uint32_t *)buf;
-		t[0] = h[0];
-		t[1] = h[1];
-		t[2] = h[2];
-		t[3] = h[3];
+		((uint32_t *)buf)[0] = h[0];
+		((uint32_t *)buf)[1] = h[1];
+		((uint32_t *)buf)[2] = h[2];
+		((uint32_t *)buf)[3] = h[3];
 		if (len >= 56) {
-			compress(t, blk);
+			compress((uint32_t *)buf, blk);
 			memset(blk, 0, 56);
 		}
-		((uint64_t *)blk)[7] = countr + 8 * len;
-		compress(t, blk);
+		((uint64_t *)blk)[7] = cntr + 8 * len;
+		compress((uint32_t *)buf, blk);
 	}
 };
