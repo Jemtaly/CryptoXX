@@ -15,14 +15,14 @@ template <size_t bls>
 class EncryptionMode {
 public:
 	typedef uint8_t block_t[bls];
-	virtual ~BlockCipher() = default;
+	virtual ~EncryptionMode() = default;
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) = 0;
 };
 template <size_t bls>
 class DecryptionMode {
 public:
 	typedef uint8_t block_t[bls];
-	virtual ~BlockCipher() = default;
+	virtual ~DecryptionMode() = default;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) = 0;
 };
 class BlockCipherFlow {

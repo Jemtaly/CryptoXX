@@ -164,11 +164,12 @@ public:
 	AES128(uint8_t const *const &mk) : rk{
 		((uint32_t *)mk)[0], ((uint32_t *)mk)[1], ((uint32_t *)mk)[2], ((uint32_t *)mk)[3],
 	} {
-		for (int i = 4; i < 44; ++i) {
+		for (int i = 4; i < 44;) {
 			uint32_t a = (*rk)[i - 1];
-			if (i % 4 == 0)
-				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 4];
-			(*rk)[i] = (*rk)[i - 4] ^ a;
+			(*rk)[i++] = (*rk)[i - 4] ^ (S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 4]);
+			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
+			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
+			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
 		}
 	}
 	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
