@@ -16,6 +16,7 @@ constexpr std::array<uint32_t, 256> M_boxes_init(uint32_t const &n) {
 		}
 	return coef_mult_n;
 }
+template <int rn>
 class AES : public BlockCipher<16> {
 protected:
 	static constexpr uint8_t S_box[256] = {
@@ -157,13 +158,48 @@ protected:
 		((uint32_t *)state)[2] ^= k[2];
 		((uint32_t *)state)[3] ^= k[3];
 	}
-};
-class AES128 : public AES {
-	uint32_t rk[11][4];
+	uint32_t rk[rn + 1][4];
+	AES() = default;
 public:
-	AES128(uint8_t const *const &mk) : rk{
-		((uint32_t *)mk)[0], ((uint32_t *)mk)[1], ((uint32_t *)mk)[2], ((uint32_t *)mk)[3],
-	} {
+	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
+		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
+		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
+		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
+		int round = 0;
+		add_round_key(dst, rk[round]);
+		sub_bytes_enc(dst);
+		shift_rows_enc(dst);
+		while (++round < rn) {
+			mix_columns_enc(dst);
+			add_round_key(dst, rk[round]);
+			sub_bytes_enc(dst);
+			shift_rows_enc(dst);
+		}
+		add_round_key(dst, rk[round]);
+	}
+	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
+		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
+		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
+		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
+		int round = rn;
+		add_round_key(dst, rk[round]);
+		while (--round > 0) {
+			shift_rows_dec(dst);
+			sub_bytes_dec(dst);
+			add_round_key(dst, rk[round]);
+			mix_columns_dec(dst);
+		}
+		shift_rows_dec(dst);
+		sub_bytes_dec(dst);
+		add_round_key(dst, rk[round]);
+	}
+};
+class AES128 : public AES<10> {
+public:
+	AES128(uint8_t const *const &mk) : AES() {
+		memcpy(rk, mk, 16);
 		for (int i = 4; i < 44;) {
 			uint32_t a = (*rk)[i - 1];
 			(*rk)[i++] = (*rk)[i - 4] ^ (S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 4]);
@@ -172,48 +208,11 @@ public:
 			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
 		}
 	}
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
-		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = 0;
-		add_round_key(dst, rk[round]);
-		sub_bytes_enc(dst);
-		shift_rows_enc(dst);
-		while (++round < 10) {
-			mix_columns_enc(dst);
-			add_round_key(dst, rk[round]);
-			sub_bytes_enc(dst);
-			shift_rows_enc(dst);
-		}
-		add_round_key(dst, rk[round]);
-	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
-		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = 10;
-		add_round_key(dst, rk[round]);
-		while (--round > 0) {
-			shift_rows_dec(dst);
-			sub_bytes_dec(dst);
-			add_round_key(dst, rk[round]);
-			mix_columns_dec(dst);
-		}
-		shift_rows_dec(dst);
-		sub_bytes_dec(dst);
-		add_round_key(dst, rk[round]);
-	}
 };
-class AES192 : public AES {
-	uint32_t rk[13][4];
+class AES192 : public AES<12> {
 public:
-	AES192(uint8_t const *const &mk) : rk{
-		((uint32_t *)mk)[0], ((uint32_t *)mk)[1], ((uint32_t *)mk)[2], ((uint32_t *)mk)[3],
-		((uint32_t *)mk)[4], ((uint32_t *)mk)[5],
-	} {
+	AES192(uint8_t const *const &mk) {
+		memcpy(rk, mk, 24);
 		for (int i = 6; i < 52; ++i) {
 			uint32_t a = (*rk)[i - 1];
 			if (i % 6 == 0)
@@ -221,48 +220,11 @@ public:
 			(*rk)[i] = (*rk)[i - 6] ^ a;
 		}
 	}
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
-		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = 0;
-		add_round_key(dst, rk[round]);
-		sub_bytes_enc(dst);
-		shift_rows_enc(dst);
-		while (++round < 12) {
-			mix_columns_enc(dst);
-			add_round_key(dst, rk[round]);
-			sub_bytes_enc(dst);
-			shift_rows_enc(dst);
-		}
-		add_round_key(dst, rk[round]);
-	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
-		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = 12;
-		add_round_key(dst, rk[round]);
-		while (--round > 0) {
-			shift_rows_dec(dst);
-			sub_bytes_dec(dst);
-			add_round_key(dst, rk[round]);
-			mix_columns_dec(dst);
-		}
-		shift_rows_dec(dst);
-		sub_bytes_dec(dst);
-		add_round_key(dst, rk[round]);
-	}
 };
-class AES256 : public AES {
-	uint32_t rk[15][4];
+class AES256 : public AES<14> {
 public:
-	AES256(uint8_t const *const &mk) : rk{
-		((uint32_t *)mk)[0], ((uint32_t *)mk)[1], ((uint32_t *)mk)[2], ((uint32_t *)mk)[3],
-		((uint32_t *)mk)[4], ((uint32_t *)mk)[5], ((uint32_t *)mk)[6], ((uint32_t *)mk)[7],
-	} {
+	AES256(uint8_t const *const &mk) {
+		memcpy(rk, mk, 32);
 		for (int i = 8; i < 60; ++i) {
 			uint32_t a = (*rk)[i - 1];
 			if (i % 8 == 0)
@@ -271,39 +233,5 @@ public:
 				a = S_box[a & 0xff] | S_box[a >> 010 & 0xff] << 010 | S_box[a >> 020 & 0xff] << 020 | S_box[a >> 030] << 030;
 			(*rk)[i] = (*rk)[i - 8] ^ a;
 		}
-	}
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
-		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = 0;
-		add_round_key(dst, rk[round]);
-		sub_bytes_enc(dst);
-		shift_rows_enc(dst);
-		while (++round < 14) {
-			mix_columns_enc(dst);
-			add_round_key(dst, rk[round]);
-			sub_bytes_enc(dst);
-			shift_rows_enc(dst);
-		}
-		add_round_key(dst, rk[round]);
-	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
-		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = 14;
-		add_round_key(dst, rk[round]);
-		while (--round > 0) {
-			shift_rows_dec(dst);
-			sub_bytes_dec(dst);
-			add_round_key(dst, rk[round]);
-			mix_columns_dec(dst);
-		}
-		shift_rows_dec(dst);
-		sub_bytes_dec(dst);
-		add_round_key(dst, rk[round]);
 	}
 };
