@@ -1,6 +1,12 @@
 #pragma once
 #include "block.hpp"
-#define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
+#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
+#define I2ARR(i, a) {           \
+	(a)[0] = (i) >> 030;        \
+	(a)[1] = (i) >> 020 & 0xff; \
+	(a)[2] = (i) >> 010 & 0xff; \
+	(a)[3] = (i) & 0xff;        \
+}
 class SM4 : public BlockCipher<16> {
 	static constexpr uint32_t FK[4] = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
@@ -46,37 +52,46 @@ class SM4 : public BlockCipher<16> {
 public:
 	SM4(uint8_t const *const &mk) {
 		uint32_t t[36] = {
-			((uint32_t *)mk)[0] ^ FK[0], ((uint32_t *)mk)[1] ^ FK[1], ((uint32_t *)mk)[2] ^ FK[2], ((uint32_t *)mk)[3] ^ FK[3],
+			(uint32_t)(mk[0x0] << 030 | mk[0x1] << 020 | mk[0x2] << 010 | mk[0x3]) ^ FK[0],
+			(uint32_t)(mk[0x4] << 030 | mk[0x5] << 020 | mk[0x6] << 010 | mk[0x7]) ^ FK[1],
+			(uint32_t)(mk[0x8] << 030 | mk[0x9] << 020 | mk[0xa] << 010 | mk[0xb]) ^ FK[2],
+			(uint32_t)(mk[0xc] << 030 | mk[0xd] << 020 | mk[0xe] << 010 | mk[0xf]) ^ FK[3],
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ CK[i]);
-			rk[i] = t[i + 4] = t[i] ^ b ^ ROL(b, 13) ^ ROL(b, 23);
+			rk[i] = t[i + 4] = t[i] ^ b ^ ROL32(b, 13) ^ ROL32(b, 23);
 		}
 	}
 	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint32_t t[36] = {
-			((uint32_t *)src)[0], ((uint32_t *)src)[1], ((uint32_t *)src)[2], ((uint32_t *)src)[3],
+			(uint32_t)(src[0x0] << 030 | src[0x1] << 020 | src[0x2] << 010 | src[0x3]),
+			(uint32_t)(src[0x4] << 030 | src[0x5] << 020 | src[0x6] << 010 | src[0x7]),
+			(uint32_t)(src[0x8] << 030 | src[0x9] << 020 | src[0xa] << 010 | src[0xb]),
+			(uint32_t)(src[0xc] << 030 | src[0xd] << 020 | src[0xe] << 010 | src[0xf]),
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i]);
-			t[i + 4] = t[i] ^ b ^ ROL(b, 2) ^ ROL(b, 10) ^ ROL(b, 18) ^ ROL(b, 24);
+			t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
 		}
-		((uint32_t *)dst)[0] = t[35];
-		((uint32_t *)dst)[1] = t[34];
-		((uint32_t *)dst)[2] = t[33];
-		((uint32_t *)dst)[3] = t[32];
+		I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
+		I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
+		I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
+		I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
 	}
 	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint32_t t[36] = {
-			((uint32_t *)src)[0], ((uint32_t *)src)[1], ((uint32_t *)src)[2], ((uint32_t *)src)[3],
+			(uint32_t)(src[0x0] << 030 | src[0x1] << 020 | src[0x2] << 010 | src[0x3]),
+			(uint32_t)(src[0x4] << 030 | src[0x5] << 020 | src[0x6] << 010 | src[0x7]),
+			(uint32_t)(src[0x8] << 030 | src[0x9] << 020 | src[0xa] << 010 | src[0xb]),
+			(uint32_t)(src[0xc] << 030 | src[0xd] << 020 | src[0xe] << 010 | src[0xf]),
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i]);
-			t[i + 4] = t[i] ^ b ^ ROL(b, 2) ^ ROL(b, 10) ^ ROL(b, 18) ^ ROL(b, 24);
+			t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
 		}
-		((uint32_t *)dst)[0] = t[35];
-		((uint32_t *)dst)[1] = t[34];
-		((uint32_t *)dst)[2] = t[33];
-		((uint32_t *)dst)[3] = t[32];
+		I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
+		I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
+		I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
+		I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
 	}
 };

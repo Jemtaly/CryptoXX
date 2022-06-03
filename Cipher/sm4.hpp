@@ -1,14 +1,27 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-#define ROL(a, x) ((a) << (x) | (a) >> (32 - (x)))
+#define I2ARR(i, a) {           \
+	(a)[0] = (i) >> 030;        \
+	(a)[1] = (i) >> 020 & 0xff; \
+	(a)[2] = (i) >> 010 & 0xff; \
+	(a)[3] = (i) & 0xff;        \
+}
 constexpr std::array<uint32_t, 256> S_boxes_init(uint8_t const (&S_box)[256], int const &n) {
 	std::array<uint32_t, 256> S_boxes_n = {};
 	for (int i = 0; i < 256; i++) {
 		uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
-		S_boxes_n[i] = (uint32_t)ROL((uint64_t)b, 8 * n);
+		S_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
 	}
 	return S_boxes_n;
+}
+constexpr std::array<uint32_t, 256> K_boxes_init(uint8_t const (&S_box)[256], int const &n) {
+	std::array<uint32_t, 256> K_boxes_n = {};
+	for (int i = 0; i < 256; i++) {
+		uint32_t b = S_box[i] ^ S_box[i] << 13 ^ S_box[i] << 23;
+		K_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
+	}
+	return K_boxes_n;
 }
 class SM4 : public BlockCipher<16> {
 	static constexpr uint32_t FK[4] = {
@@ -46,42 +59,54 @@ class SM4 : public BlockCipher<16> {
 	static constexpr auto S_boxes_1 = S_boxes_init(S_box, 1);
 	static constexpr auto S_boxes_2 = S_boxes_init(S_box, 2);
 	static constexpr auto S_boxes_3 = S_boxes_init(S_box, 3);
+	static constexpr auto K_boxes_0 = K_boxes_init(S_box, 0);
+	static constexpr auto K_boxes_1 = K_boxes_init(S_box, 1);
+	static constexpr auto K_boxes_2 = K_boxes_init(S_box, 2);
+	static constexpr auto K_boxes_3 = K_boxes_init(S_box, 3);
 	uint32_t rk[32];
 public:
 	SM4(uint8_t const *const &mk) {
 		uint32_t t[36] = {
-			((uint32_t *)mk)[0] ^ FK[0], ((uint32_t *)mk)[1] ^ FK[1], ((uint32_t *)mk)[2] ^ FK[2], ((uint32_t *)mk)[3] ^ FK[3],
+			(uint32_t)(mk[0x0] << 030 | mk[0x1] << 020 | mk[0x2] << 010 | mk[0x3]) ^ FK[0],
+			(uint32_t)(mk[0x4] << 030 | mk[0x5] << 020 | mk[0x6] << 010 | mk[0x7]) ^ FK[1],
+			(uint32_t)(mk[0x8] << 030 | mk[0x9] << 020 | mk[0xa] << 010 | mk[0xb]) ^ FK[2],
+			(uint32_t)(mk[0xc] << 030 | mk[0xd] << 020 | mk[0xe] << 010 | mk[0xf]) ^ FK[3],
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ CK[i];
-			uint32_t b = S_box[a & 0xff] | S_box[a >> 010 & 0xff] << 010 | S_box[a >> 020 & 0xff] << 020 | S_box[a >> 030] << 030;
-			rk[i] = t[i + 4] = t[i] ^ b ^ ROL(b, 13) ^ ROL(b, 23);
+			rk[i] = t[i + 4] = t[i] ^ K_boxes_0[a & 0xff] ^ K_boxes_1[a >> 010 & 0xff] ^ K_boxes_2[a >> 020 & 0xff] ^ K_boxes_3[a >> 030];
 		}
 	}
 	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint32_t t[36] = {
-			((uint32_t *)src)[0], ((uint32_t *)src)[1], ((uint32_t *)src)[2], ((uint32_t *)src)[3],
+			(uint32_t)(src[0x0] << 030 | src[0x1] << 020 | src[0x2] << 010 | src[0x3]),
+			(uint32_t)(src[0x4] << 030 | src[0x5] << 020 | src[0x6] << 010 | src[0x7]),
+			(uint32_t)(src[0x8] << 030 | src[0x9] << 020 | src[0xa] << 010 | src[0xb]),
+			(uint32_t)(src[0xc] << 030 | src[0xd] << 020 | src[0xe] << 010 | src[0xf]),
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i];
 			t[i + 4] = t[i] ^ S_boxes_0[a & 0xff] ^ S_boxes_1[a >> 010 & 0xff] ^ S_boxes_2[a >> 020 & 0xff] ^ S_boxes_3[a >> 030];
 		}
-		((uint32_t *)dst)[0] = t[35];
-		((uint32_t *)dst)[1] = t[34];
-		((uint32_t *)dst)[2] = t[33];
-		((uint32_t *)dst)[3] = t[32];
+		I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
+		I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
+		I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
+		I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
 	}
 	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint32_t t[36] = {
-			((uint32_t *)src)[0], ((uint32_t *)src)[1], ((uint32_t *)src)[2], ((uint32_t *)src)[3],
+			(uint32_t)(src[0x0] << 030 | src[0x1] << 020 | src[0x2] << 010 | src[0x3]),
+			(uint32_t)(src[0x4] << 030 | src[0x5] << 020 | src[0x6] << 010 | src[0x7]),
+			(uint32_t)(src[0x8] << 030 | src[0x9] << 020 | src[0xa] << 010 | src[0xb]),
+			(uint32_t)(src[0xc] << 030 | src[0xd] << 020 | src[0xe] << 010 | src[0xf]),
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i];
 			t[i + 4] = t[i] ^ S_boxes_0[a & 0xff] ^ S_boxes_1[a >> 010 & 0xff] ^ S_boxes_2[a >> 020 & 0xff] ^ S_boxes_3[a >> 030];
 		}
-		((uint32_t *)dst)[0] = t[35];
-		((uint32_t *)dst)[1] = t[34];
-		((uint32_t *)dst)[2] = t[33];
-		((uint32_t *)dst)[3] = t[32];
+		I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
+		I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
+		I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
+		I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
 	}
 };
