@@ -1,15 +1,17 @@
 Language: Cpp
 BasedOnStyle: Google
+BreakBeforeBraces: Attach
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+ColumnLimit: 0
 UseTab: Always
 IndentWidth: 4
 TabWidth: 4
 AccessModifierOffset: -4
 IndentCaseLabels: false
-ColumnLimit: 0
-BreakBeforeBraces: Attach
-NamespaceIndentation: All
-RemoveBracesLLVM: true
-AllowShortIfStatementsOnASingleLine: false
+EmptyLineBeforeAccessModifier: Never
 MaxEmptyLinesToKeep: 0
 SeparateDefinitionBlocks: Never
 DerivePointerAlignment: false
@@ -17,3 +19,6 @@ ReferenceAlignment: Right
 PointerAlignment: Right
 QualifierAlignment: Custom
 QualifierOrder: ['static', 'constexpr', 'inline', 'type', 'const']
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty

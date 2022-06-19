@@ -3,21 +3,23 @@
 #include "block.hpp"
 constexpr std::array<uint32_t, 256> M_boxes_init(uint32_t const &n) {
 	std::array<uint32_t, 256> coef_mult_n = {};
-	for (int j = 0; j < 256; j++)
+	for (int j = 0; j < 256; j++) {
 		for (int i = 0; i < 4; i++) {
 			uint8_t a = n >> 8 * i, b = j, p = 0;
 			for (uint8_t k = 0; k < 8; k++) {
-				if (b & 1)
+				if (b & 1) {
 					p ^= a;
+				}
 				a = a << 1 ^ (a & 0x80 ? 0x1b : 0x00);
 				b = b >> 1;
 			}
 			coef_mult_n[j] |= p << 8 * i;
 		}
+	}
 	return coef_mult_n;
 }
 template <int rn>
-class AES : public BlockCipher<16> {
+class AES: public BlockCipher<16> {
 protected:
 	static constexpr uint8_t S_box[256] = {
 		0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -196,9 +198,9 @@ public:
 		add_round_key(dst, rk[round]);
 	}
 };
-class AES128 : public AES<10> {
+class AES128: public AES<10> {
 public:
-	AES128(uint8_t const *const &mk) : AES() {
+	AES128(uint8_t const *const &mk) {
 		memcpy(rk, mk, 16);
 		for (int i = 4; i < 44;) {
 			uint32_t a = (*rk)[i - 1];
@@ -209,19 +211,20 @@ public:
 		}
 	}
 };
-class AES192 : public AES<12> {
+class AES192: public AES<12> {
 public:
 	AES192(uint8_t const *const &mk) {
 		memcpy(rk, mk, 24);
 		for (int i = 6; i < 52; ++i) {
 			uint32_t a = (*rk)[i - 1];
-			if (i % 6 == 0)
+			if (i % 6 == 0) {
 				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 6];
+			}
 			(*rk)[i] = (*rk)[i - 6] ^ a;
 		}
 	}
 };
-class AES256 : public AES<14> {
+class AES256: public AES<14> {
 public:
 	AES256(uint8_t const *const &mk) {
 		memcpy(rk, mk, 32);

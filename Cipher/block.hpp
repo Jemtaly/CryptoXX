@@ -31,13 +31,14 @@ public:
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &final = true) = 0;
 };
 template <class BC>
-class Encrypter : public BlockCipherFlow {
+class Encrypter: public BlockCipherFlow {
 	size_t use;
 	typename BC::block_t mem;
 	BC bc;
 public:
 	template <class... vals_t>
-	Encrypter(vals_t const &...vals) : bc(vals...), use(0) {}
+	Encrypter(vals_t const &...vals):
+		bc(vals...), use(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &final) {
 		if (BLS + src <= end + use) {
 			memcpy(mem + use, src, BLS - use);
@@ -45,8 +46,9 @@ public:
 			src += BLS - use;
 			dst += BLS;
 			use -= use;
-			for (; BLS + src <= end; src += BLS, dst += BLS)
+			for (; BLS + src <= end; src += BLS, dst += BLS) {
 				bc.encrypt(src, dst);
+			}
 		}
 		memcpy(mem + use, src, end - src);
 		use += end - src;
@@ -61,13 +63,14 @@ public:
 	}
 };
 template <class BC>
-class Decrypter : public BlockCipherFlow {
+class Decrypter: public BlockCipherFlow {
 	size_t use;
 	typename BC::block_t mem;
 	BC bc;
 public:
 	template <class... vals_t>
-	Decrypter(vals_t const &...vals) : bc(vals...), use(0) {}
+	Decrypter(vals_t const &...vals):
+		bc(vals...), use(0) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &final) {
 		if (BLS + src < end + use) {
 			memcpy(mem + use, src, BLS - use);
@@ -75,8 +78,9 @@ public:
 			src += BLS - use;
 			dst += BLS;
 			use -= use;
-			for (; BLS + src < end; src += BLS, dst += BLS)
+			for (; BLS + src < end; src += BLS, dst += BLS) {
 				bc.decrypt(src, dst);
+			}
 		}
 		memcpy(mem + use, src, end - src);
 		use += end - src;
@@ -92,37 +96,39 @@ public:
 };
 #include "stream.hpp"
 template <class BC>
-class CTRCrypter : public StreamCipherFlow {
+class CTRCrypter: public StreamCipherFlow {
 	size_t use;
 	typename BC::block_t ctr;
 	BC const bc;
 public:
 	template <class... vals_t>
-	CTRCrypter(uint8_t const *const &iv, vals_t const &...vals) : bc(vals...), use(0) {
+	CTRCrypter(uint8_t const *const &iv, vals_t const &...vals):
+		bc(vals...), use(0) {
 		memcpy(ctr, iv, BLS);
 	}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
 		typename BC::block_t res;
 		if (BLS + src <= end + use) {
 			bc.encrypt(ctr, res);
-			for (size_t i = use; i < BLS; i++)
+			for (size_t i = use; i < BLS; i++) {
 				dst[i - use] = src[i - use] ^ res[i];
-			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
-				;
+			}
+			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++) {}
 			src += BLS - use;
 			dst += BLS - use;
 			use -= use;
 			for (; BLS + src <= end; src += BLS, dst += BLS) {
 				bc.encrypt(ctr, res);
-				for (size_t i = 0; i < BLS; i++)
+				for (size_t i = 0; i < BLS; i++) {
 					dst[i] = src[i] ^ res[i];
-				for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++)
-					;
+				}
+				for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++) {}
 			}
 		}
 		bc.encrypt(ctr, res);
-		for (size_t i = use; i + src < end + use; i++)
+		for (size_t i = use; i + src < end + use; i++) {
 			dst[i - use] = src[i - use] ^ res[i];
+		}
 		use += end - src;
 		dst += end - src;
 		src += end - src;

@@ -1,6 +1,6 @@
 #pragma once
 #include "block.hpp"
-class DES : public BlockCipher<8> {
+class DES: public BlockCipher<8> {
 	static constexpr uint8_t E[48] = {
 		0x00, 0x1f, 0x1e, 0x1d, 0x1c, 0x1b, 0x1c, 0x1b,
 		0x1a, 0x19, 0x18, 0x17, 0x18, 0x17, 0x16, 0x15,
@@ -108,15 +108,17 @@ class DES : public BlockCipher<8> {
 	template <int dout>
 	static uint64_t permutation(uint64_t const &vin, uint8_t const (&A)[dout]) {
 		uint64_t vout = 0;
-		for (int i = 0; i < dout; i++)
+		for (int i = 0; i < dout; i++) {
 			vout = vout << 1 | vin >> A[i] & 0x1;
+		}
 		return vout;
 	}
 	static uint64_t F(uint64_t const &r, uint64_t const &k) {
 		uint64_t x = permutation(r, E) ^ k;
 		uint64_t f = 0;
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < 8; i++) {
 			f = f << 4 | S_boxes[i][x >> (6 * (7 - i)) & 0x3f];
+		}
 		return permutation(f, P);
 	}
 	uint64_t rk[16];
@@ -133,15 +135,21 @@ public:
 	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint64_t t = permutation(*(uint64_t *)src, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
-		for (int i = 0; i < 16; i++)
-			t = r, r = F(r, rk[i]) ^ l, l = t;
+		for (int i = 0; i < 16; i++) {
+			t = l;
+			l = r;
+			r = F(l, rk[i]) ^ t;
+		}
 		*(uint64_t *)dst = permutation(r << 32 | l, FP);
 	}
 	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		uint64_t t = permutation(*(uint64_t *)src, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
-		for (int i = 0; i < 16; i++)
-			t = r, r = F(r, rk[15 - i]) ^ l, l = t;
+		for (int i = 0; i < 16; i++) {
+			t = l;
+			l = r;
+			r = F(l, rk[15 - i]) ^ t;
+		}
 		*(uint64_t *)dst = permutation(r << 32 | l, FP);
 	}
 };

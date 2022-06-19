@@ -23,7 +23,7 @@ constexpr std::array<uint32_t, 256> K_boxes_init(uint8_t const (&S_box)[256], in
 	}
 	return K_boxes_n;
 }
-class SM4 : public BlockCipher<16> {
+class SM4: public BlockCipher<16> {
 	static constexpr uint32_t FK[4] = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
 	};

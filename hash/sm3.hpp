@@ -8,19 +8,22 @@
 #define FF10(x, y, z) ((x) & (y) | (x) & (z) | (y) & (z))
 #define GG00(x, y, z) ((x) ^ (y) ^ (z))
 #define GG10(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
-class SM3 : public Hash<64, 32> {
+class SM3: public Hash<64, 32> {
 	static constexpr auto K = [](uint32_t const &TT00, uint32_t const &TT10) {
 		std::array<uint32_t, 64> K = {};
-		for (int j = 0; j < 16; j++)
+		for (int j = 0; j < 16; j++) {
 			K[j] = TT00 << j % 32 | TT00 >> (32 - j) % 32;
-		for (int j = 16; j < 64; j++)
+		}
+		for (int j = 16; j < 64; j++) {
 			K[j] = TT10 << j % 32 | TT10 >> (96 - j) % 32;
+		}
 		return K;
 	}(0x79cc4519, 0x7a879d8a);
 	static void compress(uint32_t *const &rec, uint8_t const *const &blk) {
 		uint32_t W[68];
-		for (int j = 0; j < 16; j++)
+		for (int j = 0; j < 16; j++) {
 			W[j] = blk[j << 2] << 030 | blk[j << 2 | 1] << 020 | blk[j << 2 | 2] << 010 | blk[j << 2 | 3];
+		}
 		for (int j = 16; j < 68; j++) {
 			uint32_t TT0 = W[j - 16] ^ W[j - 9] ^ ROL32(W[j - 3], 15);
 			W[j] = P1(TT0) ^ W[j - 6] ^ ROL32(W[j - 13], 7);
@@ -72,13 +75,12 @@ class SM3 : public Hash<64, 32> {
 		rec[6] ^= G;
 		rec[7] ^= H;
 	}
-	uint32_t rec[8];
-	uint64_t countr;
-public:
-	SM3() : rec{
+	uint64_t countr = 0;
+	uint32_t rec[8] = {
 		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
 		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
-	}, countr(0) {}
+	};
+public:
 	void push(uint8_t const *const &blk) {
 		compress(rec, blk);
 		countr += 512;

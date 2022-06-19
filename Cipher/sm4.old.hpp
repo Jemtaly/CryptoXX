@@ -7,7 +7,7 @@
 	(a)[2] = (i) >> 010 & 0xff; \
 	(a)[3] = (i) & 0xff;        \
 }
-class SM4 : public BlockCipher<16> {
+class SM4: public BlockCipher<16> {
 	static constexpr uint32_t FK[4] = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
 	};

@@ -1,9 +1,10 @@
 #pragma once
 #include "des.hpp"
-class TDES : public BlockCipher<8> {
+class TDES: public BlockCipher<8> {
 	DES D, E, S;
 public:
-	TDES(uint8_t const *const &k, uint8_t const *const &e, uint8_t const *const &y) : D(k), E(e), S(y) {}
+	TDES(uint8_t const *const &k, uint8_t const *const &e, uint8_t const *const &y):
+		D(k), E(e), S(y) {}
 	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		D.encrypt(src, dst);
 		E.decrypt(dst, dst);

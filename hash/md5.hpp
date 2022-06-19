@@ -1,7 +1,7 @@
 #pragma once
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-class MD5 : public Hash<64, 16> {
+class MD5: public Hash<64, 16> {
 	static constexpr uint32_t k[64] = {
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 		0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -73,12 +73,11 @@ class MD5 : public Hash<64, 16> {
 		h[2] += c;
 		h[3] += d;
 	}
-	uint32_t h[4];
-	uint64_t cntr;
+	uint64_t cntr = 0;
+	uint32_t h[4] = {
+		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
+	};
 public:
-	MD5() : h{
-		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
-	}, cntr(0) {}
 	void push(uint8_t const *const &blk) {
 		compress(h, blk);
 		cntr += 512;

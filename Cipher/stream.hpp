@@ -11,14 +11,16 @@ public:
 	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) = 0;
 };
 template <class SC>
-class Crypter : public StreamCipherFlow {
+class Crypter: public StreamCipherFlow {
 	SC sc;
 public:
 	template <class... vals_t>
-	Crypter(vals_t const &...vals) : sc(vals...) {}
+	Crypter(vals_t const &...vals):
+		sc(vals...) {}
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
-		while (src < end)
+		while (src < end) {
 			sc.crypt(src++, dst++);
+		}
 		return dst;
 	}
 };

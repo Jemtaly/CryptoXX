@@ -19,21 +19,23 @@ public:
 	virtual void obtain(uint8_t *const &buf) const = 0;
 };
 template <class HA>
-class Hasher : public HashFlow {
+class Hasher: public HashFlow {
 	HA hash;
 	size_t use;
 	typename HA::blk_t mem;
 public:
 	template <class... vals_t>
-	Hasher(vals_t const &...vals) : hash(vals...), use(0) {}
+	Hasher(vals_t const &...vals):
+		hash(vals...), use(0) {}
 	void update(uint8_t const *src, uint8_t const *const &end) {
 		if (HIS + src <= use + end) {
 			memcpy(mem + use, src, HIS - use);
 			hash.push(mem);
 			src += HIS - use;
 			use -= use;
-			for (; src + HIS <= end; src += HIS)
+			for (; src + HIS <= end; src += HIS) {
 				hash.push(src);
+			}
 		}
 		memcpy(mem + use, src, end - src);
 		use += end - src;

@@ -1,11 +1,13 @@
 #pragma once
 #include "stream.hpp"
-class RC4 : public StreamCipher {
+class RC4: public StreamCipher {
 	uint8_t x, y, m[256];
 public:
-	RC4(uint8_t *const &key, size_t const &len) : x(0), y(0) {
-		for (int i = 0; i < 256; i++)
+	RC4(uint8_t *const &key, size_t const &len):
+		x(0), y(0) {
+		for (int i = 0; i < 256; i++) {
 			m[i] = i;
+		}
 		uint8_t j = 0;
 		for (int i = 0; i < 256; i++) {
 			uint8_t t = m[i];
