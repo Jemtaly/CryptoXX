@@ -7,10 +7,8 @@ constexpr std::array<uint32_t, 256> M_boxes_init(uint32_t const &n) {
 		for (int i = 0; i < 4; i++) {
 			uint8_t a = n >> 8 * i, b = j, p = 0;
 			for (uint8_t k = 0; k < 8; k++) {
-				if (b & 1) {
-					p ^= a;
-				}
-				a = a << 1 ^ (a & 0x80 ? 0x1b : 0x00);
+				p = p ^ (b & 1) * a;
+				a = a << 1 ^ (a >> 7) * 0x1b;
 				b = b >> 1;
 			}
 			coef_mult_n[j] |= p << 8 * i;
@@ -230,10 +228,11 @@ public:
 		memcpy(rk, mk, 32);
 		for (int i = 8; i < 60; ++i) {
 			uint32_t a = (*rk)[i - 1];
-			if (i % 8 == 0)
+			if (i % 8 == 0) {
 				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 8];
-			else if (i % 8 == 4)
+			} else if (i % 8 == 4) {
 				a = S_box[a & 0xff] | S_box[a >> 010 & 0xff] << 010 | S_box[a >> 020 & 0xff] << 020 | S_box[a >> 030] << 030;
+			}
 			(*rk)[i] = (*rk)[i - 8] ^ a;
 		}
 	}
