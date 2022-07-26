@@ -37,10 +37,10 @@ class SM3: public Hash<64, 32> {
 		uint32_t G = rec[6];
 		uint32_t H = rec[7];
 		for (int j = 0; j < 16; j++) {
-			uint32_t SS0 = ROL32(A, 12) + E + K[j];
-			uint32_t SS1 = ROL32(SS0, 7);
-			uint32_t SS2 = SS1 ^ ROL32(A, 12);
-			uint32_t TT1 = FF00(A, B, C) + D + SS2 + (W[j] ^ W[j + 4]);
+			uint32_t A12 = ROL32(A, 12);
+			uint32_t AEK = A12 + E + K[j];
+			uint32_t SS1 = ROL32(AEK, 7);
+			uint32_t TT1 = FF00(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]);
 			uint32_t TT2 = GG00(E, F, G) + H + SS1 + W[j];
 			D = C;
 			C = ROL32(B, 9);
@@ -52,10 +52,10 @@ class SM3: public Hash<64, 32> {
 			E = P0(TT2);
 		}
 		for (int j = 16; j < 64; j++) {
-			uint32_t SS0 = ROL32(A, 12) + E + K[j];
-			uint32_t SS1 = ROL32(SS0, 7);
-			uint32_t SS2 = SS1 ^ ROL32(A, 12);
-			uint32_t TT1 = FF10(A, B, C) + D + SS2 + (W[j] ^ W[j + 4]);
+			uint32_t A12 = ROL32(A, 12);
+			uint32_t AEK = A12 + E + K[j];
+			uint32_t SS1 = ROL32(AEK, 7);
+			uint32_t TT1 = FF10(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]);
 			uint32_t TT2 = GG10(E, F, G) + H + SS1 + W[j];
 			D = C;
 			C = ROL32(B, 9);
