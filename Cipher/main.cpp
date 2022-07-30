@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "aes.hpp"
+#include "sm4.hpp"
 #define BUFSIZE 1024
 #define REC_FLS 1
 #define REC_OFP 2
@@ -13,6 +14,7 @@
 #define REC_128 128
 #define REC_256 256
 #define REC_192 512
+#define REC_SM4 1024
 int main(int argc, char *argv[]) {
 	int rec = 0;
 	FILE *ifp = nullptr, *ofp = nullptr;
@@ -45,20 +47,26 @@ int main(int argc, char *argv[]) {
 				} else {
 					rec |= REC_FLS;
 				}
+			} else if (argv[i][1] == 'S' && argv[i][2] == '\0') {
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0) {
+					rec |= REC_SM4;
+				} else {
+					rec |= REC_FLS;
+				}
 			} else if (argv[i][1] == '4' && argv[i][2] == '\0') {
-				if ((rec & (REC_128 | REC_192 | REC_256)) == 0) {
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0) {
 					rec |= REC_128;
 				} else {
 					rec |= REC_FLS;
 				}
 			} else if (argv[i][1] == '6' && argv[i][2] == '\0') {
-				if ((rec & (REC_128 | REC_192 | REC_256)) == 0) {
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0) {
 					rec |= REC_192;
 				} else {
 					rec |= REC_FLS;
 				}
 			} else if (argv[i][1] == '8' && argv[i][2] == '\0') {
-				if ((rec & (REC_128 | REC_192 | REC_256)) == 0) {
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0) {
 					rec |= REC_256;
 				} else {
 					rec |= REC_FLS;
@@ -82,8 +90,8 @@ int main(int argc, char *argv[]) {
 			rec |= REC_FLS;
 		}
 	}
-	if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 || (rec & REC_KEY) == 0 || (rec & REC_FLS) != 0) {
-		fprintf(stderr, "usage: %s [-4 | -6 | -8] -k KEY (-c CIV | -e | -d) [-i IFILENAME] [-o OFILENAME]\n", argv[0]);
+	if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 || (rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 || (rec & REC_KEY) == 0 || (rec & REC_FLS) != 0) {
+		fprintf(stderr, "usage: %s (-S | -4 | -6 | -8) -k KEY (-c CIV | -e | -d) [-i IFILENAME] [-o OFILENAME]\n", argv[0]);
 		if ((rec & REC_IFP) != 0) {
 			fclose(ifp);
 		}
@@ -101,7 +109,11 @@ int main(int argc, char *argv[]) {
 	BlockCipherFlow *pEnc;
 	BlockCipherFlow *pDec;
 	StreamCipherFlow *pCTR;
-	if ((rec & (REC_192 | REC_256)) == 0) {
+	if ((rec & REC_SM4) != 0) {
+		pEnc = new Encrypter<SM4>(key);
+		pDec = new Decrypter<SM4>(key);
+		pCTR = new CTRCrypter<SM4>(civ, key);
+	} else if ((rec & REC_128) != 0) {
 		pEnc = new Encrypter<AES128>(key);
 		pDec = new Decrypter<AES128>(key);
 		pCTR = new CTRCrypter<AES128>(civ, key);
