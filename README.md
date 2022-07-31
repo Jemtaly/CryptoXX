@@ -8,8 +8,8 @@ A modern, high speed and elegant OOP cryptographic library implemented in C++. C
 
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
-cd CryptoXX/block
-clang++ main.cpp -std=c++2a -O3 -o main.exe
+cd CryptoXX
+clang++ example.cpp -std=c++2a -O3 -o main.exe
 ```
 
 ```sh
