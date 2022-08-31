@@ -37,36 +37,36 @@ class MD5: public Hash<64, 16> {
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)blk;
 		for (int i = 0; i < 16; i++) {
-			uint32_t sum = a + (b & c | ~b & d) + k[i] + w[i];
-			uint32_t tmp = d;
+			uint32_t s = a + (b & c | ~b & d) + k[i] + w[i];
+			uint32_t t = d;
 			d = c;
 			c = b;
-			b += ROL32(sum, r[i]);
-			a = tmp;
+			b += ROL32(s, r[i]);
+			a = t;
 		}
 		for (int i = 16; i < 32; i++) {
-			uint32_t sum = a + (d & b | ~d & c) + k[i] + w[5 * i + 1 & 0xf];
-			uint32_t tmp = d;
+			uint32_t s = a + (d & b | ~d & c) + k[i] + w[5 * i + 1 & 0xf];
+			uint32_t t = d;
 			d = c;
 			c = b;
-			b += ROL32(sum, r[i]);
-			a = tmp;
+			b += ROL32(s, r[i]);
+			a = t;
 		}
 		for (int i = 32; i < 48; i++) {
-			uint32_t sum = a + (c ^ b ^ d) + k[i] + w[3 * i + 5 & 0xf];
-			uint32_t tmp = d;
+			uint32_t s = a + (c ^ b ^ d) + k[i] + w[3 * i + 5 & 0xf];
+			uint32_t t = d;
 			d = c;
 			c = b;
-			b += ROL32(sum, r[i]);
-			a = tmp;
+			b += ROL32(s, r[i]);
+			a = t;
 		}
 		for (int i = 48; i < 64; i++) {
-			uint32_t sum = a + (c ^ (b | ~d)) + k[i] + w[7 * i & 0xf];
-			uint32_t tmp = d;
+			uint32_t s = a + (c ^ (b | ~d)) + k[i] + w[7 * i & 0xf];
+			uint32_t t = d;
 			d = c;
 			c = b;
-			b += ROL32(sum, r[i]);
-			a = tmp;
+			b += ROL32(s, r[i]);
+			a = t;
 		}
 		h[0] += a;
 		h[1] += b;
@@ -78,24 +78,24 @@ class MD5: public Hash<64, 16> {
 		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
 	};
 public:
-	void push(uint8_t const *const &blk) {
-		compress(h, blk);
+	void block(uint8_t const *const &src) {
+		compress(h, src);
 		cntr += 512;
 	}
-	void cast(uint8_t const *const &fin, size_t const &len, uint8_t *const &buf) const {
-		uint8_t blk[64];
-		memcpy(blk, fin, len);
-		memset(blk + len, 0, 64 - len);
-		blk[len] = 0x80;
-		((uint32_t *)buf)[0] = h[0];
-		((uint32_t *)buf)[1] = h[1];
-		((uint32_t *)buf)[2] = h[2];
-		((uint32_t *)buf)[3] = h[3];
+	void final(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+		uint8_t tmp[64];
+		memcpy(tmp, src, len);
+		memset(tmp + len, 0, 64 - len);
+		tmp[len] = 0x80;
+		((uint32_t *)dst)[0] = h[0];
+		((uint32_t *)dst)[1] = h[1];
+		((uint32_t *)dst)[2] = h[2];
+		((uint32_t *)dst)[3] = h[3];
 		if (len >= 56) {
-			compress((uint32_t *)buf, blk);
-			memset(blk, 0, 56);
+			compress((uint32_t *)dst, tmp);
+			memset(tmp, 0, 56);
 		}
-		((uint64_t *)blk)[7] = cntr + 8 * len;
-		compress((uint32_t *)buf, blk);
+		((uint64_t *)tmp)[7] = cntr + 8 * len;
+		compress((uint32_t *)dst, tmp);
 	}
 };

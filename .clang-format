@@ -14,6 +14,7 @@ IndentCaseLabels: false
 EmptyLineBeforeAccessModifier: Never
 MaxEmptyLinesToKeep: 0
 SeparateDefinitionBlocks: Never
+InsertBraces: true
 DerivePointerAlignment: false
 ReferenceAlignment: Right
 PointerAlignment: Right

@@ -28,7 +28,7 @@ public:
 class BlockCipherFlow {
 public:
 	virtual ~BlockCipherFlow() = default;
-	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &final = true) = 0;
+	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &pad = true) = 0;
 };
 template <class BC>
 class Encrypter: public BlockCipherFlow {
@@ -39,7 +39,7 @@ public:
 	template <class... vals_t>
 	Encrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
-	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &final) {
+	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &pad) {
 		if (BLS + src <= end + use) {
 			memcpy(mem + use, src, BLS - use);
 			bc.encrypt(mem, dst);
@@ -53,7 +53,7 @@ public:
 		memcpy(mem + use, src, end - src);
 		use += end - src;
 		src += end - src;
-		if (final) {
+		if (pad) {
 			memset(mem + use, BLS - use, BLS - use);
 			bc.encrypt(mem, dst);
 			use -= use;
@@ -71,7 +71,7 @@ public:
 	template <class... vals_t>
 	Decrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
-	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &final) {
+	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &pad) {
 		if (BLS + src < end + use) {
 			memcpy(mem + use, src, BLS - use);
 			bc.decrypt(mem, dst);
@@ -85,7 +85,7 @@ public:
 		memcpy(mem + use, src, end - src);
 		use += end - src;
 		src += end - src;
-		if (final) {
+		if (pad) {
 			assert(use == BLS);
 			bc.decrypt(mem, dst);
 			use -= use;
