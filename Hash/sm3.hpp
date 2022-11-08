@@ -2,12 +2,28 @@
 #include <array>
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define P0(x) ((x) ^ ROL32(x, 9) ^ ROL32(x, 17))
-#define P1(x) ((x) ^ ROL32(x, 15) ^ ROL32(x, 23))
-#define FF00(x, y, z) ((x) ^ (y) ^ (z))
-#define FF10(x, y, z) ((x) & (y) | (x) & (z) | (y) & (z))
-#define GG00(x, y, z) ((x) ^ (y) ^ (z))
-#define GG10(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
+#define PP0(x) ((x) ^ ROL32(x, 9) ^ ROL32(x, 17))
+#define PP1(x) ((x) ^ ROL32(x, 15) ^ ROL32(x, 23))
+#define FF0(x, y, z) ((x) ^ (y) ^ (z))
+#define FF1(x, y, z) ((x) & (y) | (x) & (z) | (y) & (z))
+#define GG0(x, y, z) ((x) ^ (y) ^ (z))
+#define GG1(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
+#define HHN(A, B, C, D, E, F, G, H, W, K, N, X, Y)                           \
+	for (int j = X; j < Y; j++) {                                            \
+		uint32_t A12 = ROL32(A, 12);                                         \
+		uint32_t AEK = A12 + E + K[j];                                       \
+		uint32_t SS1 = ROL32(AEK, 7);                                        \
+		uint32_t TT1 = FF##N(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]); \
+		uint32_t TT2 = GG##N(E, F, G) + H + SS1 + W[j];                      \
+		D = C;                                                               \
+		C = ROL32(B, 9);                                                     \
+		B = A;                                                               \
+		A = TT1;                                                             \
+		H = G;                                                               \
+		G = ROL32(F, 19);                                                    \
+		F = E;                                                               \
+		E = PP0(TT2);                                                        \
+	}
 class SM3: public Hash<64, 32> {
 	static constexpr auto K = [](uint32_t const &TT00, uint32_t const &TT10) {
 		std::array<uint32_t, 64> K = {};
@@ -20,14 +36,6 @@ class SM3: public Hash<64, 32> {
 		return K;
 	}(0x79cc4519, 0x7a879d8a);
 	static void compress(uint32_t *const &rec, uint8_t const *const &blk) {
-		uint32_t W[68];
-		for (int j = 0; j < 16; j++) {
-			W[j] = blk[j << 2] << 030 | blk[j << 2 | 1] << 020 | blk[j << 2 | 2] << 010 | blk[j << 2 | 3];
-		}
-		for (int j = 16; j < 68; j++) {
-			uint32_t TT0 = W[j - 16] ^ W[j - 9] ^ ROL32(W[j - 3], 15);
-			W[j] = P1(TT0) ^ W[j - 6] ^ ROL32(W[j - 13], 7);
-		}
 		uint32_t A = rec[0];
 		uint32_t B = rec[1];
 		uint32_t C = rec[2];
@@ -36,36 +44,16 @@ class SM3: public Hash<64, 32> {
 		uint32_t F = rec[5];
 		uint32_t G = rec[6];
 		uint32_t H = rec[7];
+		uint32_t W[68];
 		for (int j = 0; j < 16; j++) {
-			uint32_t A12 = ROL32(A, 12);
-			uint32_t AEK = A12 + E + K[j];
-			uint32_t SS1 = ROL32(AEK, 7);
-			uint32_t TT1 = FF00(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]);
-			uint32_t TT2 = GG00(E, F, G) + H + SS1 + W[j];
-			D = C;
-			C = ROL32(B, 9);
-			B = A;
-			A = TT1;
-			H = G;
-			G = ROL32(F, 19);
-			F = E;
-			E = P0(TT2);
+			W[j] = blk[j << 2] << 030 | blk[j << 2 | 1] << 020 | blk[j << 2 | 2] << 010 | blk[j << 2 | 3];
 		}
-		for (int j = 16; j < 64; j++) {
-			uint32_t A12 = ROL32(A, 12);
-			uint32_t AEK = A12 + E + K[j];
-			uint32_t SS1 = ROL32(AEK, 7);
-			uint32_t TT1 = FF10(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]);
-			uint32_t TT2 = GG10(E, F, G) + H + SS1 + W[j];
-			D = C;
-			C = ROL32(B, 9);
-			B = A;
-			A = TT1;
-			H = G;
-			G = ROL32(F, 19);
-			F = E;
-			E = P0(TT2);
+		for (int j = 16; j < 68; j++) {
+			uint32_t TT0 = W[j - 16] ^ W[j - 9] ^ ROL32(W[j - 3], 15);
+			W[j] = PP1(TT0) ^ W[j - 6] ^ ROL32(W[j - 13], 7);
 		}
+		HHN(A, B, C, D, E, F, G, H, W, K, 0, 0, 16);
+		HHN(A, B, C, D, E, F, G, H, W, K, 1, 16, 64);
 		rec[0] ^= A;
 		rec[1] ^= B;
 		rec[2] ^= C;
@@ -115,3 +103,10 @@ public:
 		}
 	}
 };
+#undef PP0
+#undef PP1
+#undef FF0
+#undef FF1
+#undef GG0
+#undef GG1
+#undef HHN

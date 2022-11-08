@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-constexpr std::array<uint32_t, 256> M_boxes_init(uint32_t const &n) {
+constexpr auto M_boxes_init(uint32_t const &n) {
 	std::array<uint32_t, 256> coef_mult_n = {};
 	for (int j = 0; j < 256; j++) {
 		for (int i = 0; i < 4; i++) {
@@ -200,12 +200,12 @@ class AES128: public AES<10> {
 public:
 	AES128(uint8_t const *const &mk) {
 		memcpy(rk, mk, 16);
-		for (int i = 4; i < 44;) {
+		for (int i = 4; i < 44; ++i) {
 			uint32_t a = (*rk)[i - 1];
-			(*rk)[i++] = (*rk)[i - 4] ^ (S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 4]);
-			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
-			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
-			(*rk)[i++] = (*rk)[i - 4] ^ (*rk)[i - 1];
+			if (i % 4 == 0) {
+				a = S_box[a >> 020 & 0xff] << 010 | S_box[a >> 030] << 020 | S_box[a & 0xff] << 030 | S_box[a >> 010 & 0xff] ^ Rcon[i / 4];
+			}
+			(*rk)[i] = (*rk)[i - 4] ^ a;
 		}
 	}
 };

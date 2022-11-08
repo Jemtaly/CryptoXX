@@ -7,7 +7,7 @@
 	(a)[2] = (i) >> 010 & 0xff; \
 	(a)[3] = (i) & 0xff;        \
 }
-constexpr std::array<uint32_t, 256> S_boxes_init(uint8_t const (&S_box)[256], int const &n) {
+constexpr auto S_boxes_init(uint8_t const (&S_box)[256], int const &n) {
 	std::array<uint32_t, 256> S_boxes_n = {};
 	for (int i = 0; i < 256; i++) {
 		uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
@@ -15,7 +15,7 @@ constexpr std::array<uint32_t, 256> S_boxes_init(uint8_t const (&S_box)[256], in
 	}
 	return S_boxes_n;
 }
-constexpr std::array<uint32_t, 256> K_boxes_init(uint8_t const (&S_box)[256], int const &n) {
+constexpr auto K_boxes_init(uint8_t const (&S_box)[256], int const &n) {
 	std::array<uint32_t, 256> K_boxes_n = {};
 	for (int i = 0; i < 256; i++) {
 		uint32_t b = S_box[i] ^ S_box[i] << 13 ^ S_box[i] << 23;

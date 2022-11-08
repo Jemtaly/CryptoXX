@@ -1,6 +1,22 @@
 #pragma once
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
+#define FF0(b, c, d) ((b) & (c) | ~(b) & (d))
+#define FF1(b, c, d) ((d) & (b) | ~(d) & (c))
+#define FF2(b, c, d) ((b) ^ (c) ^ (d))
+#define FF3(b, c, d) ((c) ^ ((b) | ~(d)))
+#define GG0(w, i) w[(i)]
+#define GG1(w, i) w[5 * (i) + 1 & 0xf]
+#define GG2(w, i) w[3 * (i) + 5 & 0xf]
+#define GG3(w, i) w[7 * (i) & 0xf]
+#define HHN(a, b, c, d, w, k, r, N, X, Y)                     \
+	for (int i = X; i < Y; i++) {                             \
+		uint32_t s = a + FF##N(b, c, d) + k[i] + GG##N(w, i); \
+		a = d;                                                \
+		d = c;                                                \
+		c = b;                                                \
+		b += ROL32(s, r[i]);                                  \
+	}
 class MD5: public Hash<64, 16> {
 	static constexpr uint32_t k[64] = {
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -36,38 +52,10 @@ class MD5: public Hash<64, 16> {
 		uint32_t c = h[2];
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)blk;
-		for (int i = 0; i < 16; i++) {
-			uint32_t s = a + (b & c | ~b & d) + k[i] + w[i];
-			uint32_t t = d;
-			d = c;
-			c = b;
-			b += ROL32(s, r[i]);
-			a = t;
-		}
-		for (int i = 16; i < 32; i++) {
-			uint32_t s = a + (d & b | ~d & c) + k[i] + w[5 * i + 1 & 0xf];
-			uint32_t t = d;
-			d = c;
-			c = b;
-			b += ROL32(s, r[i]);
-			a = t;
-		}
-		for (int i = 32; i < 48; i++) {
-			uint32_t s = a + (c ^ b ^ d) + k[i] + w[3 * i + 5 & 0xf];
-			uint32_t t = d;
-			d = c;
-			c = b;
-			b += ROL32(s, r[i]);
-			a = t;
-		}
-		for (int i = 48; i < 64; i++) {
-			uint32_t s = a + (c ^ (b | ~d)) + k[i] + w[7 * i & 0xf];
-			uint32_t t = d;
-			d = c;
-			c = b;
-			b += ROL32(s, r[i]);
-			a = t;
-		}
+		HHN(a, b, c, d, w, k, r, 0, 0, 16);
+		HHN(a, b, c, d, w, k, r, 1, 16, 32);
+		HHN(a, b, c, d, w, k, r, 2, 32, 48);
+		HHN(a, b, c, d, w, k, r, 3, 48, 64);
 		h[0] += a;
 		h[1] += b;
 		h[2] += c;
@@ -99,3 +87,12 @@ public:
 		compress((uint32_t *)dst, tmp);
 	}
 };
+#undef FF0
+#undef FF1
+#undef FF2
+#undef FF3
+#undef GG0
+#undef GG1
+#undef GG2
+#undef GG3
+#undef HHN
