@@ -7,7 +7,6 @@
 #define REC_ERR 1
 #define REC_OFP 2
 #define REC_IFP 4
-#define REC_KEY 8
 #define REC_ENC 16
 #define REC_DEC 32
 #define REC_CTR 64
@@ -39,6 +38,20 @@ void choose(int rec, FILE *ifp, FILE *ofp, uint8_t *iv, uint8_t *key) {
 		bcrypt(Decrypter<T>(key), ifp, ofp);
 	}
 }
+bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
+	for (size_t i = 0; i < len * 2; ++i) {
+		if (hex[i] >= '0' && hex[i] <= '9') {
+			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= hex[i] - '0' << (i % 2 ? 0 : 4);
+		} else if (hex[i] >= 'a' && hex[i] <= 'f') {
+			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= hex[i] - 'a' + 10 << (i % 2 ? 0 : 4);
+		} else if (hex[i] >= 'A' && hex[i] <= 'F') {
+			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= hex[i] - 'A' + 10 << (i % 2 ? 0 : 4);
+		} else {
+			return false;
+		}
+	}
+	return hex[len * 2] == '\0';
+}
 int main(int argc, char *argv[]) {
 	int rec = 0;
 	FILE *ifp = stdin, *ofp = stdout;
@@ -46,8 +59,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; (rec & REC_ERR) == 0 && i < argc; i++) {
 		if (argv[i][0] == '-') {
 			if (argv[i][1] == 'c' && argv[i][2] == '\0') {
-				if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 && i + 1 < argc) {
-					strncpy((char *)(civ = new uint8_t[16]), argv[++i], 16);
+				if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
 					rec |= REC_CTR;
 				} else {
 					rec |= REC_ERR;
@@ -65,29 +77,25 @@ int main(int argc, char *argv[]) {
 					rec |= REC_ERR;
 				}
 			} else if (argv[i][1] == 'S' && argv[i][2] == '\0') {
-				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc) {
-					strncpy((char *)(key = new uint8_t[16]), argv[++i], 16);
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
 					rec |= REC_SM4;
 				} else {
 					rec |= REC_ERR;
 				}
 			} else if (argv[i][1] == '4' && argv[i][2] == '\0') {
-				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc) {
-					strncpy((char *)(key = new uint8_t[16]), argv[++i], 16);
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
 					rec |= REC_128;
 				} else {
 					rec |= REC_ERR;
 				}
 			} else if (argv[i][1] == '6' && argv[i][2] == '\0') {
-				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc) {
-					strncpy((char *)(key = new uint8_t[24]), argv[++i], 24);
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
 					rec |= REC_192;
 				} else {
 					rec |= REC_ERR;
 				}
 			} else if (argv[i][1] == '8' && argv[i][2] == '\0') {
-				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc) {
-					strncpy((char *)(key = new uint8_t[32]), argv[++i], 32);
+				if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
 					rec |= REC_256;
 				} else {
 					rec |= REC_ERR;
