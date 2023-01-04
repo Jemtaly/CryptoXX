@@ -6,7 +6,7 @@
 template <size_t bls>
 class BlockCipher {
 public:
-	typedef uint8_t block_t[bls];
+	using block_t = uint8_t[bls];
 	virtual ~BlockCipher() = default;
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
@@ -14,14 +14,14 @@ public:
 template <size_t bls>
 class EncryptionMode {
 public:
-	typedef uint8_t block_t[bls];
+	using block_t = uint8_t[bls];
 	virtual ~EncryptionMode() = default;
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) = 0;
 };
 template <size_t bls>
 class DecryptionMode {
 public:
-	typedef uint8_t block_t[bls];
+	using block_t = uint8_t[bls];
 	virtual ~DecryptionMode() = default;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) = 0;
 };
@@ -36,6 +36,7 @@ class Encrypter: public BlockCipherFlow {
 	typename BC::block_t mem;
 	BC bc;
 public:
+	using bc_t = BC;
 	template <class... vals_t>
 	Encrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
@@ -68,6 +69,7 @@ class Decrypter: public BlockCipherFlow {
 	typename BC::block_t mem;
 	BC bc;
 public:
+	using bc_t = BC;
 	template <class... vals_t>
 	Decrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
@@ -101,6 +103,7 @@ class CTRCrypter: public StreamCipherFlow {
 	typename BC::block_t ctr;
 	BC const bc;
 public:
+	using bc_t = BC;
 	template <class... vals_t>
 	CTRCrypter(uint8_t const *const &iv, vals_t const &...vals):
 		bc(vals...), use(0) {

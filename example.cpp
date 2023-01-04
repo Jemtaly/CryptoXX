@@ -16,12 +16,12 @@
 #define REC_192 512
 #define REC_SM4 1024
 template <typename SCF>
-void scrypt(SCF scf, FILE *ifp, FILE *ofp) {
+void scrypt(SCF &&scf, FILE *ifp, FILE *ofp) {
 	uint8_t buf[BUFSIZE];
 	while (fwrite(buf, 1, scf.update(buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp), buf) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
 template <typename BCF>
-void bcrypt(BCF bcf, FILE *ifp, FILE *ofp) {
+void bcrypt(BCF &&bcf, FILE *ifp, FILE *ofp) {
 	uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
 	size_t read;
 	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {

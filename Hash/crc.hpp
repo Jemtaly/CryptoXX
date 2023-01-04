@@ -11,7 +11,7 @@ public:
 		memcpy(xrv, xv, sz8);
 		memcpy(sta, iv, sz8);
 		for (int itr = 0; itr < 256; itr++) {
-			uint8_t(&ref)[sz8] = box[itr];
+			uint8_t (&ref)[sz8] = box[itr];
 			ref[0] = itr;
 			for (int i = 0; i < 8; i++) {
 				uint8_t per = 0;
@@ -29,7 +29,7 @@ public:
 		}
 	}
 	void block(uint8_t const *const &src) {
-		uint8_t const(&ref)[sz8] = box[sta[0] ^ src[0]];
+		uint8_t const (&ref)[sz8] = box[sta[0] ^ src[0]];
 		for (size_t i = 0; i < sz8 - 1; i++) {
 			sta[i] = ref[i] ^ sta[i + 1];
 		}

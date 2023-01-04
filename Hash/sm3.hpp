@@ -44,16 +44,16 @@ class SM3: public Hash<64, 32> {
 		uint32_t F = rec[5];
 		uint32_t G = rec[6];
 		uint32_t H = rec[7];
-		uint32_t W[68];
+		uint32_t W[68], TMP;
 		for (int j = 0; j < 16; j++) {
 			W[j] = blk[j << 2] << 030 | blk[j << 2 | 1] << 020 | blk[j << 2 | 2] << 010 | blk[j << 2 | 3];
 		}
 		for (int j = 16; j < 68; j++) {
-			uint32_t TT0 = W[j - 16] ^ W[j - 9] ^ ROL32(W[j - 3], 15);
-			W[j] = PP1(TT0) ^ W[j - 6] ^ ROL32(W[j - 13], 7);
+			TMP = W[j - 16] ^ W[j - 9] ^ ROL32(W[j - 3], 15);
+			W[j] = PP1(TMP) ^ W[j - 6] ^ ROL32(W[j - 13], 7);
 		}
-		HHN(A, B, C, D, E, F, G, H, W, K, 0, 0, 16);
-		HHN(A, B, C, D, E, F, G, H, W, K, 1, 16, 64);
+		HHN(A, B, C, D, E, F, G, H, W, K, 0, 0x00, 0x10);
+		HHN(A, B, C, D, E, F, G, H, W, K, 1, 0x10, 0x40);
 		rec[0] ^= A;
 		rec[1] ^= B;
 		rec[2] ^= C;

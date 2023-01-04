@@ -52,10 +52,10 @@ class MD5: public Hash<64, 16> {
 		uint32_t c = h[2];
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)blk;
-		HHN(a, b, c, d, w, k, r, 0, 0, 16);
-		HHN(a, b, c, d, w, k, r, 1, 16, 32);
-		HHN(a, b, c, d, w, k, r, 2, 32, 48);
-		HHN(a, b, c, d, w, k, r, 3, 48, 64);
+		HHN(a, b, c, d, w, k, r, 0, 0x00, 0x10);
+		HHN(a, b, c, d, w, k, r, 1, 0x10, 0x20);
+		HHN(a, b, c, d, w, k, r, 2, 0x20, 0x30);
+		HHN(a, b, c, d, w, k, r, 3, 0x30, 0x40);
 		h[0] += a;
 		h[1] += b;
 		h[2] += c;

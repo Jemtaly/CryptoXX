@@ -6,8 +6,8 @@
 template <size_t ibs, size_t obs>
 class Hash {
 public:
-	typedef uint8_t blk_t[ibs];
-	typedef uint8_t buf_t[obs];
+	using blk_t = uint8_t[ibs];
+	using buf_t = uint8_t[obs];
 	virtual ~Hash() = default;
 	virtual void block(uint8_t const *const &src) = 0;
 	virtual void final(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const = 0;
@@ -24,6 +24,7 @@ class Hasher: public HashFlow {
 	size_t use;
 	typename HA::blk_t mem;
 public:
+	using ha_t = HA;
 	template <class... vals_t>
 	Hasher(vals_t const &...vals):
 		hash(vals...), use(0) {}

@@ -14,6 +14,7 @@ template <class SC>
 class Crypter: public StreamCipherFlow {
 	SC sc;
 public:
+	using sc_t = SC;
 	template <class... vals_t>
 	Crypter(vals_t const &...vals):
 		sc(vals...) {}
