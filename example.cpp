@@ -7,13 +7,13 @@
 #define REC_ERR 1
 #define REC_OFP 2
 #define REC_IFP 4
-#define REC_ENC 16
-#define REC_DEC 32
-#define REC_CTR 64
-#define REC_128 128
-#define REC_256 256
-#define REC_192 512
-#define REC_SM4 1024
+#define REC_SM4 8
+#define REC_128 16
+#define REC_256 32
+#define REC_192 64
+#define REC_ENC 128
+#define REC_DEC 256
+#define REC_CTR 512
 template <typename SCF>
 void scrypt(SCF &&scf, FILE *ifp, FILE *ofp) {
 	uint8_t buf[BUFSIZE];
@@ -31,7 +31,7 @@ void bcrypt(BCF &&bcf, FILE *ifp, FILE *ofp) {
 template <typename T>
 void choose(int rec, FILE *ifp, FILE *ofp, uint8_t *iv, uint8_t *key) {
 	if ((rec & REC_CTR) != 0) {
-		scrypt(CTRCrypter<T>(iv, key), ifp, ofp);
+		scrypt(Crypter<CTRMode<T>>(iv, key), ifp, ofp);
 	} else if ((rec & REC_ENC) != 0) {
 		bcrypt(Encrypter<T>(key), ifp, ofp);
 	} else if ((rec & REC_DEC) != 0) {
@@ -41,11 +41,11 @@ void choose(int rec, FILE *ifp, FILE *ofp, uint8_t *iv, uint8_t *key) {
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
 	for (size_t i = 0; i < len * 2; ++i) {
 		if (hex[i] >= '0' && hex[i] <= '9') {
-			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= hex[i] - '0' << (i % 2 ? 0 : 4);
+			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= hex[i] - '0' << (i & 1 ? 0 : 4);
 		} else if (hex[i] >= 'a' && hex[i] <= 'f') {
-			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= hex[i] - 'a' + 10 << (i % 2 ? 0 : 4);
+			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= hex[i] - 'a' + 10 << (i & 1 ? 0 : 4);
 		} else if (hex[i] >= 'A' && hex[i] <= 'F') {
-			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= hex[i] - 'A' + 10 << (i % 2 ? 0 : 4);
+			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= hex[i] - 'A' + 10 << (i & 1 ? 0 : 4);
 		} else {
 			return false;
 		}

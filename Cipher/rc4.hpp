@@ -1,6 +1,6 @@
 #pragma once
 #include "stream.hpp"
-class RC4: public StreamCipher {
+class RC4: public StreamCipher<1> {
 	uint8_t x, y, m[256];
 public:
 	RC4(uint8_t const &len, uint8_t *const &key):
@@ -16,11 +16,11 @@ public:
 			m[j] = temp;
 		}
 	}
-	void crypt(uint8_t const *const &src, uint8_t *const &dst) {
+	void generate(uint8_t *const &dst) {
 		uint8_t a = m[x += 1];
 		uint8_t b = m[y += a];
 		m[x] = b;
 		m[y] = a;
-		*dst = *src ^ m[a + b & 0xff];
+		*dst = m[a + b & 0xff];
 	}
 };

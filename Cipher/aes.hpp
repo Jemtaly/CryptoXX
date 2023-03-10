@@ -168,14 +168,14 @@ public:
 		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
 		int round = 0;
 		add_round_key(dst, rk[round]);
-		sub_bytes_enc(dst);
-		shift_rows_enc(dst);
 		while (++round < rn) {
-			mix_columns_enc(dst);
-			add_round_key(dst, rk[round]);
 			sub_bytes_enc(dst);
 			shift_rows_enc(dst);
+			mix_columns_enc(dst);
+			add_round_key(dst, rk[round]);
 		}
+		sub_bytes_enc(dst);
+		shift_rows_enc(dst);
 		add_round_key(dst, rk[round]);
 	}
 	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {

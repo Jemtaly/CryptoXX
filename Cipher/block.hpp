@@ -11,20 +11,6 @@ public:
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 };
-template <size_t bls>
-class EncryptionMode {
-public:
-	using block_t = uint8_t[bls];
-	virtual ~EncryptionMode() = default;
-	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) = 0;
-};
-template <size_t bls>
-class DecryptionMode {
-public:
-	using block_t = uint8_t[bls];
-	virtual ~DecryptionMode() = default;
-	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) = 0;
-};
 class BlockCipherFlow {
 public:
 	virtual ~BlockCipherFlow() = default;
@@ -32,9 +18,9 @@ public:
 };
 template <class BC>
 class Encrypter: public BlockCipherFlow {
+	BC bc;
 	size_t use;
 	typename BC::block_t mem;
-	BC bc;
 public:
 	using bc_t = BC;
 	template <class... vals_t>
@@ -65,9 +51,9 @@ public:
 };
 template <class BC>
 class Decrypter: public BlockCipherFlow {
+	BC bc;
 	size_t use;
 	typename BC::block_t mem;
-	BC bc;
 public:
 	using bc_t = BC;
 	template <class... vals_t>
@@ -98,43 +84,18 @@ public:
 };
 #include "stream.hpp"
 template <class BC>
-class CTRCrypter: public StreamCipherFlow {
-	size_t use;
+class CTRMode: public StreamCipher<BLS> {
+	BC bc;
 	typename BC::block_t ctr;
-	BC const bc;
 public:
 	using bc_t = BC;
 	template <class... vals_t>
-	CTRCrypter(uint8_t const *const &iv, vals_t const &...vals):
-		bc(vals...), use(0) {
+	CTRMode(uint8_t const *const &iv, vals_t const &...vals):
+		bc(vals...) {
 		memcpy(ctr, iv, BLS);
 	}
-	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
-		typename BC::block_t res;
-		if (BLS + src <= end + use) {
-			bc.encrypt(ctr, res);
-			for (size_t i = use; i < BLS; i++) {
-				dst[i - use] = src[i - use] ^ res[i];
-			}
-			for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++) {}
-			src += BLS - use;
-			dst += BLS - use;
-			use -= use;
-			for (; BLS + src <= end; src += BLS, dst += BLS) {
-				bc.encrypt(ctr, res);
-				for (size_t i = 0; i < BLS; i++) {
-					dst[i] = src[i] ^ res[i];
-				}
-				for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++) {}
-			}
-		}
-		bc.encrypt(ctr, res);
-		for (size_t i = use; i + src < end + use; i++) {
-			dst[i - use] = src[i - use] ^ res[i];
-		}
-		use += end - src;
-		dst += end - src;
-		src += end - src;
-		return dst;
+	void generate(uint8_t *const &dst) {
+		bc.encrypt(ctr, dst);
+		for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++) {}
 	}
 };
