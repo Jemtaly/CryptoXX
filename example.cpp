@@ -41,11 +41,11 @@ void choose(int rec, FILE *ifp, FILE *ofp, uint8_t *iv, uint8_t *key) {
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
 	for (size_t i = 0; i < len * 2; ++i) {
 		if (hex[i] >= '0' && hex[i] <= '9') {
-			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= hex[i] - '0' << (i & 1 ? 0 : 4);
+			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= (hex[i] - '0') << (i & 1 ? 0 : 4);
 		} else if (hex[i] >= 'a' && hex[i] <= 'f') {
-			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= hex[i] - 'a' + 10 << (i & 1 ? 0 : 4);
+			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= (hex[i] - 'a' + 10) << (i & 1 ? 0 : 4);
 		} else if (hex[i] >= 'A' && hex[i] <= 'F') {
-			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= hex[i] - 'A' + 10 << (i & 1 ? 0 : 4);
+			(bin[i / 2] &= (i & 1 ? 0xf0 : 0x0f)) |= (hex[i] - 'A' + 10) << (i & 1 ? 0 : 4);
 		} else {
 			return false;
 		}
