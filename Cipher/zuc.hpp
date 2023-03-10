@@ -52,7 +52,7 @@ class ZUC: public StreamCipher<4> {
 		return (c & 0x7FFFFFFF) + (c >> 31);
 	}
 	template <bool init>
-	void update() {
+	void UpdateAll() {
 		// The bit-reorganization
 		X0 = LFSR[15] <<  1 & 0xffff0000 | LFSR[14] & 0xffff;
 		X1 = LFSR[11] << 16 | LFSR[ 9] >> 15;
@@ -87,12 +87,12 @@ public:
 			LFSR[i] = k[i] << 23 | EK[i] << 8 | iv[i];
 		}
 		for (int i = 0; i < 32; i++) {
-			update<1>();
+			UpdateAll<1>();
 		}
-		update<0>();
+		UpdateAll<0>();
 	}
 	void generate(uint8_t *const &dst) {
-		update<0>();
+		UpdateAll<0>();
 		*(uint32_t *)dst = W ^ X3;
 	}
 };

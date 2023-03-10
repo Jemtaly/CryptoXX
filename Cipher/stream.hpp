@@ -17,7 +17,7 @@ template <class SC>
 class Crypter: public StreamCipherFlow {
 	SC sc;
 	size_t use;
-	typename SC::block_t mem;
+	typename SC::block_t buf;
 public:
 	using sc_t = SC;
 	template <class... vals_t>
@@ -26,13 +26,13 @@ public:
 	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
 		while (SCS + src < end + use) {
 			while (use < SCS) {
-				*dst++ = *src++ ^ mem[use++];
+				*dst++ = *src++ ^ buf[use++];
 			}
-			sc.generate(mem);
+			sc.generate(buf);
 			use -= SCS;
 		}
 		while (src < end) {
-			*dst++ = *src++ ^ mem[use++];
+			*dst++ = *src++ ^ buf[use++];
 		}
 		return dst;
 	}

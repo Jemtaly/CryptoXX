@@ -108,28 +108,28 @@ class DES: public BlockCipher<8> {
 		uint64_t vout = 0;
 		for (int i = 0; i < dout; i += 8) {
 			vout = vout << 8 |
-				(vin >> A[i] & 1) << 7 |
+				(vin >> A[i    ] & 1) << 7 |
 				(vin >> A[i | 1] & 1) << 6 |
 				(vin >> A[i | 2] & 1) << 5 |
 				(vin >> A[i | 3] & 1) << 4 |
 				(vin >> A[i | 4] & 1) << 3 |
 				(vin >> A[i | 5] & 1) << 2 |
 				(vin >> A[i | 6] & 1) << 1 |
-				(vin >> A[i | 7] & 1);
+				(vin >> A[i | 7] & 1)     ;
 		}
 		return vout;
 	}
 	static uint64_t F(uint64_t const &r, uint64_t const &k) {
 		uint64_t x = permutation(r, E) ^ k;
 		uint64_t f =
-			S_boxes_0[x >> 42] << 28 |
+			S_boxes_0[x >> 42       ] << 28 |
 			S_boxes_1[x >> 36 & 0x3f] << 24 |
 			S_boxes_2[x >> 30 & 0x3f] << 20 |
 			S_boxes_3[x >> 24 & 0x3f] << 16 |
 			S_boxes_4[x >> 18 & 0x3f] << 12 |
-			S_boxes_5[x >> 12 & 0x3f] << 8 |
-			S_boxes_6[x >> 6 & 0x3f] << 4 |
-			S_boxes_7[x & 0x3f];
+			S_boxes_5[x >> 12 & 0x3f] <<  8 |
+			S_boxes_6[x >>  6 & 0x3f] <<  4 |
+			S_boxes_7[x       & 0x3f]      ;
 		return permutation(f, P);
 	}
 	uint64_t rk[16];

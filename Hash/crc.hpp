@@ -15,7 +15,7 @@ public:
 			ref[0] = itr;
 			for (int i = 0; i < 8; i++) {
 				uint8_t per = 0;
-				for (size_t j = sz8 - 1; j != -1; j--) {
+				for (size_t j = sz8 - 1; j < sz8; j--) {
 					uint8_t tmp = ref[j] & 1;
 					ref[j] = ref[j] >> 1 | per << 7;
 					per = tmp;
