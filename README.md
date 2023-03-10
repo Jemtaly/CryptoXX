@@ -9,14 +9,14 @@ A modern, high speed and elegant OOP cryptographic library implemented in C++. C
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
-clang++ example.cpp -std=c++2a -O3 -o main.exe
+clang++ example.cpp -std=c++2a -O3 -o example.exe
 ```
 
 ```sh
-./main.exe -S -k ABCDEFGHABCDEFGH -e -i in.txt -o out.txt
-# Encrypt in.txt in ECB mode with the SM4 algorithm and output to out.txt.
-./main.exe -S -k ABCDEFGHABCDEFGH -d -i out.txt
+./example.exe -6 -k 0123456789abcdeffedcba9876543210 -e -i in.txt -o out.txt
+# Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.txt. (-4 means AES-128, -6 means AES-192, -8 means AES-256, -S means SM4, KEY and IV are entered in hexadecimal format)
+./example.exe -6 -k 0123456789abcdeffedcba9876543210 -d -i out.txt
 # Decrypt out.txt and output to command line.
-./main.exe -6 -k XXXXXXXXXXXXXXXXXXXXXXXX -c IVIVIVIVIVIVIVIV -o out.txt
-# Read from command line and encrypt/decrypt in CTR mode with the AES-192 algorithm.
+./example.exe -S -k 0123456789abcdeffedcba9876543210 -c 0123456789abcdeffedcba9876543210 -o out.txt
+# Read from command line and encrypt/decrypt in CTR mode with the SM4 algorithm.
 ```
