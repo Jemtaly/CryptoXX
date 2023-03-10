@@ -96,6 +96,6 @@ public:
 	}
 	void generate(uint8_t *const &dst) {
 		bc.encrypt(ctr, dst);
-		for (size_t i = 0; i < BLS && ++ctr[i] == 0; i++) {}
+		for (size_t i = BLS - 1; i < BLS && ++ctr[i] == 0; i--) {}
 	}
 };
