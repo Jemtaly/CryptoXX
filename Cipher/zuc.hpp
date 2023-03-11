@@ -1,7 +1,7 @@
 #pragma once
 #include "stream.hpp"
-#define ROL31(x, n) ((x) >> (31 - (n)) | (x) << (n) & 0x7FFFFFFF)
-#define ROL32(x, n) ((x) >> (32 - (n)) | (x) << (n))
+#define ROL31(x, n) ((x) << (n) & 0x7FFFFFFF | (x) >> (31 - (n)))
+#define ROL32(x, n) ((x) << (n)              | (x) >> (32 - (n)))
 class ZUC: public StreamCipher<4> {
 	uint32_t LFSR[16];
 	uint32_t R1, R2, X0, X1, X2, X3, W;
@@ -54,10 +54,10 @@ class ZUC: public StreamCipher<4> {
 	template <bool init>
 	void UpdateAll() {
 		// The bit-reorganization
-		X0 = LFSR[15] <<  1 & 0xffff0000 | LFSR[14] & 0xffff;
-		X1 = LFSR[11] << 16 | LFSR[ 9] >> 15;
-		X2 = LFSR[ 7] << 16 | LFSR[ 5] >> 15;
-		X3 = LFSR[ 2] << 16 | LFSR[ 0] >> 15;
+		X0 = LFSR[15] <<  1 & 0xffff0000 | LFSR[14]       & 0x0000ffff;
+		X1 = LFSR[11] << 16              | LFSR[ 9] >> 15             ;
+		X2 = LFSR[ 7] << 16              | LFSR[ 5] >> 15             ;
+		X3 = LFSR[ 2] << 16              | LFSR[ 0] >> 15             ;
 		// The nonlinear function F
 		uint32_t W1, W2, C1, C2, L1, L2;
 		W = (X0 ^ R1) + R2;

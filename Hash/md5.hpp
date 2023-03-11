@@ -9,7 +9,7 @@
 #define GG1(i) (5 * (i) + 1 & 0xf)
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
-#define HHN(a, b, c, d, w, k, r, N, X, Y)                     \
+#define HHN(N, a, b, c, d, w, k, r, X, Y)                     \
 	for (int i = X; i < Y; i++) {                             \
 		uint32_t s = a + FF##N(b, c, d) + k[i] + w[GG##N(i)]; \
 		a = d;                                                \
@@ -52,10 +52,10 @@ class MD5: public Hash<64, 16> {
 		uint32_t c = h[2];
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)blk;
-		HHN(a, b, c, d, w, k, r, 0,  0, 16);
-		HHN(a, b, c, d, w, k, r, 1, 16, 32);
-		HHN(a, b, c, d, w, k, r, 2, 32, 48);
-		HHN(a, b, c, d, w, k, r, 3, 48, 64);
+		HHN(0, a, b, c, d, w, k, r,  0, 16);
+		HHN(1, a, b, c, d, w, k, r, 16, 32);
+		HHN(2, a, b, c, d, w, k, r, 32, 48);
+		HHN(3, a, b, c, d, w, k, r, 48, 64);
 		h[0] += a;
 		h[1] += b;
 		h[2] += c;

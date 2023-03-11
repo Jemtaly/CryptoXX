@@ -8,17 +8,17 @@
 #define FF1(x, y, z) ((x) & (y) | (x) & (z) | (y) & (z))
 #define GG0(x, y, z) ((x) ^ (y) ^ (z))
 #define GG1(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
-#define HHN(A, B, C, D, E, F, G, H, W, K, N, X, Y)                           \
+#define HHN(N, A, B, C, D, E, F, G, H, W, K, X, Y)                           \
 	for (int j = X; j < Y; j++) {                                            \
-		uint32_t A12 = ROL32(A, 12);                                         \
+		uint32_t A12 = ROL32(A  , 12);                                       \
 		uint32_t AEK = A12 + E + K[j];                                       \
-		uint32_t SS1 = ROL32(AEK, 7);                                        \
+		uint32_t SS1 = ROL32(AEK,  7);                                       \
 		uint32_t TT1 = FF##N(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]); \
 		uint32_t TT2 = GG##N(E, F, G) + H +  SS1        +  W[j]            ; \
 		D = C;                                                               \
 		C = ROL32(B,  9);                                                    \
 		B = A;                                                               \
-		A = TT1;                                                             \
+		A =    (TT1);                                                        \
 		H = G;                                                               \
 		G = ROL32(F, 19);                                                    \
 		F = E;                                                               \
@@ -46,14 +46,15 @@ class SM3: public Hash<64, 32> {
 		uint32_t H = rec[7];
 		uint32_t W[68], TMP;
 		for (int j =  0; j < 16; j++) {
-			W[j] = blk[j << 2] << 030 | blk[j << 2 | 1] << 020 | blk[j << 2 | 2] << 010 | blk[j << 2 | 3];
+			uint8_t const *ref = blk + 4 * j;
+			W[j] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
 		}
 		for (int j = 16; j < 68; j++) {
 			TMP = W[j - 16] ^ W[j - 9] ^ ROL32(W[j -  3], 15);
 			W[j] = PP1(TMP) ^ W[j - 6] ^ ROL32(W[j - 13],  7);
 		}
-		HHN(A, B, C, D, E, F, G, H, W, K, 0,  0, 16);
-		HHN(A, B, C, D, E, F, G, H, W, K, 1, 16, 64);
+		HHN(0, A, B, C, D, E, F, G, H, W, K,  0, 16);
+		HHN(1, A, B, C, D, E, F, G, H, W, K, 16, 64);
 		rec[0] ^= A;
 		rec[1] ^= B;
 		rec[2] ^= C;
@@ -96,10 +97,11 @@ public:
 		tmp[56] = u8ctmp[7];
 		compress(rectmp, tmp);
 		for (int j = 0; j < 8; j++) {
-			dst[j << 2    ] = rectmp[j] >> 24;
-			dst[j << 2 | 1] = rectmp[j] >> 16;
-			dst[j << 2 | 2] = rectmp[j] >>  8;
-			dst[j << 2 | 3] = rectmp[j]      ;
+			uint8_t *ref = dst + 4 * j;
+			ref[0] = rectmp[j] >> 24;
+			ref[1] = rectmp[j] >> 16;
+			ref[2] = rectmp[j] >>  8;
+			ref[3] = rectmp[j]      ;
 		}
 	}
 };
