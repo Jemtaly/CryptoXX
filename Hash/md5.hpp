@@ -46,12 +46,17 @@ class MD5: public Hash<64, 16> {
 		0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
 		0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
 	};
-	static void compress(uint32_t *const &h, uint8_t const *const &blk) {
+	uint64_t cntr = 0;
+	uint32_t h[4] = {
+		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
+	};
+public:
+	void push(uint8_t const *const &src) {
 		uint32_t a = h[0];
 		uint32_t b = h[1];
 		uint32_t c = h[2];
 		uint32_t d = h[3];
-		uint32_t const *w = (uint32_t *)blk;
+		uint32_t const *w = (uint32_t *)src;
 		HHN(0, a, b, c, d, w, k, r,  0, 16);
 		HHN(1, a, b, c, d, w, k, r, 16, 32);
 		HHN(2, a, b, c, d, w, k, r, 32, 48);
@@ -60,31 +65,24 @@ class MD5: public Hash<64, 16> {
 		h[1] += b;
 		h[2] += c;
 		h[3] += d;
-	}
-	uint64_t cntr = 0;
-	uint32_t h[4] = {
-		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
-	};
-public:
-	void block(uint8_t const *const &src) {
-		compress(h, src);
 		cntr += 512;
 	}
-	void final(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+		MD5 copy = *this;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);
 		memset(tmp + len, 0, 64 - len);
 		tmp[len] = 0x80;
-		((uint32_t *)dst)[0] = h[0];
-		((uint32_t *)dst)[1] = h[1];
-		((uint32_t *)dst)[2] = h[2];
-		((uint32_t *)dst)[3] = h[3];
 		if (len >= 56) {
-			compress((uint32_t *)dst, tmp);
+			copy.push(tmp);
 			memset(tmp, 0, 56);
 		}
 		((uint64_t *)tmp)[7] = cntr + 8 * len;
-		compress((uint32_t *)dst, tmp);
+		copy.push(tmp);
+		((uint32_t *)dst)[0] = copy.h[0];
+		((uint32_t *)dst)[1] = copy.h[1];
+		((uint32_t *)dst)[2] = copy.h[2];
+		((uint32_t *)dst)[3] = copy.h[3];
 	}
 };
 #undef FF0

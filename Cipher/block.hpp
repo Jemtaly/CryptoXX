@@ -1,5 +1,4 @@
 #pragma once
-#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #define BLS sizeof(typename BC::block_t)
@@ -14,7 +13,8 @@ public:
 class BlockCipherFlow {
 public:
 	virtual ~BlockCipherFlow() = default;
-	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &pad = true) = 0;
+	virtual uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) = 0;
+	virtual uint8_t *fflush(uint8_t *dst) = 0;
 };
 template <class BC>
 class Encrypter: public BlockCipherFlow {
@@ -26,7 +26,7 @@ public:
 	template <class... vals_t>
 	Encrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
-	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &pad) {
+	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) {
 		if (BLS + src <= end + use) {
 			memcpy(buf + use, src, BLS - use);
 			bc.encrypt(buf, dst);
@@ -40,12 +40,13 @@ public:
 		memcpy(buf + use, src, end - src);
 		use += end - src;
 		src += end - src;
-		if (pad) {
-			memset(buf + use, BLS - use, BLS - use);
-			bc.encrypt(buf, dst);
-			use -= use;
-			dst += BLS;
-		}
+		return dst;
+	}
+	uint8_t *fflush(uint8_t *dst) {
+		memset(buf + use, BLS - use, BLS - use);
+		bc.encrypt(buf, dst);
+		use -= use;
+		dst += BLS;
 		return dst;
 	}
 };
@@ -59,7 +60,7 @@ public:
 	template <class... vals_t>
 	Decrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
-	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst, bool const &pad) {
+	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) {
 		if (BLS + src < end + use) {
 			memcpy(buf + use, src, BLS - use);
 			bc.decrypt(buf, dst);
@@ -73,12 +74,15 @@ public:
 		memcpy(buf + use, src, end - src);
 		use += end - src;
 		src += end - src;
-		if (pad) {
-			assert(use == BLS);
-			bc.decrypt(buf, dst);
-			use -= use;
-			dst += BLS - dst[BLS - 1];
+		return dst;
+	}
+	uint8_t *fflush(uint8_t *dst) {
+		if (use != BLS) { // invalid padding
+			return nullptr;
 		}
+		bc.decrypt(buf, dst);
+		use -= use;
+		dst += BLS - dst[BLS - 1];
 		return dst;
 	}
 };

@@ -11,7 +11,7 @@ public:
 class StreamCipherFlow {
 public:
 	virtual ~StreamCipherFlow() = default;
-	virtual uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) = 0;
+	virtual uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) = 0;
 };
 template <class SC>
 class Crypter: public StreamCipherFlow {
@@ -23,7 +23,7 @@ public:
 	template <class... vals_t>
 	Crypter(vals_t const &...vals):
 		sc(vals...), use(SCS) {}
-	uint8_t *update(uint8_t const *src, uint8_t const *const &end, uint8_t *dst) {
+	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) {
 		while (SCS + src < end + use) {
 			while (use < SCS) {
 				*dst++ = *src++ ^ buf[use++];

@@ -35,7 +35,13 @@ class SM3: public Hash<64, 32> {
 		}
 		return K;
 	}(0x79cc4519, 0x7a879d8a);
-	static void compress(uint32_t *const &rec, uint8_t const *const &blk) {
+	uint64_t countr = 0;
+	uint32_t rec[8] = {
+		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
+		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
+	};
+public:
+	void push(uint8_t const *const &src) {
 		uint32_t A = rec[0];
 		uint32_t B = rec[1];
 		uint32_t C = rec[2];
@@ -46,7 +52,7 @@ class SM3: public Hash<64, 32> {
 		uint32_t H = rec[7];
 		uint32_t W[68], TMP;
 		for (int j =  0; j < 16; j++) {
-			uint8_t const *ref = blk + 4 * j;
+			uint8_t const *ref = src + 4 * j;
 			W[j] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
 		}
 		for (int j = 16; j < 68; j++) {
@@ -63,30 +69,20 @@ class SM3: public Hash<64, 32> {
 		rec[5] ^= F;
 		rec[6] ^= G;
 		rec[7] ^= H;
-	}
-	uint64_t countr = 0;
-	uint32_t rec[8] = {
-		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
-		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
-	};
-public:
-	void block(uint8_t const *const &src) {
-		compress(rec, src);
 		countr += 512;
 	}
-	void final(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+		SM3 copy = *this;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);
 		memset(tmp + len, 0, 64 - len);
 		tmp[len] = 0x80;
-		uint32_t rectmp[8];
-		memcpy(rectmp, rec, 32);
-		uint64_t ctrtmp = countr + 8 * len;
-		uint8_t *u8ctmp = (uint8_t *)&ctrtmp;
 		if (len >= 56) {
-			compress(rectmp, tmp);
+			copy.push(tmp);
 			memset(tmp, 0, 56);
 		}
+		uint64_t ctrtmp = countr + 8 * len;
+		uint8_t *u8ctmp = (uint8_t *)&ctrtmp;
 		tmp[63] = u8ctmp[0];
 		tmp[62] = u8ctmp[1];
 		tmp[61] = u8ctmp[2];
@@ -95,13 +91,13 @@ public:
 		tmp[58] = u8ctmp[5];
 		tmp[57] = u8ctmp[6];
 		tmp[56] = u8ctmp[7];
-		compress(rectmp, tmp);
+		copy.push(tmp);
 		for (int j = 0; j < 8; j++) {
 			uint8_t *ref = dst + 4 * j;
-			ref[0] = rectmp[j] >> 24;
-			ref[1] = rectmp[j] >> 16;
-			ref[2] = rectmp[j] >>  8;
-			ref[3] = rectmp[j]      ;
+			ref[0] = copy.rec[j] >> 24;
+			ref[1] = copy.rec[j] >> 16;
+			ref[2] = copy.rec[j] >>  8;
+			ref[3] = copy.rec[j]      ;
 		}
 	}
 };

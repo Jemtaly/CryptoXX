@@ -28,14 +28,14 @@ public:
 			}
 		}
 	}
-	void block(uint8_t const *const &src) {
+	void push(uint8_t const *const &src) {
 		uint8_t const (&ref)[sz8] = box[sta[0] ^ src[0]];
 		for (size_t i = 0; i < sz8 - 1; i++) {
 			sta[i] = ref[i] ^ sta[i + 1];
 		}
 		sta[sz8 - 1] = ref[sz8 - 1];
 	}
-	void final(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
 		for (size_t i = 0; i < sz8; i++) {
 			dst[i] = xrv[i] ^ sta[i];
 		}

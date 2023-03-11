@@ -17,16 +17,16 @@
 template <typename SCF>
 void scrypt(SCF &&scf, FILE *ifp, FILE *ofp) {
 	uint8_t buf[BUFSIZE];
-	while (fwrite(buf, 1, scf.update(buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp), buf) - (uint8_t *)buf, ofp) == BUFSIZE) {}
+	while (fwrite(buf, 1, scf.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
 template <typename BCF>
 void bcrypt(BCF &&bcf, FILE *ifp, FILE *ofp) {
 	uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
 	size_t read;
 	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
-		fwrite(dst, 1, bcf.update(src, (uint8_t *)src + BUFSIZE, dst, false) - (uint8_t *)dst, ofp);
+		fwrite(dst, 1, bcf.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
 	}
-	fwrite(dst, 1, bcf.update(src, (uint8_t *)src + read, dst, true) - (uint8_t *)dst, ofp);
+	fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
 }
 template <typename T>
 void choose(int rec, FILE *ifp, FILE *ofp, uint8_t *iv, uint8_t *key) {

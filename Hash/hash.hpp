@@ -9,8 +9,8 @@ public:
 	using blk_t = uint8_t[ibs];
 	using buf_t = uint8_t[obs];
 	virtual ~Hash() = default;
-	virtual void block(uint8_t const *const &src) = 0;
-	virtual void final(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const = 0;
+	virtual void push(uint8_t const *const &src) = 0;
+	virtual void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const = 0;
 };
 class HashFlow {
 public:
@@ -31,11 +31,11 @@ public:
 	void update(uint8_t const *src, uint8_t const *const &end) {
 		if (HIS + src <= use + end) {
 			memcpy(mem + use, src, HIS - use);
-			hash.block(mem);
+			hash.push(mem);
 			src += HIS - use;
 			use -= use;
 			for (; src + HIS <= end; src += HIS) {
-				hash.block(src);
+				hash.push(src);
 			}
 		}
 		memcpy(mem + use, src, end - src);
@@ -43,6 +43,6 @@ public:
 		src += end - src;
 	}
 	void digest(uint8_t *const &dst) const {
-		hash.final(mem, use, dst);
+		hash.test(mem, use, dst);
 	}
 };
