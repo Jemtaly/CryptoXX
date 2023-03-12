@@ -17,7 +17,7 @@
 		c = b;                                                \
 		b += ROL32(s, r[i]);                                  \
 	}
-class MD5: public Hash<64, 16> {
+class MD5Inner {
 	static constexpr uint32_t k[64] = {
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 		0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -46,12 +46,11 @@ class MD5: public Hash<64, 16> {
 		0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
 		0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
 	};
-	uint64_t cntr = 0;
+public:
 	uint32_t h[4] = {
 		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
 	};
-public:
-	void push(uint8_t const *const &src) {
+	void compress(uint8_t const *const &src) {
 		uint32_t a = h[0];
 		uint32_t b = h[1];
 		uint32_t c = h[2];
@@ -65,20 +64,28 @@ public:
 		h[1] += b;
 		h[2] += c;
 		h[3] += d;
-		cntr += 512;
+	}
+};
+class MD5: public Hash<64, 16> {
+	MD5Inner inner;
+	uint64_t counter = 0;
+public:
+	void push(uint8_t const *const &src) {
+		inner.compress(src);
+		counter += 512;
 	}
 	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
-		MD5 copy = *this;
+		MD5Inner copy = inner;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);
 		memset(tmp + len, 0, 64 - len);
 		tmp[len] = 0x80;
 		if (len >= 56) {
-			copy.push(tmp);
+			copy.compress(tmp);
 			memset(tmp, 0, 56);
 		}
-		((uint64_t *)tmp)[7] = cntr + 8 * len;
-		copy.push(tmp);
+		((uint64_t *)tmp)[7] = counter + 8 * len;
+		copy.compress(tmp);
 		((uint32_t *)dst)[0] = copy.h[0];
 		((uint32_t *)dst)[1] = copy.h[1];
 		((uint32_t *)dst)[2] = copy.h[2];

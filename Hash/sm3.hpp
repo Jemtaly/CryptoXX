@@ -24,7 +24,7 @@
 		F = E;                                                               \
 		E = PP0(TT2);                                                        \
 	}
-class SM3: public Hash<64, 32> {
+class SM3Inner {
 	static constexpr auto K = [](uint32_t const &TT00, uint32_t const &TT10) {
 		std::array<uint32_t, 64> K = {};
 		for (int j =  0; j < 16; j++) {
@@ -35,13 +35,12 @@ class SM3: public Hash<64, 32> {
 		}
 		return K;
 	}(0x79cc4519, 0x7a879d8a);
-	uint64_t countr = 0;
+public:
 	uint32_t rec[8] = {
 		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
 		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
 	};
-public:
-	void push(uint8_t const *const &src) {
+	void compress(uint8_t const *const &src) {
 		uint32_t A = rec[0];
 		uint32_t B = rec[1];
 		uint32_t C = rec[2];
@@ -69,29 +68,37 @@ public:
 		rec[5] ^= F;
 		rec[6] ^= G;
 		rec[7] ^= H;
-		countr += 512;
+	}
+};
+class SM3: public Hash<64, 32> {
+	SM3Inner inner;
+	uint64_t counter = 0;
+public:
+	void push(uint8_t const *const &src) {
+		inner.compress(src);
+		counter += 512;
 	}
 	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
-		SM3 copy = *this;
+		SM3Inner copy = inner;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);
 		memset(tmp + len, 0, 64 - len);
 		tmp[len] = 0x80;
 		if (len >= 56) {
-			copy.push(tmp);
+			copy.compress(tmp);
 			memset(tmp, 0, 56);
 		}
-		uint64_t ctrtmp = countr + 8 * len;
-		uint8_t *u8ctmp = (uint8_t *)&ctrtmp;
-		tmp[63] = u8ctmp[0];
-		tmp[62] = u8ctmp[1];
-		tmp[61] = u8ctmp[2];
-		tmp[60] = u8ctmp[3];
-		tmp[59] = u8ctmp[4];
-		tmp[58] = u8ctmp[5];
-		tmp[57] = u8ctmp[6];
-		tmp[56] = u8ctmp[7];
-		copy.push(tmp);
+		uint64_t total = counter + 8 * len;
+		uint8_t *totu8 = (uint8_t *)&total;
+		tmp[63] = totu8[0];
+		tmp[62] = totu8[1];
+		tmp[61] = totu8[2];
+		tmp[60] = totu8[3];
+		tmp[59] = totu8[4];
+		tmp[58] = totu8[5];
+		tmp[57] = totu8[6];
+		tmp[56] = totu8[7];
+		copy.compress(tmp);
 		for (int j = 0; j < 8; j++) {
 			uint8_t *ref = dst + 4 * j;
 			ref[0] = copy.rec[j] >> 24;
