@@ -39,7 +39,7 @@ class SM4: public BlockCipher<16> {
 		0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
 		0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
 	};
-	static constexpr auto S_boxes_init = [](int const &n) {
+	static constexpr auto S_boxes_init = [](int n) {
 		std::array<uint32_t, 256> S_boxes_n = {};
 		for (int i = 0; i < 256; i++) {
 			uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
@@ -47,7 +47,7 @@ class SM4: public BlockCipher<16> {
 		}
 		return S_boxes_n;
 	};
-	static constexpr auto K_boxes_init = [](int const &n) {
+	static constexpr auto K_boxes_init = [](int n) {
 		std::array<uint32_t, 256> K_boxes_n = {};
 		for (int i = 0; i < 256; i++) {
 			uint32_t b = S_box[i] ^ S_box[i] << 13 ^ S_box[i] << 23;
@@ -65,7 +65,7 @@ class SM4: public BlockCipher<16> {
 	static constexpr auto K_boxes_3 = K_boxes_init(3);
 	uint32_t rk[32];
 public:
-	SM4(uint8_t const *const &mk) {
+	SM4(uint8_t const *mk) {
 		uint32_t t[36] = {
 			(uint32_t)(mk[0x0] << 24 | mk[0x1] << 16 | mk[0x2] << 8 | mk[0x3]) ^ FK[0],
 			(uint32_t)(mk[0x4] << 24 | mk[0x5] << 16 | mk[0x6] << 8 | mk[0x7]) ^ FK[1],
@@ -77,7 +77,7 @@ public:
 			rk[i] = t[i + 4] = t[i] ^ K_boxes_0[a & 0xff] ^ K_boxes_1[a >> 8 & 0xff] ^ K_boxes_2[a >> 16 & 0xff] ^ K_boxes_3[a >> 24];
 		}
 	}
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void encrypt(uint8_t const *src, uint8_t *dst) const {
 		uint32_t t[36] = {
 			(uint32_t)(src[0x0] << 24 | src[0x1] << 16 | src[0x2] << 8 | src[0x3]),
 			(uint32_t)(src[0x4] << 24 | src[0x5] << 16 | src[0x6] << 8 | src[0x7]),
@@ -93,7 +93,7 @@ public:
 		I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
 		I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
 	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void decrypt(uint8_t const *src, uint8_t *dst) const {
 		uint32_t t[36] = {
 			(uint32_t)(src[0x0] << 24 | src[0x1] << 16 | src[0x2] << 8 | src[0x3]),
 			(uint32_t)(src[0x4] << 24 | src[0x5] << 16 | src[0x6] << 8 | src[0x7]),

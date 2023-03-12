@@ -7,13 +7,13 @@ class BlockCipher {
 public:
 	using blk_t = uint8_t[blk_s];
 	virtual ~BlockCipher() = default;
-	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
-	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
+	virtual void encrypt(uint8_t const *src, uint8_t *dst) const = 0;
+	virtual void decrypt(uint8_t const *src, uint8_t *dst) const = 0;
 };
 class BlockCipherFlow {
 public:
 	virtual ~BlockCipherFlow() = default;
-	virtual uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) = 0;
+	virtual uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) = 0;
 	virtual uint8_t *fflush(uint8_t *dst) = 0;
 };
 template <class BC>
@@ -25,7 +25,7 @@ public:
 	template <class... vals_t>
 	Encrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
-	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) {
+	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
 		if (BLS + src <= end + use) {
 			memcpy(buf + use, src, BLS - use);
 			bc.encrypt(buf, dst);
@@ -58,7 +58,7 @@ public:
 	template <class... vals_t>
 	Decrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
-	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *const &end) {
+	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
 		if (BLS + src < end + use) {
 			memcpy(buf + use, src, BLS - use);
 			bc.decrypt(buf, dst);
@@ -91,11 +91,11 @@ class CTRMode: public StreamCipher<BLS> {
 	typename BC::blk_t ctr;
 public:
 	template <class... vals_t>
-	CTRMode(uint8_t const *const &iv, vals_t const &...vals):
+	CTRMode(uint8_t const *civ, vals_t const &...vals):
 		bc(vals...) {
-		memcpy(ctr, iv, BLS);
+		memcpy(ctr, civ, BLS);
 	}
-	void generate(uint8_t *const &dst) {
+	void generate(uint8_t *dst) {
 		bc.encrypt(ctr, dst);
 		for (size_t i = BLS - 1; i < BLS && ++ctr[i] == 0; i--) {}
 	}

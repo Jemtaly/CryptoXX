@@ -104,7 +104,7 @@ class DES: public BlockCipher<8> {
 		1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
 	};
 	template <int dout>
-	static uint64_t permutation(uint64_t const &vin, uint8_t const (&A)[dout]) {
+	static uint64_t permutation(uint64_t vin, uint8_t const (&A)[dout]) {
 		uint64_t vout = 0;
 		for (int i = 0; i < dout; i += 8) {
 			vout = vout << 8 |
@@ -119,7 +119,7 @@ class DES: public BlockCipher<8> {
 		}
 		return vout;
 	}
-	static uint64_t F(uint64_t const &r, uint64_t const &k) {
+	static uint64_t F(uint64_t r, uint64_t k) {
 		uint64_t x = permutation(r, E) ^ k;
 		uint64_t f =
 			S_boxes_0[x >> 42       ] << 28 |
@@ -134,7 +134,7 @@ class DES: public BlockCipher<8> {
 	}
 	uint64_t rk[16];
 public:
-	DES(uint8_t const *const &mk) {
+	DES(uint8_t const *mk) {
 		uint64_t t = permutation(*(uint64_t *)mk, PC_1);
 		uint64_t l = t >> 28, r = t & 0xfffffff;
 		for (int i = 0; i < 16; i++) {
@@ -143,7 +143,7 @@ public:
 			rk[i] = permutation(l << 28 | r, PC_2);
 		}
 	}
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void encrypt(uint8_t const *src, uint8_t *dst) const {
 		uint64_t t = permutation(*(uint64_t *)src, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
 		for (int i = 0; i < 16; i++) {
@@ -153,7 +153,7 @@ public:
 		}
 		*(uint64_t *)dst = permutation(r << 32 | l, FP);
 	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void decrypt(uint8_t const *src, uint8_t *dst) const {
 		uint64_t t = permutation(*(uint64_t *)src, IP);
 		uint64_t l = t >> 32, r = t & 0xffffffff;
 		for (int i = 0; i < 16; i++) {

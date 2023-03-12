@@ -82,7 +82,7 @@ class ZUC: public StreamCipher<4> {
 		LFSR[15] = init ? AddM(f, W >> 1) : f;
 	}
 public:
-	ZUC(uint8_t *k, uint8_t *iv): R1(0), R2(0) {
+	ZUC(uint8_t const *k, uint8_t const *iv): R1(0), R2(0) {
 		for (int i = 0; i < 16; ++i) {
 			LFSR[i] = k[i] << 23 | EK[i] << 8 | iv[i];
 		}
@@ -91,7 +91,7 @@ public:
 		}
 		UpdateAll<0>();
 	}
-	void generate(uint8_t *const &dst) {
+	void generate(uint8_t *dst) {
 		UpdateAll<0>();
 		*(uint32_t *)dst = W ^ X3;
 	}

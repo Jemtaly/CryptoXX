@@ -6,12 +6,12 @@ class CRC: public Hash<1, sz8> {
 	uint8_t sta[sz8];
 	uint8_t xrv[sz8];
 public:
-	CRC(uint8_t const *const &exp, uint8_t const *const &iv, uint8_t const *const &xv):
+	CRC(uint8_t const *exp, uint8_t const *iv, uint8_t const *xv):
 		box{} {
 		memcpy(xrv, xv, sz8);
 		memcpy(sta, iv, sz8);
 		for (int itr = 0; itr < 256; itr++) {
-			uint8_t (&ref)[sz8] = box[itr];
+			uint8_t *ref = &box[itr];
 			ref[0] = itr;
 			for (int i = 0; i < 8; i++) {
 				uint8_t per = 0;
@@ -28,14 +28,15 @@ public:
 			}
 		}
 	}
-	void push(uint8_t const *const &src) {
-		uint8_t const (&ref)[sz8] = box[sta[0] ^ src[0]];
+	void push(uint8_t const *src) {
+		uint8_t const *ref = &box[sta[0] ^ src[0]];
+		uint8_t const *st1 = &sta[1];
 		for (size_t i = 0; i < sz8 - 1; i++) {
-			sta[i] = ref[i] ^ sta[i + 1];
+			sta[i] = ref[i] ^ st1[i];
 		}
 		sta[sz8 - 1] = ref[sz8 - 1];
 	}
-	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+	void test(uint8_t const *src, size_t len, uint8_t *dst) const {
 		for (size_t i = 0; i < sz8; i++) {
 			dst[i] = xrv[i] ^ sta[i];
 		}

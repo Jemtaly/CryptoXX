@@ -25,7 +25,7 @@
 		E = PP0(TT2);                                                        \
 	}
 class SM3Inner {
-	static constexpr auto K = [](uint32_t const &TT00, uint32_t const &TT10) {
+	static constexpr auto K = [](uint32_t TT00, uint32_t TT10) {
 		std::array<uint32_t, 64> K = {};
 		for (int j =  0; j < 16; j++) {
 			K[j] = TT00 << j % 32 | TT00 >> (32 - j) % 32;
@@ -40,7 +40,7 @@ public:
 		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
 		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
 	};
-	void compress(uint8_t const *const &src) {
+	void compress(uint8_t const *src) {
 		uint32_t A = rec[0];
 		uint32_t B = rec[1];
 		uint32_t C = rec[2];
@@ -51,7 +51,7 @@ public:
 		uint32_t H = rec[7];
 		uint32_t W[68], TMP;
 		for (int j =  0; j < 16; j++) {
-			uint8_t const *ref = src + 4 * j;
+			uint8_t const *ref = &src[j << 2];
 			W[j] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
 		}
 		for (int j = 16; j < 68; j++) {
@@ -74,37 +74,37 @@ class SM3: public Hash<64, 32> {
 	SM3Inner inner;
 	uint64_t counter = 0;
 public:
-	void push(uint8_t const *const &src) {
+	void push(uint8_t const *src) {
 		inner.compress(src);
 		counter += 512;
 	}
-	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
-		SM3Inner copy = inner;
+	void test(uint8_t const *src, size_t slen, uint8_t *dst) const {
+		SM3Inner icopy = inner;
 		uint8_t tmp[64];
-		memcpy(tmp, src, len);
-		memset(tmp + len, 0, 64 - len);
-		tmp[len] = 0x80;
-		if (len >= 56) {
-			copy.compress(tmp);
+		memcpy(tmp, src, slen);
+		memset(tmp + slen, 0, 64 - slen);
+		tmp[slen] = 0x80;
+		if (slen >= 56) {
+			icopy.compress(tmp);
 			memset(tmp, 0, 56);
 		}
-		uint64_t total = counter + 8 * len;
-		uint8_t *totu8 = (uint8_t *)&total;
-		tmp[63] = totu8[0];
-		tmp[62] = totu8[1];
-		tmp[61] = totu8[2];
-		tmp[60] = totu8[3];
-		tmp[59] = totu8[4];
-		tmp[58] = totu8[5];
-		tmp[57] = totu8[6];
-		tmp[56] = totu8[7];
-		copy.compress(tmp);
+		uint64_t totaln = counter + 8 * slen;
+		uint8_t *totals = (uint8_t *)&totaln;
+		tmp[63] = totals[0];
+		tmp[62] = totals[1];
+		tmp[61] = totals[2];
+		tmp[60] = totals[3];
+		tmp[59] = totals[4];
+		tmp[58] = totals[5];
+		tmp[57] = totals[6];
+		tmp[56] = totals[7];
+		icopy.compress(tmp);
 		for (int j = 0; j < 8; j++) {
-			uint8_t *ref = dst + 4 * j;
-			ref[0] = copy.rec[j] >> 24;
-			ref[1] = copy.rec[j] >> 16;
-			ref[2] = copy.rec[j] >>  8;
-			ref[3] = copy.rec[j]      ;
+			uint8_t *ref = &dst[j << 2];
+			ref[0] = icopy.rec[j] >> 24;
+			ref[1] = icopy.rec[j] >> 16;
+			ref[2] = icopy.rec[j] >>  8;
+			ref[3] = icopy.rec[j]      ;
 		}
 	}
 };

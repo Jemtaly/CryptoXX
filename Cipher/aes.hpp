@@ -42,7 +42,7 @@ protected:
 	static constexpr uint8_t Rcon[16] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 	};
-	static constexpr auto M_boxes_init = [](uint32_t const &n) {
+	static constexpr auto M_boxes_init = [](uint32_t n) {
 		std::array<uint32_t, 256> coef_mult_n = {};
 		for (int j = 0; j < 256; j++) {
 			for (int i = 0; i < 4; i++) {
@@ -65,19 +65,19 @@ protected:
 	static constexpr auto D_boxes_1 = M_boxes_init(0x0d090e0b);
 	static constexpr auto D_boxes_2 = M_boxes_init(0x090e0b0d);
 	static constexpr auto D_boxes_3 = M_boxes_init(0x0e0b0d09);
-	static void mix_columns_enc(uint8_t *const &state) {
+	static void mix_columns_enc(uint8_t *state) {
 		((uint32_t *)state)[0] = E_boxes_0[state[0x0]] ^ E_boxes_1[state[0x1]] ^ E_boxes_2[state[0x2]] ^ E_boxes_3[state[0x3]];
 		((uint32_t *)state)[1] = E_boxes_0[state[0x4]] ^ E_boxes_1[state[0x5]] ^ E_boxes_2[state[0x6]] ^ E_boxes_3[state[0x7]];
 		((uint32_t *)state)[2] = E_boxes_0[state[0x8]] ^ E_boxes_1[state[0x9]] ^ E_boxes_2[state[0xa]] ^ E_boxes_3[state[0xb]];
 		((uint32_t *)state)[3] = E_boxes_0[state[0xc]] ^ E_boxes_1[state[0xd]] ^ E_boxes_2[state[0xe]] ^ E_boxes_3[state[0xf]];
 	}
-	static void mix_columns_dec(uint8_t *const &state) {
+	static void mix_columns_dec(uint8_t *state) {
 		((uint32_t *)state)[0] = D_boxes_0[state[0x0]] ^ D_boxes_1[state[0x1]] ^ D_boxes_2[state[0x2]] ^ D_boxes_3[state[0x3]];
 		((uint32_t *)state)[1] = D_boxes_0[state[0x4]] ^ D_boxes_1[state[0x5]] ^ D_boxes_2[state[0x6]] ^ D_boxes_3[state[0x7]];
 		((uint32_t *)state)[2] = D_boxes_0[state[0x8]] ^ D_boxes_1[state[0x9]] ^ D_boxes_2[state[0xa]] ^ D_boxes_3[state[0xb]];
 		((uint32_t *)state)[3] = D_boxes_0[state[0xc]] ^ D_boxes_1[state[0xd]] ^ D_boxes_2[state[0xe]] ^ D_boxes_3[state[0xf]];
 	}
-	static void shift_rows_enc(uint8_t *const &state) {
+	static void shift_rows_enc(uint8_t *state) {
 		uint8_t temp_value;
 		temp_value = state[0x1];
 		state[0x1] = state[0x5];
@@ -96,7 +96,7 @@ protected:
 		state[0x7] = state[0x3];
 		state[0x3] = temp_value;
 	}
-	static void shift_rows_dec(uint8_t *const &state) {
+	static void shift_rows_dec(uint8_t *state) {
 		uint8_t temp_value;
 		temp_value = state[0xd];
 		state[0xd] = state[0x9];
@@ -115,7 +115,7 @@ protected:
 		state[0xb] = state[0xf];
 		state[0xf] = temp_value;
 	}
-	static void sub_bytes_enc(uint8_t *const &state) {
+	static void sub_bytes_enc(uint8_t *state) {
 		state[0x0] = S_box[state[0x0]];
 		state[0x1] = S_box[state[0x1]];
 		state[0x2] = S_box[state[0x2]];
@@ -133,7 +133,7 @@ protected:
 		state[0xe] = S_box[state[0xe]];
 		state[0xf] = S_box[state[0xf]];
 	}
-	static void sub_bytes_dec(uint8_t *const &state) {
+	static void sub_bytes_dec(uint8_t *state) {
 		state[0x0] = R_box[state[0x0]];
 		state[0x1] = R_box[state[0x1]];
 		state[0x2] = R_box[state[0x2]];
@@ -151,7 +151,7 @@ protected:
 		state[0xe] = R_box[state[0xe]];
 		state[0xf] = R_box[state[0xf]];
 	}
-	static void add_round_key(uint8_t *const &state, uint32_t const (&k)[4]) {
+	static void add_round_key(uint8_t *state, uint32_t const *k) {
 		((uint32_t *)state)[0] ^= k[0];
 		((uint32_t *)state)[1] ^= k[1];
 		((uint32_t *)state)[2] ^= k[2];
@@ -164,7 +164,7 @@ protected:
 	uint32_t rk[Rn + 1][4];
 	AESTmpl() = default;
 public:
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void encrypt(uint8_t const *src, uint8_t *dst) const {
 		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
 		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
 		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
@@ -181,7 +181,7 @@ public:
 		shift_rows_enc(dst);
 		add_round_key(dst, rk[round]);
 	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void decrypt(uint8_t const *src, uint8_t *dst) const {
 		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
 		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
 		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
@@ -201,7 +201,7 @@ public:
 };
 class AES128: public AESTmpl<10> {
 public:
-	AES128(uint8_t const *const &mk) {
+	AES128(uint8_t const *mk) {
 		memcpy(rk, mk, 16);
 		for (int i = 4; i < 44; ++i) {
 			uint32_t a = (*rk)[i - 1];
@@ -214,7 +214,7 @@ public:
 };
 class AES192: public AESTmpl<12> {
 public:
-	AES192(uint8_t const *const &mk) {
+	AES192(uint8_t const *mk) {
 		memcpy(rk, mk, 24);
 		for (int i = 6; i < 52; ++i) {
 			uint32_t a = (*rk)[i - 1];
@@ -227,7 +227,7 @@ public:
 };
 class AES256: public AESTmpl<14> {
 public:
-	AES256(uint8_t const *const &mk) {
+	AES256(uint8_t const *mk) {
 		memcpy(rk, mk, 32);
 		for (int i = 8; i < 60; ++i) {
 			uint32_t a = (*rk)[i - 1];

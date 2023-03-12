@@ -50,7 +50,7 @@ public:
 	uint32_t h[4] = {
 		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
 	};
-	void compress(uint8_t const *const &src) {
+	void compress(uint8_t const *src) {
 		uint32_t a = h[0];
 		uint32_t b = h[1];
 		uint32_t c = h[2];
@@ -70,11 +70,11 @@ class MD5: public Hash<64, 16> {
 	MD5Inner inner;
 	uint64_t counter = 0;
 public:
-	void push(uint8_t const *const &src) {
+	void push(uint8_t const *src) {
 		inner.compress(src);
 		counter += 512;
 	}
-	void test(uint8_t const *const &src, size_t const &len, uint8_t *const &dst) const {
+	void test(uint8_t const *src, size_t len, uint8_t *dst) const {
 		MD5Inner copy = inner;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);

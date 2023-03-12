@@ -14,13 +14,11 @@
 #define REC_ENC 128
 #define REC_DEC 256
 #define REC_CTR 512
-template <typename SCF>
-void scrypt(SCF &&scf, FILE *ifp, FILE *ofp) {
+void scrypt(StreamCipherFlow &&scf, FILE *ifp, FILE *ofp) {
 	uint8_t buf[BUFSIZE];
 	while (fwrite(buf, 1, scf.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
-template <typename BCF>
-void bcrypt(BCF &&bcf, FILE *ifp, FILE *ofp) {
+void bcrypt(BlockCipherFlow &&bcf, FILE *ifp, FILE *ofp) {
 	uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
 	size_t read;
 	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {

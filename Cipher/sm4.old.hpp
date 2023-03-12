@@ -39,9 +39,10 @@ class SM4: public BlockCipher<16> {
 		0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
 		0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
 	};
-	static uint32_t tau(uint32_t const &a) {
+	static uint32_t tau(uint32_t a) {
 		uint32_t b;
-		uint8_t *A = (uint8_t *)&a, *B = (uint8_t *)&b;
+		uint8_t *A = (uint8_t *)&a;
+		uint8_t *B = (uint8_t *)&b;
 		B[0] = S_box[A[0]];
 		B[1] = S_box[A[1]];
 		B[2] = S_box[A[2]];
@@ -50,7 +51,7 @@ class SM4: public BlockCipher<16> {
 	}
 	uint32_t rk[32];
 public:
-	SM4(uint8_t const *const &mk) {
+	SM4(uint8_t const *mk) {
 		uint32_t t[36] = {
 			(uint32_t)(mk[0x0] << 24 | mk[0x1] << 16 | mk[0x2] << 8 | mk[0x3]) ^ FK[0],
 			(uint32_t)(mk[0x4] << 24 | mk[0x5] << 16 | mk[0x6] << 8 | mk[0x7]) ^ FK[1],
@@ -62,7 +63,7 @@ public:
 			rk[i] = t[i + 4] = t[i] ^ b ^ ROL32(b, 13) ^ ROL32(b, 23);
 		}
 	}
-	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void encrypt(uint8_t const *src, uint8_t *dst) const {
 		uint32_t t[36] = {
 			(uint32_t)(src[0x0] << 24 | src[0x1] << 16 | src[0x2] << 8 | src[0x3]),
 			(uint32_t)(src[0x4] << 24 | src[0x5] << 16 | src[0x6] << 8 | src[0x7]),
@@ -78,7 +79,7 @@ public:
 		I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
 		I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
 	}
-	void decrypt(uint8_t const *const &src, uint8_t *const &dst) const {
+	void decrypt(uint8_t const *src, uint8_t *dst) const {
 		uint32_t t[36] = {
 			(uint32_t)(src[0x0] << 24 | src[0x1] << 16 | src[0x2] << 8 | src[0x3]),
 			(uint32_t)(src[0x4] << 24 | src[0x5] << 16 | src[0x6] << 8 | src[0x7]),
