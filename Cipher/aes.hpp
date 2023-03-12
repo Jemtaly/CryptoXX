@@ -1,21 +1,6 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-constexpr auto M_boxes_init(uint32_t const &n) {
-	std::array<uint32_t, 256> coef_mult_n = {};
-	for (int j = 0; j < 256; j++) {
-		for (int i = 0; i < 4; i++) {
-			uint8_t a = n >> 8 * i, b = j, p = 0;
-			for (uint8_t k = 0; k < 8; k++) {
-				p = p ^ (b & 1) * a;
-				a = a << 1 ^ (a >> 7) * 0x1b;
-				b = b >> 1;
-			}
-			coef_mult_n[j] |= p << 8 * i;
-		}
-	}
-	return coef_mult_n;
-}
 template <int rn>
 class AES: public BlockCipher<16> {
 protected:
@@ -57,6 +42,21 @@ protected:
 	};
 	static constexpr uint8_t Rcon[16] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
+	};
+	constexpr auto M_boxes_init = [](uint32_t const &n) {
+		std::array<uint32_t, 256> coef_mult_n = {};
+		for (int j = 0; j < 256; j++) {
+			for (int i = 0; i < 4; i++) {
+				uint8_t a = n >> 8 * i, b = j, p = 0;
+				for (uint8_t k = 0; k < 8; k++) {
+					p = p ^ (b & 1) * a;
+					a = a << 1 ^ (a >> 7) * 0x1b;
+					b = b >> 1;
+				}
+				coef_mult_n[j] |= p << 8 * i;
+			}
+		}
+		return coef_mult_n;
 	};
 	static constexpr auto E_boxes_0 = M_boxes_init(0x03010102);
 	static constexpr auto E_boxes_1 = M_boxes_init(0x01010203);

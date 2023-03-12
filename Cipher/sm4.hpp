@@ -7,22 +7,6 @@
 	(a)[2] = (i) >>  8 & 0xff; \
 	(a)[3] = (i)       & 0xff; \
 }
-constexpr auto S_boxes_init(uint8_t const (&S_box)[256], int const &n) {
-	std::array<uint32_t, 256> S_boxes_n = {};
-	for (int i = 0; i < 256; i++) {
-		uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
-		S_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
-	}
-	return S_boxes_n;
-}
-constexpr auto K_boxes_init(uint8_t const (&S_box)[256], int const &n) {
-	std::array<uint32_t, 256> K_boxes_n = {};
-	for (int i = 0; i < 256; i++) {
-		uint32_t b = S_box[i] ^ S_box[i] << 13 ^ S_box[i] << 23;
-		K_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
-	}
-	return K_boxes_n;
-}
 class SM4: public BlockCipher<16> {
 	static constexpr uint32_t FK[4] = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
@@ -55,14 +39,30 @@ class SM4: public BlockCipher<16> {
 		0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
 		0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
 	};
-	static constexpr auto S_boxes_0 = S_boxes_init(S_box, 0);
-	static constexpr auto S_boxes_1 = S_boxes_init(S_box, 1);
-	static constexpr auto S_boxes_2 = S_boxes_init(S_box, 2);
-	static constexpr auto S_boxes_3 = S_boxes_init(S_box, 3);
-	static constexpr auto K_boxes_0 = K_boxes_init(S_box, 0);
-	static constexpr auto K_boxes_1 = K_boxes_init(S_box, 1);
-	static constexpr auto K_boxes_2 = K_boxes_init(S_box, 2);
-	static constexpr auto K_boxes_3 = K_boxes_init(S_box, 3);
+	static constexpr auto S_boxes_init = [](int const &n) {
+		std::array<uint32_t, 256> S_boxes_n = {};
+		for (int i = 0; i < 256; i++) {
+			uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
+			S_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
+		}
+		return S_boxes_n;
+	};
+	static constexpr auto K_boxes_init = [](int const &n) {
+		std::array<uint32_t, 256> K_boxes_n = {};
+		for (int i = 0; i < 256; i++) {
+			uint32_t b = S_box[i] ^ S_box[i] << 13 ^ S_box[i] << 23;
+			K_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
+		}
+		return K_boxes_n;
+	};
+	static constexpr auto S_boxes_0 = S_boxes_init(0);
+	static constexpr auto S_boxes_1 = S_boxes_init(1);
+	static constexpr auto S_boxes_2 = S_boxes_init(2);
+	static constexpr auto S_boxes_3 = S_boxes_init(3);
+	static constexpr auto K_boxes_0 = K_boxes_init(0);
+	static constexpr auto K_boxes_1 = K_boxes_init(1);
+	static constexpr auto K_boxes_2 = K_boxes_init(2);
+	static constexpr auto K_boxes_3 = K_boxes_init(3);
 	uint32_t rk[32];
 public:
 	SM4(uint8_t const *const &mk) {
