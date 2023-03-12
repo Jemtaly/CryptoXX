@@ -21,6 +21,6 @@ public:
 		uint8_t b = m[y += a];
 		m[x] = b;
 		m[y] = a;
-		*dst = m[a + b & 0xff];
+		*dst = m[a + b & 255];
 	}
 };

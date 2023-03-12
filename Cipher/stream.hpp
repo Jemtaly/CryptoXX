@@ -1,10 +1,10 @@
 #pragma once
 #include <stdint.h>
-#define SCS sizeof(typename SC::block_t)
-template <size_t bls>
+#define SCS sizeof(typename SC::sec_t)
+template <size_t sec_s>
 class StreamCipher {
 public:
-	using block_t = uint8_t[bls];
+	using sec_t = uint8_t[sec_s];
 	virtual ~StreamCipher() = default;
 	virtual void generate(uint8_t *const &dst) = 0;
 };
@@ -17,9 +17,8 @@ template <class SC>
 class Crypter: public StreamCipherFlow {
 	SC sc;
 	size_t use;
-	typename SC::block_t buf;
+	typename SC::sec_t buf;
 public:
-	using sc_t = SC;
 	template <class... vals_t>
 	Crypter(vals_t const &...vals):
 		sc(vals...), use(SCS) {}
@@ -37,3 +36,4 @@ public:
 		return dst;
 	}
 };
+#undef SCS

@@ -1,11 +1,11 @@
 #pragma once
 #include <stdint.h>
 #include <string.h>
-#define BLS sizeof(typename BC::block_t)
-template <size_t bls>
+#define BLS sizeof(typename BC::blk_t)
+template <size_t blk_s>
 class BlockCipher {
 public:
-	using block_t = uint8_t[bls];
+	using blk_t = uint8_t[blk_s];
 	virtual ~BlockCipher() = default;
 	virtual void encrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
 	virtual void decrypt(uint8_t const *const &src, uint8_t *const &dst) const = 0;
@@ -20,9 +20,8 @@ template <class BC>
 class Encrypter: public BlockCipherFlow {
 	BC bc;
 	size_t use;
-	typename BC::block_t buf;
+	typename BC::blk_t buf;
 public:
-	using bc_t = BC;
 	template <class... vals_t>
 	Encrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
@@ -54,9 +53,8 @@ template <class BC>
 class Decrypter: public BlockCipherFlow {
 	BC bc;
 	size_t use;
-	typename BC::block_t buf;
+	typename BC::blk_t buf;
 public:
-	using bc_t = BC;
 	template <class... vals_t>
 	Decrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
@@ -90,9 +88,8 @@ public:
 template <class BC>
 class CTRMode: public StreamCipher<BLS> {
 	BC bc;
-	typename BC::block_t ctr;
+	typename BC::blk_t ctr;
 public:
-	using bc_t = BC;
 	template <class... vals_t>
 	CTRMode(uint8_t const *const &iv, vals_t const &...vals):
 		bc(vals...) {
@@ -103,3 +100,4 @@ public:
 		for (size_t i = BLS - 1; i < BLS && ++ctr[i] == 0; i--) {}
 	}
 };
+#undef BLS
