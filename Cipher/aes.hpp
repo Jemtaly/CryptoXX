@@ -1,8 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-template <int rn>
-class AES: public BlockCipher<16> {
+class AESVirt: public BlockCipher<16> {
 protected:
 	static constexpr uint8_t S_box[256] = {
 		0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -43,7 +42,7 @@ protected:
 	static constexpr uint8_t Rcon[16] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 	};
-	constexpr auto M_boxes_init = [](uint32_t const &n) {
+	static constexpr auto M_boxes_init = [](uint32_t const &n) {
 		std::array<uint32_t, 256> coef_mult_n = {};
 		for (int j = 0; j < 256; j++) {
 			for (int i = 0; i < 4; i++) {
@@ -158,8 +157,12 @@ protected:
 		((uint32_t *)state)[2] ^= k[2];
 		((uint32_t *)state)[3] ^= k[3];
 	}
-	uint32_t rk[rn + 1][4];
-	AES() = default;
+};
+template <int Rn>
+class AESTmpl: public AESVirt {
+protected:
+	uint32_t rk[Rn + 1][4];
+	AESTmpl() = default;
 public:
 	void encrypt(uint8_t const *const &src, uint8_t *const &dst) const {
 		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
@@ -168,7 +171,7 @@ public:
 		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
 		int round = 0;
 		add_round_key(dst, rk[round]);
-		while (++round < rn) {
+		while (++round < Rn) {
 			sub_bytes_enc(dst);
 			shift_rows_enc(dst);
 			mix_columns_enc(dst);
@@ -183,7 +186,7 @@ public:
 		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
 		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
 		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = rn;
+		int round = Rn;
 		add_round_key(dst, rk[round]);
 		while (--round > 0) {
 			shift_rows_dec(dst);
@@ -196,7 +199,7 @@ public:
 		add_round_key(dst, rk[round]);
 	}
 };
-class AES128: public AES<10> {
+class AES128: public AESTmpl<10> {
 public:
 	AES128(uint8_t const *const &mk) {
 		memcpy(rk, mk, 16);
@@ -209,7 +212,7 @@ public:
 		}
 	}
 };
-class AES192: public AES<12> {
+class AES192: public AESTmpl<12> {
 public:
 	AES192(uint8_t const *const &mk) {
 		memcpy(rk, mk, 24);
@@ -222,7 +225,7 @@ public:
 		}
 	}
 };
-class AES256: public AES<14> {
+class AES256: public AESTmpl<14> {
 public:
 	AES256(uint8_t const *const &mk) {
 		memcpy(rk, mk, 32);
