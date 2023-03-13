@@ -12,6 +12,7 @@ A modern, high speed and elegant OOP cryptographic library implemented in C++. C
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
 clang++ example.cpp -std=c++17 -O3 -o example.exe
+# Don't use -O3 option if you are compiling with gcc.
 ```
 
 ```sh
