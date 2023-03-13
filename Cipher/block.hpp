@@ -1,38 +1,39 @@
 #pragma once
 #include <stdint.h>
 #include <string.h>
-#define BLS sizeof(typename BC::blk_t)
+#include "stream.hpp"
+#define BLK sizeof(typename BlockCipher::blk_t)
 template <size_t blk_s>
-class BlockCipher {
+class BlockCipherBase {
 public:
 	using blk_t = uint8_t[blk_s];
-	virtual ~BlockCipher() = default;
+	virtual ~BlockCipherBase() = default;
 	virtual void encrypt(uint8_t const *src, uint8_t *dst) const = 0;
 	virtual void decrypt(uint8_t const *src, uint8_t *dst) const = 0;
 };
-class BlockCipherFlow {
+class BlockCipherCrypterBase {
 public:
-	virtual ~BlockCipherFlow() = default;
+	virtual ~BlockCipherCrypterBase() = default;
 	virtual uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) = 0;
 	virtual uint8_t *fflush(uint8_t *dst) = 0;
 };
-template <class BC>
-class Encrypter: public BlockCipherFlow {
-	BC bc;
+template <class BlockCipher>
+class BlockCipherEncrypter: public BlockCipherCrypterBase {
+	BlockCipher bc;
 	size_t use;
-	typename BC::blk_t buf;
+	typename BlockCipher::blk_t buf;
 public:
 	template <class... vals_t>
-	Encrypter(vals_t const &...vals):
+	BlockCipherEncrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
 	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
-		if (BLS + src <= end + use) {
-			memcpy(buf + use, src, BLS - use);
+		if (BLK + src <= end + use) {
+			memcpy(buf + use, src, BLK - use);
 			bc.encrypt(buf, dst);
-			src += BLS - use;
-			dst += BLS;
+			src += BLK - use;
+			dst += BLK;
 			use -= use;
-			for (; BLS + src <= end; src += BLS, dst += BLS) {
+			for (; BLK + src <= end; src += BLK, dst += BLK) {
 				bc.encrypt(src, dst);
 			}
 		}
@@ -42,30 +43,30 @@ public:
 		return dst;
 	}
 	uint8_t *fflush(uint8_t *dst) {
-		memset(buf + use, BLS - use, BLS - use);
+		memset(buf + use, BLK - use, BLK - use);
 		bc.encrypt(buf, dst);
 		use -= use;
-		dst += BLS;
+		dst += BLK;
 		return dst;
 	}
 };
-template <class BC>
-class Decrypter: public BlockCipherFlow {
-	BC bc;
+template <class BlockCipher>
+class BlockCipherDecrypter: public BlockCipherCrypterBase {
+	BlockCipher bc;
 	size_t use;
-	typename BC::blk_t buf;
+	typename BlockCipher::blk_t buf;
 public:
 	template <class... vals_t>
-	Decrypter(vals_t const &...vals):
+	BlockCipherDecrypter(vals_t const &...vals):
 		bc(vals...), use(0) {}
 	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
-		if (BLS + src < end + use) {
-			memcpy(buf + use, src, BLS - use);
+		if (BLK + src < end + use) {
+			memcpy(buf + use, src, BLK - use);
 			bc.decrypt(buf, dst);
-			src += BLS - use;
-			dst += BLS;
+			src += BLK - use;
+			dst += BLK;
 			use -= use;
-			for (; BLS + src < end; src += BLS, dst += BLS) {
+			for (; BLK + src < end; src += BLK, dst += BLK) {
 				bc.decrypt(src, dst);
 			}
 		}
@@ -75,29 +76,28 @@ public:
 		return dst;
 	}
 	uint8_t *fflush(uint8_t *dst) {
-		if (use != BLS) { // invalid padding
+		if (use != BLK) { // invalid padding
 			return nullptr;
 		}
 		bc.decrypt(buf, dst);
 		use -= use;
-		dst += BLS - dst[BLS - 1];
+		dst += BLK - dst[BLK - 1];
 		return dst;
 	}
 };
-#include "stream.hpp"
-template <class BC>
-class CTRMode: public StreamCipher<BLS> {
-	BC bc;
-	typename BC::blk_t ctr;
+template <class BlockCipher>
+class CTRMode: public StreamCipherBase<BLK> {
+	BlockCipher bc;
+	typename BlockCipher::blk_t ctr;
 public:
 	template <class... vals_t>
 	CTRMode(uint8_t const *civ, vals_t const &...vals):
 		bc(vals...) {
-		memcpy(ctr, civ, BLS);
+		memcpy(ctr, civ, BLK);
 	}
 	void generate(uint8_t *dst) {
 		bc.encrypt(ctr, dst);
-		for (size_t i = BLS - 1; i < BLS && ++ctr[i] == 0; i--) {}
+		for (size_t i = BLK - 1; i < BLK && ++ctr[i] == 0; i--) {}
 	}
 };
-#undef BLS
+#undef BLK

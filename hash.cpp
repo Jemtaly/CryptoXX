@@ -5,8 +5,8 @@
 #include "Hash/sm3.hpp"
 #define BUFSIZE 1024
 int main(int argc, char *argv[]) {
-	Hasher<MD5> md5;
-	Hasher<SM3> sm3;
+	HashWrapper<MD5> md5;
+	HashWrapper<SM3> sm3;
 	uint8_t buf[BUFSIZE];
 	size_t read;
 	while ((read = fread(buf, 1, BUFSIZE, stdin)) == BUFSIZE) {

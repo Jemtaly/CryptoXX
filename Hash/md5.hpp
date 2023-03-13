@@ -1,5 +1,6 @@
 #pragma once
 #include "hash.hpp"
+#include <assert.h>
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
 #define FF0(b, c, d) ((b) & (c) | ~(b) & (d))
 #define FF1(b, c, d) ((d) & (b) | ~(d) & (c))
@@ -56,6 +57,13 @@ public:
 		uint32_t c = h[2];
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)src;
+		// for (int i = 0; i < 16; i++) {
+		// 	auto wi = src[4 * i + 0] <<  0
+		// 	    	| src[4 * i + 1] <<  8
+		// 	    	| src[4 * i + 2] << 16
+		// 	    	| src[4 * i + 3] << 24;
+		// 	assert(wi == w[i]);
+		// } // I don't know why, but uncommenting this code avoids incorrect calculation results when compiled with g++'s -O3 option.
 		HHN(0, a, b, c, d, w, k, r,  0, 16);
 		HHN(1, a, b, c, d, w, k, r, 16, 32);
 		HHN(2, a, b, c, d, w, k, r, 32, 48);
@@ -66,7 +74,7 @@ public:
 		h[3] += d;
 	}
 };
-class MD5: public Hash<64, 16> {
+class MD5: public HashBase<64, 16> {
 	MD5Inner inner;
 	uint64_t counter = 0;
 public:

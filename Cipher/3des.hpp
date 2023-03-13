@@ -1,6 +1,6 @@
 #pragma once
 #include "des.hpp"
-class TDES: public BlockCipher<8> {
+class TDES: public BlockCipherBase<8> {
 	DES D, E, S;
 public:
 	TDES(uint8_t const *k, uint8_t const *e, uint8_t const *y):

@@ -70,7 +70,7 @@ public:
 		rec[7] ^= H;
 	}
 };
-class SM3: public Hash<64, 32> {
+class SM3: public HashBase<64, 32> {
 	SM3Inner inner;
 	uint64_t counter = 0;
 public:

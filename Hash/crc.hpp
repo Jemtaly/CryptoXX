@@ -1,7 +1,7 @@
 #pragma once
 #include "hash.hpp"
 template <size_t sz8>
-class CRC: public Hash<1, sz8> {
+class CRC: public HashBase<1, sz8> {
 	uint8_t box[256][sz8];
 	uint8_t sta[sz8];
 	uint8_t xrv[sz8];
