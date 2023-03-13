@@ -3,6 +3,8 @@
 #include <string.h>
 #include "Cipher/aes.hpp"
 #include "Cipher/sm4.hpp"
+#include "Cipher/ctr.hpp"
+#define BLK sizeof(typename BlockCipher::blk_t)
 #define BUFSIZE 1024
 #define REC_ERR 1
 #define REC_OFP 2
@@ -14,25 +16,25 @@
 #define REC_ENC 128
 #define REC_DEC 256
 #define REC_CTR 512
-template <typename T, typename... Args>
-void CTR(FILE *ifp, FILE *ofp, uint8_t const *civ, Args &&...args) {
-	StreamCipherCrypter<CTRMode<T>> scc(civ, std::forward<Args>(args)...);
+template <typename StreamCipher, typename... Args>
+void XXC(FILE *ifp, FILE *ofp, Args &&...args) {
+	StreamCipherCrypter<StreamCipher> scc(std::forward<Args>(args)...);
 	uint8_t buf[BUFSIZE];
 	while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
-template <typename T, typename... Args>
+template <typename BlockCipher, typename... Args>
 void ENC(FILE *ifp, FILE *ofp, Args &&...args) {
-	BlockCipherEncrypter<T> bcf(std::forward<Args>(args)...);
-	uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
+	BlockCipherEncrypter<BlockCipher> bcf(std::forward<Args>(args)...);
+	uint8_t src[BUFSIZE], dst[BUFSIZE + BLK];
 	size_t read;
 	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
 		fwrite(dst, 1, bcf.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
 	}
 	fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
 }
-template <typename T, typename... Args>
+template <typename BlockCipher, typename... Args>
 void DEC(FILE *ifp, FILE *ofp, Args &&...args) {
-	BlockCipherDecrypter<T> bcf(std::forward<Args>(args)...);
+	BlockCipherDecrypter<BlockCipher> bcf(std::forward<Args>(args)...);
 	uint8_t src[BUFSIZE], dst[BUFSIZE];
 	size_t read;
 	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
@@ -40,14 +42,14 @@ void DEC(FILE *ifp, FILE *ofp, Args &&...args) {
 	}
 	fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
 }
-template <typename T>
+template <typename BlockCipher>
 void process(int rec, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *key) {
 	if ((rec & REC_CTR) != 0) {
-		CTR<T>(ifp, ofp, civ, key);
+		XXC<CTRMode<BlockCipher>>(ifp, ofp, civ, key);
 	} else if ((rec & REC_ENC) != 0) {
-		ENC<T>(ifp, ofp, key);
+		ENC<BlockCipher>(ifp, ofp, key);
 	} else if ((rec & REC_DEC) != 0) {
-		DEC<T>(ifp, ofp, key);
+		DEC<BlockCipher>(ifp, ofp, key);
 	}
 }
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
