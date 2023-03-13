@@ -1,6 +1,6 @@
 #pragma once
 #include "stream.hpp"
-class RC4: public StreamCipherBase<1> {
+class RC4: public StreamCipherInterface<1> {
 	uint8_t x, y, m[256];
 public:
 	RC4(uint8_t len, uint8_t const *key):

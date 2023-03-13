@@ -4,28 +4,22 @@
 #include "stream.hpp"
 #define BLK sizeof(typename BlockCipher::blk_t)
 template <size_t blk_s>
-class BlockCipherBase {
+class BlockCipherInterface {
 public:
 	using blk_t = uint8_t[blk_s];
-	virtual ~BlockCipherBase() = default;
+	virtual ~BlockCipherInterface() = default;
 	virtual void encrypt(uint8_t const *src, uint8_t *dst) const = 0;
 	virtual void decrypt(uint8_t const *src, uint8_t *dst) const = 0;
 };
-class BlockCipherCrypterBase {
-public:
-	virtual ~BlockCipherCrypterBase() = default;
-	virtual uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) = 0;
-	virtual uint8_t *fflush(uint8_t *dst) = 0;
-};
 template <class BlockCipher>
-class BlockCipherEncrypter: public BlockCipherCrypterBase {
+class BlockCipherEncrypter {
 	BlockCipher bc;
 	size_t use;
 	typename BlockCipher::blk_t buf;
 public:
 	template <class... vals_t>
-	BlockCipherEncrypter(vals_t const &...vals):
-		bc(vals...), use(0) {}
+	BlockCipherEncrypter(vals_t &&...vals):
+		bc(std::forward<vals_t>(vals)...), use(0) {}
 	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
 		if (BLK + src <= end + use) {
 			memcpy(buf + use, src, BLK - use);
@@ -51,14 +45,14 @@ public:
 	}
 };
 template <class BlockCipher>
-class BlockCipherDecrypter: public BlockCipherCrypterBase {
+class BlockCipherDecrypter {
 	BlockCipher bc;
 	size_t use;
 	typename BlockCipher::blk_t buf;
 public:
 	template <class... vals_t>
-	BlockCipherDecrypter(vals_t const &...vals):
-		bc(vals...), use(0) {}
+	BlockCipherDecrypter(vals_t &&...vals):
+		bc(std::forward<vals_t>(vals)...), use(0) {}
 	uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
 		if (BLK + src < end + use) {
 			memcpy(buf + use, src, BLK - use);
@@ -86,13 +80,13 @@ public:
 	}
 };
 template <class BlockCipher>
-class CTRMode: public StreamCipherBase<BLK> {
+class CTRMode: public StreamCipherInterface<BLK> {
 	BlockCipher bc;
 	typename BlockCipher::blk_t ctr;
 public:
 	template <class... vals_t>
-	CTRMode(uint8_t const *civ, vals_t const &...vals):
-		bc(vals...) {
+	CTRMode(uint8_t const *civ, vals_t &&...vals):
+		bc(std::forward<vals_t>(vals)...) {
 		memcpy(ctr, civ, BLK);
 	}
 	void generate(uint8_t *dst) {

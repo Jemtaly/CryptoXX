@@ -14,11 +14,15 @@
 #define REC_ENC 128
 #define REC_DEC 256
 #define REC_CTR 512
-void scrypt(StreamCipherCrypterBase &&scf, FILE *ifp, FILE *ofp) {
+template <typename T, typename... Args>
+void CTR(FILE *ifp, FILE *ofp, uint8_t const *civ, Args &&...args) {
+	StreamCipherCrypter<CTRMode<T>> scc(civ, std::forward<Args>(args)...);
 	uint8_t buf[BUFSIZE];
-	while (fwrite(buf, 1, scf.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
+	while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
-void bcrypt(BlockCipherCrypterBase &&bcf, FILE *ifp, FILE *ofp) {
+template <typename T, typename... Args>
+void ENC(FILE *ifp, FILE *ofp, Args &&...args) {
+	BlockCipherEncrypter<T> bcf(std::forward<Args>(args)...);
 	uint8_t src[BUFSIZE], dst[BUFSIZE + 16];
 	size_t read;
 	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
@@ -26,20 +30,30 @@ void bcrypt(BlockCipherCrypterBase &&bcf, FILE *ifp, FILE *ofp) {
 	}
 	fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
 }
+template <typename T, typename... Args>
+void DEC(FILE *ifp, FILE *ofp, Args &&...args) {
+	BlockCipherDecrypter<T> bcf(std::forward<Args>(args)...);
+	uint8_t src[BUFSIZE], dst[BUFSIZE];
+	size_t read;
+	while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
+		fwrite(dst, 1, bcf.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
+	}
+	fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
+}
 template <typename T>
-void choose(int rec, FILE *ifp, FILE *ofp, uint8_t *iv, uint8_t *key) {
+void process(int rec, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *key) {
 	if ((rec & REC_CTR) != 0) {
-		scrypt(StreamCipherCrypter<CTRMode<T>>(iv, key), ifp, ofp);
+		CTR<T>(ifp, ofp, civ, key);
 	} else if ((rec & REC_ENC) != 0) {
-		bcrypt(BlockCipherEncrypter<T>(key), ifp, ofp);
+		ENC<T>(ifp, ofp, key);
 	} else if ((rec & REC_DEC) != 0) {
-		bcrypt(BlockCipherDecrypter<T>(key), ifp, ofp);
+		DEC<T>(ifp, ofp, key);
 	}
 }
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
 	for (size_t i = 0; i < len * 2; ++i) {
 		if (hex[i] >= '0' && hex[i] <= '9') {
-			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - '0' +  0) << (i % 2 ? 0 : 4);
+			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - '0') << (i % 2 ? 0 : 4);
 		} else if (hex[i] >= 'a' && hex[i] <= 'f') {
 			(bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - 'a' + 10) << (i % 2 ? 0 : 4);
 		} else if (hex[i] >= 'A' && hex[i] <= 'F') {
@@ -123,13 +137,13 @@ int main(int argc, char *argv[]) {
 	if ((rec & REC_ERR) != 0) {
 		fprintf(stderr, "usage: %s [-i INFILE] [-o OUTFILE] (-c IV | -e | -d) (-S KEY | -4 KEY | -6 KEY | -8 KEY)\n", argv[0]);
 	} else if ((rec & REC_SM4) != 0) {
-		choose<SM4>(rec, ifp, ofp, civ, key);
+		process<SM4>(rec, ifp, ofp, civ, key);
 	} else if ((rec & REC_128) != 0) {
-		choose<AES128>(rec, ifp, ofp, civ, key);
+		process<AES128>(rec, ifp, ofp, civ, key);
 	} else if ((rec & REC_192) != 0) {
-		choose<AES192>(rec, ifp, ofp, civ, key);
+		process<AES192>(rec, ifp, ofp, civ, key);
 	} else if ((rec & REC_256) != 0) {
-		choose<AES256>(rec, ifp, ofp, civ, key);
+		process<AES256>(rec, ifp, ofp, civ, key);
 	}
 	if (key) {
 		delete[] key;

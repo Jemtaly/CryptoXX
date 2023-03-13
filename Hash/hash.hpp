@@ -4,29 +4,23 @@
 #define BLK sizeof(typename Hash::blk_t)
 #define BUF sizeof(typename Hash::buf_t)
 template <size_t blk_s, size_t buf_s>
-class HashBase {
+class HashInterface {
 public:
 	using blk_t = uint8_t[blk_s];
 	using buf_t = uint8_t[buf_s];
-	virtual ~HashBase() = default;
+	virtual ~HashInterface() = default;
 	virtual void push(uint8_t const *src) = 0;
 	virtual void test(uint8_t const *src, size_t len, uint8_t *dst) const = 0;
 };
-class HashWrapperBase {
-public:
-	virtual ~HashWrapperBase() = default;
-	virtual void update(uint8_t const *src, uint8_t const *end) = 0;
-	virtual void digest(uint8_t *dst) const = 0;
-};
 template <class Hash>
-class HashWrapper: public HashWrapperBase {
+class HashWrapper {
 	Hash hash;
 	size_t use;
 	typename Hash::blk_t mem;
 public:
 	template <class... vals_t>
-	HashWrapper(vals_t const &...vals):
-		hash(vals...), use(0) {}
+	HashWrapper(vals_t &&...vals):
+		hash(std::forward<vals_t>(vals)...), use(0) {}
 	void update(uint8_t const *src, uint8_t const *end) {
 		if (BLK + src <= use + end) {
 			memcpy(mem + use, src, BLK - use);

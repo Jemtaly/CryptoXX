@@ -74,7 +74,7 @@ public:
 		h[3] += d;
 	}
 };
-class MD5: public HashBase<64, 16> {
+class MD5: public HashInterface<64, 16> {
 	MD5Inner inner;
 	uint64_t counter = 0;
 public:
