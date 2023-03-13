@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include "stream.hpp"
 #define ROL32EQ(v, n) ((v) = (v) << (n) | (v) >> (32 - (n)))
 #define QUARTER(x, a, b, c, d) {                   \
@@ -10,6 +9,7 @@
 }
 class ChaCha: StreamCipherInterface<64> {
 	uint32_t input[16];
+public:
 	ChaCha(uint32_t const *key, uint32_t const *counter):
         input{
             0x61707865, 0x3320646e, 0x79622d32, 0x6b206574, // "expand 32-byte k"
@@ -35,7 +35,7 @@ class ChaCha: StreamCipherInterface<64> {
             QUARTER(x, 3, 4,  9, 14);
         }
         for (int i = 0; i < 16; i++) {
-            (uint32_t *)dst[i] = x[i] + input[i];
+            ((uint32_t *)dst)[i] = x[i] + input[i];
         }
         for (int i = 12; i < 16 && ++input[i] == 0; i++) {} // increment counter
 	}
