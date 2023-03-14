@@ -1,8 +1,8 @@
 # CryptoXX
 
-A modern, high speed and elegant OOP cryptographic library implemented in C++. Currently supports DES, 3DES, AES, SM4 block cipher algorithms in ECB and CTR modes, RC4 and ZUC stream cipher algorithm, as well as SM3, MD5 and CRC hashing algorithms.
+A modern, high-speed and easy-to-use OOP cryptographic library implemented in C++. Currently supports DES, 3DES, AES, SM4 block cipher algorithms in ECB and CTR modes, RC4, ZUC and ChaCha20 stream cipher algorithm, as well as SM3, MD5 and CRC hashing algorithms.
 
-一个现代、高速、优雅的面向对象 C++ 密码库，目前支持 DES，3DES，AES-128，AES-192，AES-256 以及 SM4 等块密码算法在 ECB 和 CTR 模式下的加解密，RC4 和 ZUC 流密码，以及 SM3，MD5 和 CRC 哈希算法。
+一个现代、高速、易用的面向对象 C++ 密码库，目前支持 DES，3DES，AES，SM4 等块密码算法在 ECB 和 CTR 模式下的加解密，RC4，ZUC，ChaCha20 流密码，以及 SM3，MD5 和 CRC 哈希算法。
 
 ## Compiling and running the sample program / 编译并运行示例程序
 
@@ -35,3 +35,7 @@ clang++ hash.cpp -std=c++17 -O3 -o hash.exe
 cat in.txt | ./hash.exe
 # Output the MD5 and SM3 checksums of in.txt.
 ```
+
+## Library usage documentation / 密码库使用说明
+
+To be continued...
