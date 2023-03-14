@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <string.h>
+#include <utility> // std::forward
 #define INP sizeof(typename Hash::inp_t)
 #define OUT sizeof(typename Hash::out_t)
 template <size_t inp_s, size_t out_s>

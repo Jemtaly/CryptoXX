@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include <string.h>
+#include <utility> // std::forward
 #define SEC sizeof(typename StreamCipher::sec_t)
 template <size_t sec_s>
 class StreamCipherInterface {

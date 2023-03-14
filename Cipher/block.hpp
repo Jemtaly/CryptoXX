@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <string.h>
+#include <utility> // std::forward
 #define BLK sizeof(typename BlockCipher::blk_t)
 template <size_t blk_s>
 class BlockCipherInterface {

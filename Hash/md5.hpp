@@ -1,6 +1,6 @@
 #pragma once
-#include "hash.hpp"
 #include <assert.h>
+#include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
 #define FF0(b, c, d) ((b) & (c) | ~(b) & (d))
 #define FF1(b, c, d) ((d) & (b) | ~(d) & (c))
