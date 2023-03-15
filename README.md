@@ -28,8 +28,7 @@ A modern, efficient and easy-to-use object-oriented C++ cryptographic library de
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
-clang++ example.cpp -std=c++17 -O3 -o example.exe
-# Don't use -O3 option if you are compiling with gcc.
+clang++ example.cpp -std=c++17 -O2 -o example.exe
 ```
 
 ```sh
@@ -45,7 +44,7 @@ clang++ example.cpp -std=c++17 -O3 -o example.exe
 - hash.cpp
 
 ```sh
-clang++ hash.cpp -std=c++17 -O3 -o hash.exe
+clang++ hash.cpp -std=c++17 -O2 -o hash.exe
 ```
 
 ```sh
