@@ -1,8 +1,8 @@
 # CryptoXX
 
-A modern, efficient and easy-to-use object-oriented C++ cryptographic library designed to make cryptographic algorithms modular using object-oriented techniques, allowing different cryptographic algorithms to have a uniform interface, thus improving ease of implementation (scalability) and flexibility of use. The efficiency of the algorithms is optimized at compile time using various new features of C++17 and C++20.
+A modern, efficient and easy-to-use object-oriented C++ cryptographic library designed to simplify cryptographic algorithm invocation steps using the object-oriented features of C++, and to make cryptographic algorithms modular and provide a uniform interface to different cryptographic algorithms, thus improving ease of implementation (scalability) and flexibility of use. A number of new features of C++17 and C++20 are used to optimize algorithm runtime efficiency at compile time.
 
-一个现代、高效、易用的面向对象 C++ 密码库，该密码库旨在利用面向对象技术让密码算法模块化，让不同密码算法具有统一的接口，从而提升实现时的便捷性（易扩展性）和使用的灵活性。使用 C++17 和 C++20 的多种新特性在编译时对算法运行效率进行优化。
+一个现代、高效、易用的面向对象 C++ 密码库，该密码库旨在利用 C++ 的面向对象特性简化密码算法调用步骤，且使密码算法模块化、让不同密码算法具有统一的接口，从而提升实现时的便捷性（易扩展性）和使用的灵活性。使用 C++17 和 C++20 的多种新特性在编译时对算法运行效率进行优化。
 
 ## Currently supported algorithms / 目前支持的算法
 
