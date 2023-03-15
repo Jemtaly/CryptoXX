@@ -42,7 +42,7 @@ protected:
 	static constexpr uint8_t Rcon[16] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 	};
-	static constexpr auto M_boxes_init = [](uint32_t n) {
+	static constexpr auto gen_LUT = [](uint32_t n) {
 		std::array<uint32_t, 256> coef_mult_n = {};
 		for (int j = 0; j < 256; j++) {
 			for (int i = 0; i < 4; i++) {
@@ -57,25 +57,25 @@ protected:
 		}
 		return coef_mult_n;
 	};
-	static constexpr auto E_boxes_0 = M_boxes_init(0x03010102);
-	static constexpr auto E_boxes_1 = M_boxes_init(0x01010203);
-	static constexpr auto E_boxes_2 = M_boxes_init(0x01020301);
-	static constexpr auto E_boxes_3 = M_boxes_init(0x02030101);
-	static constexpr auto D_boxes_0 = M_boxes_init(0x0b0d090e);
-	static constexpr auto D_boxes_1 = M_boxes_init(0x0d090e0b);
-	static constexpr auto D_boxes_2 = M_boxes_init(0x090e0b0d);
-	static constexpr auto D_boxes_3 = M_boxes_init(0x0e0b0d09);
+	static constexpr auto LUT_E_0 = gen_LUT(0x03010102);
+	static constexpr auto LUT_E_1 = gen_LUT(0x01010203);
+	static constexpr auto LUT_E_2 = gen_LUT(0x01020301);
+	static constexpr auto LUT_E_3 = gen_LUT(0x02030101);
+	static constexpr auto LUT_D_0 = gen_LUT(0x0b0d090e);
+	static constexpr auto LUT_D_1 = gen_LUT(0x0d090e0b);
+	static constexpr auto LUT_D_2 = gen_LUT(0x090e0b0d);
+	static constexpr auto LUT_D_3 = gen_LUT(0x0e0b0d09);
 	static void mix_columns_enc(uint8_t *state) {
-		((uint32_t *)state)[0] = E_boxes_0[state[0x0]] ^ E_boxes_1[state[0x1]] ^ E_boxes_2[state[0x2]] ^ E_boxes_3[state[0x3]];
-		((uint32_t *)state)[1] = E_boxes_0[state[0x4]] ^ E_boxes_1[state[0x5]] ^ E_boxes_2[state[0x6]] ^ E_boxes_3[state[0x7]];
-		((uint32_t *)state)[2] = E_boxes_0[state[0x8]] ^ E_boxes_1[state[0x9]] ^ E_boxes_2[state[0xa]] ^ E_boxes_3[state[0xb]];
-		((uint32_t *)state)[3] = E_boxes_0[state[0xc]] ^ E_boxes_1[state[0xd]] ^ E_boxes_2[state[0xe]] ^ E_boxes_3[state[0xf]];
+		((uint32_t *)state)[0] = LUT_E_0[state[0x0]] ^ LUT_E_1[state[0x1]] ^ LUT_E_2[state[0x2]] ^ LUT_E_3[state[0x3]];
+		((uint32_t *)state)[1] = LUT_E_0[state[0x4]] ^ LUT_E_1[state[0x5]] ^ LUT_E_2[state[0x6]] ^ LUT_E_3[state[0x7]];
+		((uint32_t *)state)[2] = LUT_E_0[state[0x8]] ^ LUT_E_1[state[0x9]] ^ LUT_E_2[state[0xa]] ^ LUT_E_3[state[0xb]];
+		((uint32_t *)state)[3] = LUT_E_0[state[0xc]] ^ LUT_E_1[state[0xd]] ^ LUT_E_2[state[0xe]] ^ LUT_E_3[state[0xf]];
 	}
 	static void mix_columns_dec(uint8_t *state) {
-		((uint32_t *)state)[0] = D_boxes_0[state[0x0]] ^ D_boxes_1[state[0x1]] ^ D_boxes_2[state[0x2]] ^ D_boxes_3[state[0x3]];
-		((uint32_t *)state)[1] = D_boxes_0[state[0x4]] ^ D_boxes_1[state[0x5]] ^ D_boxes_2[state[0x6]] ^ D_boxes_3[state[0x7]];
-		((uint32_t *)state)[2] = D_boxes_0[state[0x8]] ^ D_boxes_1[state[0x9]] ^ D_boxes_2[state[0xa]] ^ D_boxes_3[state[0xb]];
-		((uint32_t *)state)[3] = D_boxes_0[state[0xc]] ^ D_boxes_1[state[0xd]] ^ D_boxes_2[state[0xe]] ^ D_boxes_3[state[0xf]];
+		((uint32_t *)state)[0] = LUT_D_0[state[0x0]] ^ LUT_D_1[state[0x1]] ^ LUT_D_2[state[0x2]] ^ LUT_D_3[state[0x3]];
+		((uint32_t *)state)[1] = LUT_D_0[state[0x4]] ^ LUT_D_1[state[0x5]] ^ LUT_D_2[state[0x6]] ^ LUT_D_3[state[0x7]];
+		((uint32_t *)state)[2] = LUT_D_0[state[0x8]] ^ LUT_D_1[state[0x9]] ^ LUT_D_2[state[0xa]] ^ LUT_D_3[state[0xb]];
+		((uint32_t *)state)[3] = LUT_D_0[state[0xc]] ^ LUT_D_1[state[0xd]] ^ LUT_D_2[state[0xe]] ^ LUT_D_3[state[0xf]];
 	}
 	static void shift_rows_enc(uint8_t *state) {
 		uint8_t temp_value;

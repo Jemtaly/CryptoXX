@@ -39,30 +39,30 @@ class SM4: public BlockCipherInterface<16> {
 		0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
 		0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
 	};
-	static constexpr auto S_boxes_init = [](int n) {
-		std::array<uint32_t, 256> S_boxes_n = {};
+	static constexpr auto gen_LUT_S = [](int n) {
+		std::array<uint32_t, 256> LUT_S_n = {};
 		for (int i = 0; i < 256; i++) {
 			uint32_t b = S_box[i] ^ S_box[i] << 2 ^ S_box[i] << 10 ^ S_box[i] << 18 ^ S_box[i] << 24;
-			S_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
+			LUT_S_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
 		}
-		return S_boxes_n;
+		return LUT_S_n;
 	};
-	static constexpr auto K_boxes_init = [](int n) {
-		std::array<uint32_t, 256> K_boxes_n = {};
+	static constexpr auto gen_LUT_K = [](int n) {
+		std::array<uint32_t, 256> LUT_K_n = {};
 		for (int i = 0; i < 256; i++) {
 			uint32_t b = S_box[i] ^ S_box[i] << 13 ^ S_box[i] << 23;
-			K_boxes_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
+			LUT_K_n[i] = b << 8 * n | b >> (32 - 8 * n) % 32;
 		}
-		return K_boxes_n;
+		return LUT_K_n;
 	};
-	static constexpr auto S_boxes_0 = S_boxes_init(0);
-	static constexpr auto S_boxes_1 = S_boxes_init(1);
-	static constexpr auto S_boxes_2 = S_boxes_init(2);
-	static constexpr auto S_boxes_3 = S_boxes_init(3);
-	static constexpr auto K_boxes_0 = K_boxes_init(0);
-	static constexpr auto K_boxes_1 = K_boxes_init(1);
-	static constexpr auto K_boxes_2 = K_boxes_init(2);
-	static constexpr auto K_boxes_3 = K_boxes_init(3);
+	static constexpr auto LUT_S_0 = gen_LUT_S(0);
+	static constexpr auto LUT_S_1 = gen_LUT_S(1);
+	static constexpr auto LUT_S_2 = gen_LUT_S(2);
+	static constexpr auto LUT_S_3 = gen_LUT_S(3);
+	static constexpr auto LUT_K_0 = gen_LUT_K(0);
+	static constexpr auto LUT_K_1 = gen_LUT_K(1);
+	static constexpr auto LUT_K_2 = gen_LUT_K(2);
+	static constexpr auto LUT_K_3 = gen_LUT_K(3);
 	uint32_t rk[32];
 public:
 	SM4(uint8_t const *mk) {
@@ -74,7 +74,7 @@ public:
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ CK[i];
-			rk[i] = t[i + 4] = t[i] ^ K_boxes_0[a & 0xff] ^ K_boxes_1[a >> 8 & 0xff] ^ K_boxes_2[a >> 16 & 0xff] ^ K_boxes_3[a >> 24];
+			rk[i] = t[i + 4] = t[i] ^ LUT_K_0[a & 0xff] ^ LUT_K_1[a >> 8 & 0xff] ^ LUT_K_2[a >> 16 & 0xff] ^ LUT_K_3[a >> 24];
 		}
 	}
 	void encrypt(uint8_t const *src, uint8_t *dst) const {
@@ -86,7 +86,7 @@ public:
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i];
-			t[i + 4] = t[i] ^ S_boxes_0[a & 0xff] ^ S_boxes_1[a >> 8 & 0xff] ^ S_boxes_2[a >> 16 & 0xff] ^ S_boxes_3[a >> 24];
+			t[i + 4] = t[i] ^ LUT_S_0[a & 0xff] ^ LUT_S_1[a >> 8 & 0xff] ^ LUT_S_2[a >> 16 & 0xff] ^ LUT_S_3[a >> 24];
 		}
 		I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
 		I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
@@ -102,7 +102,7 @@ public:
 		};
 		for (int i = 0; i < 32; i++) {
 			uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i];
-			t[i + 4] = t[i] ^ S_boxes_0[a & 0xff] ^ S_boxes_1[a >> 8 & 0xff] ^ S_boxes_2[a >> 16 & 0xff] ^ S_boxes_3[a >> 24];
+			t[i + 4] = t[i] ^ LUT_S_0[a & 0xff] ^ LUT_S_1[a >> 8 & 0xff] ^ LUT_S_2[a >> 16 & 0xff] ^ LUT_S_3[a >> 24];
 		}
 		I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
 		I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
