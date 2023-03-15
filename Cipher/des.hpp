@@ -131,16 +131,12 @@ class DES: public BlockCipherInterface<8> {
 	};
 	static uint<32> F(uint<32> r, uint<48> k) {
 		uint<48> x = permutation<32, 48>(r, E) ^ k;
-		uint<32> f =
-			S_box_0[x >> 42       ] << 28 |
-			S_box_1[x >> 36 & 0x3f] << 24 |
-			S_box_2[x >> 30 & 0x3f] << 20 |
-			S_box_3[x >> 24 & 0x3f] << 16 |
-			S_box_4[x >> 18 & 0x3f] << 12 |
-			S_box_5[x >> 12 & 0x3f] <<  8 |
-			S_box_6[x >>  6 & 0x3f] <<  4 |
-			S_box_7[x       & 0x3f]      ;
-		return permutation<32, 32>(f, P);
+		// Merge the substitution and permutation operations
+		return
+			P[0][S_box_6[x >>  6 & 0x3f] << 4 | S_box_7[x       & 0x3f]] |
+			P[1][S_box_4[x >> 18 & 0x3f] << 4 | S_box_5[x >> 12 & 0x3f]] |
+			P[2][S_box_2[x >> 30 & 0x3f] << 4 | S_box_3[x >> 24 & 0x3f]] |
+			P[3][S_box_0[x >> 42       ] << 4 | S_box_1[x >> 36 & 0x3f]];
 	}
 	uint<48> rk[16];
 public:
