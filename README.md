@@ -1,8 +1,25 @@
 # CryptoXX
 
-A modern, efficient and easy-to-use OOP cryptographic library implemented in C++. Currently supports DES, 3DES, AES, SM4 block cipher algorithms in ECB and CTR modes, RC4, ZUC and ChaCha20 stream cipher algorithm, as well as SM3, MD5 and CRC hashing algorithms.
+A modern, efficient, and easy-to-use object-oriented C++ cryptographic library. The cryptographic library aims to use object-oriented technology to make cryptographic algorithms modular, so that different cryptographic algorithms have a unified interface, thereby improving the convenience of implementation and the flexibility of application. sex. At the same time, various new features of C++17 and C++20 are used to optimize the operation efficiency of the algorithm at compile time.
 
-一个现代、高效、易用的面向对象 C++ 密码库，目前支持 DES，3DES，AES，SM4 等块密码算法在 ECB 和 CTR 模式下的加解密，RC4，ZUC，ChaCha20 流密码，以及 SM3，MD5 和 CRC 哈希算法。
+一个现代、高效、易用的面向对象 C++ 密码库，该密码库旨在利用面向对象技术让密码算法模块化，让不同密码算法具有统一的接口，从而提升实现时的便捷性和应用时的灵活性。同时使用 C++17 和 C++20 的多种新特性在编译时对算法运行效率进行优化。
+
+## Currently supported algorithms / 目前支持的算法
+
+- Block cipher algorithms (ECB mode and CTR mode) / 块密码算法 (ECB 模式和 CTR 模式)
+  - DES
+  - 3DES
+  - AES (AES-128, AES-192, AES-256)
+  - SM4
+- Stream cipher algorithms / 流密码算法
+  - RC4
+  - ZUC (祖冲之算法)
+  - ChaCha
+- Hash Algorithms / 哈希算法
+  - CRC
+  - MD5
+  - SM3
+  - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
 
