@@ -7,9 +7,10 @@
 	x[a] += x[b], x[d] ^= x[a], ROL32EQ(x[d],  8); \
 	x[c] += x[d], x[b] ^= x[c], ROL32EQ(x[b],  7); \
 }
-class ChaCha: StreamCipherInterface<64> {
+class ChaCha {
 	uint32_t input[16];
 public:
+    static constexpr size_t SECTION_SIZE = 64;
 	ChaCha(uint32_t const *key, uint32_t const *counter):
         input{
             0x61707865, 0x3320646e, 0x79622d32, 0x6b206574, // "expand 32-byte k"

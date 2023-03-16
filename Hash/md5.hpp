@@ -10,16 +10,16 @@
 #define GG1(i) (5 * (i) + 1 & 0xf)
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
-#define HHN(N, a, b, c, d, w, k, r, X, Y)                     \
+#define HHN(N, a, b, c, d, w, K, R, X, Y)                     \
 	for (int i = X; i < Y; i++) {                             \
-		uint32_t s = a + FF##N(b, c, d) + k[i] + w[GG##N(i)]; \
+		uint32_t s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
 		a = d;                                                \
 		d = c;                                                \
 		c = b;                                                \
-		b += ROL32(s, r[i]);                                  \
+		b += ROL32(s, R[i]);                                  \
 	}
 class MD5Inner {
-	static constexpr uint32_t k[64] = {
+	static constexpr uint32_t K[64] = {
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 		0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
 		0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
@@ -37,7 +37,7 @@ class MD5Inner {
 		0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 		0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
 	};
-	static constexpr uint8_t r[64] = {
+	static constexpr uint8_t R[64] = {
 		0x07, 0x0c, 0x11, 0x16, 0x07, 0x0c, 0x11, 0x16,
 		0x07, 0x0c, 0x11, 0x16, 0x07, 0x0c, 0x11, 0x16,
 		0x05, 0x09, 0x0e, 0x14, 0x05, 0x09, 0x0e, 0x14,
@@ -57,47 +57,50 @@ public:
 		uint32_t c = h[2];
 		uint32_t d = h[3];
 		uint32_t const *w = (uint32_t *)src;
+		// The result will be wrong when compiling with g++'s -O3 option, however, the code below can fix it for unknown reason.
 		// for (int i = 0; i < 16; i++) {
 		// 	auto wi = src[4 * i + 0] <<  0
 		// 	    	| src[4 * i + 1] <<  8
 		// 	    	| src[4 * i + 2] << 16
 		// 	    	| src[4 * i + 3] << 24;
 		// 	assert(wi == w[i]);
-		// } // I don't know why, but uncommenting this code avoids incorrect calculation results when compiled with g++'s -O3 option.
-		HHN(0, a, b, c, d, w, k, r,  0, 16);
-		HHN(1, a, b, c, d, w, k, r, 16, 32);
-		HHN(2, a, b, c, d, w, k, r, 32, 48);
-		HHN(3, a, b, c, d, w, k, r, 48, 64);
+		// }
+		HHN(0, a, b, c, d, w, K, R,  0, 16);
+		HHN(1, a, b, c, d, w, K, R, 16, 32);
+		HHN(2, a, b, c, d, w, K, R, 32, 48);
+		HHN(3, a, b, c, d, w, K, R, 48, 64);
 		h[0] += a;
 		h[1] += b;
 		h[2] += c;
 		h[3] += d;
 	}
 };
-class MD5: public HashInterface<64, 16> {
+class MD5 {
 	MD5Inner inner;
 	uint64_t counter = 0;
 public:
+	static constexpr size_t BLOCK_SIZE = 64;
+	static constexpr size_t DIGEST_SIZE = 16;
 	void push(uint8_t const *src) {
 		inner.compress(src);
 		counter += 512;
 	}
 	void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-		MD5Inner copy = inner;
+		MD5Inner icopy = inner;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);
 		memset(tmp + len, 0, 64 - len);
 		tmp[len] = 0x80;
 		if (len >= 56) {
-			copy.compress(tmp);
+			icopy.compress(tmp);
 			memset(tmp, 0, 56);
 		}
 		((uint64_t *)tmp)[7] = counter + 8 * len;
-		copy.compress(tmp);
-		((uint32_t *)dst)[0] = copy.h[0];
-		((uint32_t *)dst)[1] = copy.h[1];
-		((uint32_t *)dst)[2] = copy.h[2];
-		((uint32_t *)dst)[3] = copy.h[3];
+		icopy.compress(tmp);
+		((uint32_t *)dst)[0] = icopy.h[0];
+		((uint32_t *)dst)[1] = icopy.h[1];
+		((uint32_t *)dst)[2] = icopy.h[2];
+		((uint32_t *)dst)[3] = icopy.h[3];
 	}
 };
 #undef FF0

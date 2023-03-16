@@ -4,7 +4,7 @@
 #include "Cipher/aes.hpp"
 #include "Cipher/sm4.hpp"
 #include "Cipher/ctr.hpp"
-#define BLK sizeof(typename BlockCipher::blk_t)
+#define BLK BlockCipher::BLOCK_SIZE
 #define BUFSIZE 1024
 #define REC_ERR 1
 #define REC_OFP 2

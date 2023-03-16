@@ -2,7 +2,7 @@
 #include "stream.hpp"
 #define ROL31(x, n) ((x) << (n) & 0x7FFFFFFF | (x) >> (31 - (n)))
 #define ROL32(x, n) ((x) << (n)              | (x) >> (32 - (n)))
-class ZUC: public StreamCipherInterface<4> {
+class ZUC {
 	static constexpr uint8_t S0[256] = {
 		0x3e, 0x72, 0x5b, 0x47, 0xca, 0xe0, 0x00, 0x33, 0x04, 0xd1, 0x54, 0x98, 0x09, 0xb9, 0x6d, 0xcb,
 		0x7b, 0x1b, 0xf9, 0x32, 0xaf, 0x9d, 0x6a, 0xa5, 0xb8, 0x2d, 0xfc, 0x1d, 0x08, 0x53, 0x03, 0x90,
@@ -45,54 +45,55 @@ class ZUC: public StreamCipherInterface<4> {
 		0x4D78, 0x2F13, 0x6BC4, 0x1AF1,
 		0x5E26, 0x3C4D, 0x789A, 0x47AC,
 	};
-	static uint32_t AddM(uint32_t a, uint32_t b) {
+	static uint32_t mod_add(uint32_t a, uint32_t b) {
 		uint32_t c = a + b;
 		return (c & 0x7FFFFFFF) + (c >> 31);
 	}
-	uint32_t LFSR[16];
-	uint32_t R1, R2, X0, X1, X2, X3, W;
-	template <bool init>
-	void UpdateAll() {
+	uint32_t lfsr[16];
+	uint32_t r1, r2, x0, x1, x2, x3, w;
+	template <bool INIT>
+	void update_all() {
 		// The bit-reorganization
-		X0 = LFSR[15] <<  1 & 0xffff0000 | LFSR[14]       & 0x0000ffff;
-		X1 = LFSR[11] << 16              | LFSR[ 9] >> 15             ;
-		X2 = LFSR[ 7] << 16              | LFSR[ 5] >> 15             ;
-		X3 = LFSR[ 2] << 16              | LFSR[ 0] >> 15             ;
+		x0 = lfsr[15] <<  1 & 0xffff0000 | lfsr[14]       & 0x0000ffff;
+		x1 = lfsr[11] << 16              | lfsr[ 9] >> 15             ;
+		x2 = lfsr[ 7] << 16              | lfsr[ 5] >> 15             ;
+		x3 = lfsr[ 2] << 16              | lfsr[ 0] >> 15             ;
 		// The nonlinear function F
-		uint32_t W1, W2, C1, C2, L1, L2;
-		W = (X0 ^ R1) + R2;
-		W1 = R1 + X1;
-		W2 = R2 ^ X2;
-		C1 = W1 << 16 | W2 >> 16;
-		C2 = W2 << 16 | W1 >> 16;
-		L1 = C1 ^ ROL32(C1, 2) ^ ROL32(C1, 10) ^ ROL32(C1, 18) ^ ROL32(C1, 24);
-		L2 = C2 ^ ROL32(C2, 8) ^ ROL32(C2, 14) ^ ROL32(C2, 22) ^ ROL32(C2, 30);
-		R1 = S0[L1 >> 24] << 24 | S1[L1 >> 16 & 0xff] << 16 | S0[L1 >> 8 & 0xff] << 8 | S1[L1 & 0xff];
-		R2 = S0[L2 >> 24] << 24 | S1[L2 >> 16 & 0xff] << 16 | S0[L2 >> 8 & 0xff] << 8 | S1[L2 & 0xff];
+		uint32_t w1, w2, c1, c2, l1, l2;
+		w = (x0 ^ r1) + r2;
+		w1 = r1 + x1;
+		w2 = r2 ^ x2;
+		c1 = w1 << 16 | w2 >> 16;
+		c2 = w2 << 16 | w1 >> 16;
+		l1 = c1 ^ ROL32(c1, 2) ^ ROL32(c1, 10) ^ ROL32(c1, 18) ^ ROL32(c1, 24);
+		l2 = c2 ^ ROL32(c2, 8) ^ ROL32(c2, 14) ^ ROL32(c2, 22) ^ ROL32(c2, 30);
+		r1 = S0[l1 >> 24] << 24 | S1[l1 >> 16 & 0xff] << 16 | S0[l1 >> 8 & 0xff] << 8 | S1[l1 & 0xff];
+		r2 = S0[l2 >> 24] << 24 | S1[l2 >> 16 & 0xff] << 16 | S0[l2 >> 8 & 0xff] << 8 | S1[l2 & 0xff];
 		// The linear feedback shift register (LFSR)
-		uint32_t f = LFSR[0];
-		f = AddM(f, ROL31(LFSR[ 0],  8));
-		f = AddM(f, ROL31(LFSR[ 4], 20));
-		f = AddM(f, ROL31(LFSR[10], 21));
-		f = AddM(f, ROL31(LFSR[13], 17));
-		f = AddM(f, ROL31(LFSR[15], 15));
+		uint32_t f = lfsr[0];
+		f = mod_add(f, ROL31(lfsr[ 0],  8));
+		f = mod_add(f, ROL31(lfsr[ 4], 20));
+		f = mod_add(f, ROL31(lfsr[10], 21));
+		f = mod_add(f, ROL31(lfsr[13], 17));
+		f = mod_add(f, ROL31(lfsr[15], 15));
 		for (int i = 0; i < 15; ++i) {
-			LFSR[i] = LFSR[i + 1];
+			lfsr[i] = lfsr[i + 1];
 		}
-		LFSR[15] = init ? AddM(f, W >> 1) : f;
+		lfsr[15] = INIT ? mod_add(f, w >> 1) : f;
 	}
 public:
-	ZUC(uint8_t const *k, uint8_t const *iv): R1(0), R2(0) {
+	static constexpr size_t SECTION_SIZE = 4;
+	ZUC(uint8_t const *k, uint8_t const *iv): r1(0), r2(0) {
 		for (int i = 0; i < 16; ++i) {
-			LFSR[i] = k[i] << 23 | EK[i] << 8 | iv[i];
+			lfsr[i] = k[i] << 23 | EK[i] << 8 | iv[i];
 		}
 		for (int i = 0; i < 32; i++) {
-			UpdateAll<1>();
+			update_all<1>();
 		}
-		UpdateAll<0>();
+		update_all<0>();
 	}
 	void generate(uint8_t *dst) {
-		UpdateAll<0>();
-		*(uint32_t *)dst = W ^ X3;
+		update_all<0>();
+		*(uint32_t *)dst = w ^ x3;
 	}
 };

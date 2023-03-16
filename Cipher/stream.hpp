@@ -2,19 +2,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <utility> // std::forward
-#define SEC sizeof(typename StreamCipher::sec_t)
-template <size_t sec_s>
-class StreamCipherInterface {
-public:
-	using sec_t = uint8_t[sec_s];
-	virtual ~StreamCipherInterface() = default;
-	virtual void generate(uint8_t *dst) = 0;
-};
+#define SEC StreamCipher::SECTION_SIZE
 template <class StreamCipher>
 class StreamCipherCrypter {
 	StreamCipher sc;
 	size_t use;
-	typename StreamCipher::sec_t buf;
+	uint8_t buf[SEC];
 public:
 	template <class... vals_t>
 	StreamCipherCrypter(vals_t &&...vals):

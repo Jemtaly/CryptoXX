@@ -1,9 +1,9 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-class AESVirt: public BlockCipherInterface<16> {
+class AESBase {
 protected:
-	static constexpr uint8_t S_box[256] = {
+	static constexpr uint8_t S_BOX[256] = {
 		0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
 		0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
 		0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
@@ -21,7 +21,7 @@ protected:
 		0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
 		0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16,
 	};
-	static constexpr uint8_t R_box[256] = {
+	static constexpr uint8_t I_BOX[256] = {
 		0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
 		0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
 		0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
@@ -39,32 +39,32 @@ protected:
 		0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
 		0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d,
 	};
-	static constexpr uint8_t Rcon[16] = {
+	static constexpr uint8_t R_CON[16] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 	};
-	static constexpr auto gen_LUT = [](uint32_t n) {
-		std::array<uint32_t, 256> coef_mult_n = {};
+	static constexpr auto coef_mult = [](uint32_t X) {
+		std::array<uint32_t, 256> coef_mult_X = {};
 		for (int j = 0; j < 256; j++) {
 			for (int i = 0; i < 4; i++) {
-				uint8_t a = n >> 8 * i, b = j, p = 0;
+				uint8_t a = X >> 8 * i, b = j, p = 0;
 				for (uint8_t k = 0; k < 8; k++) {
 					p = p ^ (b & 1) * a;
 					a = a << 1 ^ (a >> 7) * 0x1b;
 					b = b >> 1;
 				}
-				coef_mult_n[j] |= p << 8 * i;
+				coef_mult_X[j] |= p << 8 * i;
 			}
 		}
-		return coef_mult_n;
+		return coef_mult_X;
 	};
-	static constexpr auto LUT_E_0 = gen_LUT(0x03010102);
-	static constexpr auto LUT_E_1 = gen_LUT(0x01010203);
-	static constexpr auto LUT_E_2 = gen_LUT(0x01020301);
-	static constexpr auto LUT_E_3 = gen_LUT(0x02030101);
-	static constexpr auto LUT_D_0 = gen_LUT(0x0b0d090e);
-	static constexpr auto LUT_D_1 = gen_LUT(0x0d090e0b);
-	static constexpr auto LUT_D_2 = gen_LUT(0x090e0b0d);
-	static constexpr auto LUT_D_3 = gen_LUT(0x0e0b0d09);
+	static constexpr auto LUT_E_0 = coef_mult(0x03010102);
+	static constexpr auto LUT_E_1 = coef_mult(0x01010203);
+	static constexpr auto LUT_E_2 = coef_mult(0x01020301);
+	static constexpr auto LUT_E_3 = coef_mult(0x02030101);
+	static constexpr auto LUT_D_0 = coef_mult(0x0b0d090e);
+	static constexpr auto LUT_D_1 = coef_mult(0x0d090e0b);
+	static constexpr auto LUT_D_2 = coef_mult(0x090e0b0d);
+	static constexpr auto LUT_D_3 = coef_mult(0x0e0b0d09);
 	static void mix_columns_enc(uint8_t *state) {
 		((uint32_t *)state)[0] = LUT_E_0[state[0x0]] ^ LUT_E_1[state[0x1]] ^ LUT_E_2[state[0x2]] ^ LUT_E_3[state[0x3]];
 		((uint32_t *)state)[1] = LUT_E_0[state[0x4]] ^ LUT_E_1[state[0x5]] ^ LUT_E_2[state[0x6]] ^ LUT_E_3[state[0x7]];
@@ -116,40 +116,40 @@ protected:
 		state[0xf] = temp_value;
 	}
 	static void sub_bytes_enc(uint8_t *state) {
-		state[0x0] = S_box[state[0x0]];
-		state[0x1] = S_box[state[0x1]];
-		state[0x2] = S_box[state[0x2]];
-		state[0x3] = S_box[state[0x3]];
-		state[0x4] = S_box[state[0x4]];
-		state[0x5] = S_box[state[0x5]];
-		state[0x6] = S_box[state[0x6]];
-		state[0x7] = S_box[state[0x7]];
-		state[0x8] = S_box[state[0x8]];
-		state[0x9] = S_box[state[0x9]];
-		state[0xa] = S_box[state[0xa]];
-		state[0xb] = S_box[state[0xb]];
-		state[0xc] = S_box[state[0xc]];
-		state[0xd] = S_box[state[0xd]];
-		state[0xe] = S_box[state[0xe]];
-		state[0xf] = S_box[state[0xf]];
+		state[0x0] = S_BOX[state[0x0]];
+		state[0x1] = S_BOX[state[0x1]];
+		state[0x2] = S_BOX[state[0x2]];
+		state[0x3] = S_BOX[state[0x3]];
+		state[0x4] = S_BOX[state[0x4]];
+		state[0x5] = S_BOX[state[0x5]];
+		state[0x6] = S_BOX[state[0x6]];
+		state[0x7] = S_BOX[state[0x7]];
+		state[0x8] = S_BOX[state[0x8]];
+		state[0x9] = S_BOX[state[0x9]];
+		state[0xa] = S_BOX[state[0xa]];
+		state[0xb] = S_BOX[state[0xb]];
+		state[0xc] = S_BOX[state[0xc]];
+		state[0xd] = S_BOX[state[0xd]];
+		state[0xe] = S_BOX[state[0xe]];
+		state[0xf] = S_BOX[state[0xf]];
 	}
 	static void sub_bytes_dec(uint8_t *state) {
-		state[0x0] = R_box[state[0x0]];
-		state[0x1] = R_box[state[0x1]];
-		state[0x2] = R_box[state[0x2]];
-		state[0x3] = R_box[state[0x3]];
-		state[0x4] = R_box[state[0x4]];
-		state[0x5] = R_box[state[0x5]];
-		state[0x6] = R_box[state[0x6]];
-		state[0x7] = R_box[state[0x7]];
-		state[0x8] = R_box[state[0x8]];
-		state[0x9] = R_box[state[0x9]];
-		state[0xa] = R_box[state[0xa]];
-		state[0xb] = R_box[state[0xb]];
-		state[0xc] = R_box[state[0xc]];
-		state[0xd] = R_box[state[0xd]];
-		state[0xe] = R_box[state[0xe]];
-		state[0xf] = R_box[state[0xf]];
+		state[0x0] = I_BOX[state[0x0]];
+		state[0x1] = I_BOX[state[0x1]];
+		state[0x2] = I_BOX[state[0x2]];
+		state[0x3] = I_BOX[state[0x3]];
+		state[0x4] = I_BOX[state[0x4]];
+		state[0x5] = I_BOX[state[0x5]];
+		state[0x6] = I_BOX[state[0x6]];
+		state[0x7] = I_BOX[state[0x7]];
+		state[0x8] = I_BOX[state[0x8]];
+		state[0x9] = I_BOX[state[0x9]];
+		state[0xa] = I_BOX[state[0xa]];
+		state[0xb] = I_BOX[state[0xb]];
+		state[0xc] = I_BOX[state[0xc]];
+		state[0xd] = I_BOX[state[0xd]];
+		state[0xe] = I_BOX[state[0xe]];
+		state[0xf] = I_BOX[state[0xf]];
 	}
 	static void add_round_key(uint8_t *state, uint32_t const *k) {
 		((uint32_t *)state)[0] ^= k[0];
@@ -157,12 +157,14 @@ protected:
 		((uint32_t *)state)[2] ^= k[2];
 		((uint32_t *)state)[3] ^= k[3];
 	}
+public:
+	static constexpr size_t BLOCK_SIZE = 16;
 };
-template <int Rn>
-class AESTmpl: public AESVirt {
+template <int RN>
+class AESTmpl: public AESBase {
 protected:
-	uint32_t rk[Rn + 1][4];
-	AESTmpl() = default;
+	uint32_t rk[RN + 1][4];
+	AESTmpl() = default; // not instantiable
 public:
 	void encrypt(uint8_t const *src, uint8_t *dst) const {
 		((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
@@ -171,7 +173,7 @@ public:
 		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
 		int round = 0;
 		add_round_key(dst, rk[round]);
-		while (++round < Rn) {
+		while (++round < RN) {
 			sub_bytes_enc(dst);
 			shift_rows_enc(dst);
 			mix_columns_enc(dst);
@@ -186,7 +188,7 @@ public:
 		((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
 		((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
 		((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
-		int round = Rn;
+		int round = RN;
 		add_round_key(dst, rk[round]);
 		while (--round > 0) {
 			shift_rows_dec(dst);
@@ -206,7 +208,7 @@ public:
 		for (int i = 4; i < 44; ++i) {
 			uint32_t a = (*rk)[i - 1];
 			if (i % 4 == 0) {
-				a = S_box[a >> 16 & 0xff] << 8 | S_box[a >> 24] << 16 | S_box[a & 0xff] << 24 | S_box[a >> 8 & 0xff] ^ Rcon[i / 4];
+				a = S_BOX[a >> 16 & 0xff] << 8 | S_BOX[a >> 24] << 16 | S_BOX[a & 0xff] << 24 | S_BOX[a >> 8 & 0xff] ^ R_CON[i / 4];
 			}
 			(*rk)[i] = (*rk)[i - 4] ^ a;
 		}
@@ -219,7 +221,7 @@ public:
 		for (int i = 6; i < 52; ++i) {
 			uint32_t a = (*rk)[i - 1];
 			if (i % 6 == 0) {
-				a = S_box[a >> 16 & 0xff] << 8 | S_box[a >> 24] << 16 | S_box[a & 0xff] << 24 | S_box[a >> 8 & 0xff] ^ Rcon[i / 6];
+				a = S_BOX[a >> 16 & 0xff] << 8 | S_BOX[a >> 24] << 16 | S_BOX[a & 0xff] << 24 | S_BOX[a >> 8 & 0xff] ^ R_CON[i / 6];
 			}
 			(*rk)[i] = (*rk)[i - 6] ^ a;
 		}
@@ -232,9 +234,9 @@ public:
 		for (int i = 8; i < 60; ++i) {
 			uint32_t a = (*rk)[i - 1];
 			if (i % 8 == 0) {
-				a = S_box[a >> 16 & 0xff] << 8 | S_box[a >> 24] << 16 | S_box[a & 0xff] << 24 | S_box[a >> 8 & 0xff] ^ Rcon[i / 8];
+				a = S_BOX[a >> 16 & 0xff] << 8 | S_BOX[a >> 24] << 16 | S_BOX[a & 0xff] << 24 | S_BOX[a >> 8 & 0xff] ^ R_CON[i / 8];
 			} else if (i % 8 == 4) {
-				a = S_box[a & 0xff] | S_box[a >> 8 & 0xff] << 8 | S_box[a >> 16 & 0xff] << 16 | S_box[a >> 24] << 24;
+				a = S_BOX[a & 0xff] | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 24] << 24;
 			}
 			(*rk)[i] = (*rk)[i - 8] ^ a;
 		}

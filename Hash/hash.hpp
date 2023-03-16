@@ -2,33 +2,24 @@
 #include <stdint.h>
 #include <string.h>
 #include <utility> // std::forward
-#define INP sizeof(typename Hash::inp_t)
-#define OUT sizeof(typename Hash::out_t)
-template <size_t inp_s, size_t out_s>
-class HashInterface {
-public:
-	using inp_t = uint8_t[inp_s];
-	using out_t = uint8_t[out_s];
-	virtual ~HashInterface() = default;
-	virtual void push(uint8_t const *src) = 0;
-	virtual void test(uint8_t const *src, size_t len, uint8_t *dst) const = 0;
-};
+#define BLK Hash::BLOCK_SIZE
+#define DIG Hash::DIGEST_SIZE
 template <class Hash>
 class HashWrapper {
 	Hash hash;
 	size_t use;
-	typename Hash::inp_t mem;
+	uint8_t mem[BLK];
 public:
 	template <class... vals_t>
 	HashWrapper(vals_t &&...vals):
 		hash(std::forward<vals_t>(vals)...), use(0) {}
 	void update(uint8_t const *src, uint8_t const *end) {
-		if (INP + src <= use + end) {
-			memcpy(mem + use, src, INP - use);
+		if (BLK + src <= use + end) {
+			memcpy(mem + use, src, BLK - use);
 			hash.push(mem);
-			src += INP - use;
+			src += BLK - use;
 			use -= use;
-			for (; src + INP <= end; src += INP) {
+			for (; src + BLK <= end; src += BLK) {
 				hash.push(src);
 			}
 		}
@@ -40,5 +31,5 @@ public:
 		hash.test(mem, use, dst);
 	}
 };
-#undef INP
-#undef OUT
+#undef BLK
+#undef DIG

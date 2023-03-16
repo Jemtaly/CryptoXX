@@ -7,7 +7,7 @@
 	(a)[2] = (i) >>  8 & 0xff; \
 	(a)[3] = (i)       & 0xff; \
 }
-class SM4: public BlockCipherInterface<16> {
+class SM4 {
 	static constexpr uint32_t FK[4] = {
 		0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
 	};
@@ -21,7 +21,7 @@ class SM4: public BlockCipherInterface<16> {
 		0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209,
 		0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279,
 	};
-	static constexpr uint8_t S_box[256] = {
+	static constexpr uint8_t S_BOX[256] = {
 		0xd6, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7, 0x16, 0xb6, 0x14, 0xc2, 0x28, 0xfb, 0x2c, 0x05,
 		0x2b, 0x67, 0x9a, 0x76, 0x2a, 0xbe, 0x04, 0xc3, 0xaa, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
 		0x9c, 0x42, 0x50, 0xf4, 0x91, 0xef, 0x98, 0x7a, 0x33, 0x54, 0x0b, 0x43, 0xed, 0xcf, 0xac, 0x62,
@@ -41,16 +41,17 @@ class SM4: public BlockCipherInterface<16> {
 	};
 	static uint32_t tau(uint32_t a) {
 		uint32_t b;
-		uint8_t *A = (uint8_t *)&a;
-		uint8_t *B = (uint8_t *)&b;
-		B[0] = S_box[A[0]];
-		B[1] = S_box[A[1]];
-		B[2] = S_box[A[2]];
-		B[3] = S_box[A[3]];
+		uint8_t *u = (uint8_t *)&a;
+		uint8_t *v = (uint8_t *)&b;
+		v[0] = S_BOX[u[0]];
+		v[1] = S_BOX[u[1]];
+		v[2] = S_BOX[u[2]];
+		v[3] = S_BOX[u[3]];
 		return b;
 	}
 	uint32_t rk[32];
 public:
+	static constexpr size_t BLOCK_SIZE = 16;
 	SM4(uint8_t const *mk) {
 		uint32_t t[36] = {
 			(uint32_t)(mk[0x0] << 24 | mk[0x1] << 16 | mk[0x2] << 8 | mk[0x3]) ^ FK[0],

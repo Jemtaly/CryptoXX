@@ -8,21 +8,21 @@
 #define FF1(x, y, z) ((x) & (y) | (x) & (z) | (y) & (z))
 #define GG0(x, y, z) ((x) ^ (y) ^ (z))
 #define GG1(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
-#define HHN(N, A, B, C, D, E, F, G, H, W, K, X, Y)                           \
+#define HHN(N, a, b, c, d, e, f, g, h, w, k, X, Y)                           \
 	for (int j = X; j < Y; j++) {                                            \
-		uint32_t A12 = ROL32(A  , 12);                                       \
-		uint32_t AEK = A12 + E + K[j];                                       \
-		uint32_t SS1 = ROL32(AEK,  7);                                       \
-		uint32_t TT1 = FF##N(A, B, C) + D + (SS1 ^ A12) + (W[j] ^ W[j + 4]); \
-		uint32_t TT2 = GG##N(E, F, G) + H +  SS1        +  W[j]            ; \
-		D = C;                                                               \
-		C = ROL32(B,  9);                                                    \
-		B = A;                                                               \
-		A =    (TT1);                                                        \
-		H = G;                                                               \
-		G = ROL32(F, 19);                                                    \
-		F = E;                                                               \
-		E = PP0(TT2);                                                        \
+		uint32_t a12 = ROL32(a  , 12);                                       \
+		uint32_t aek = a12 + e + k[j];                                       \
+		uint32_t ss1 = ROL32(aek,  7);                                       \
+		uint32_t tt1 = FF##N(a, b, c) + d + (ss1 ^ a12) + (w[j] ^ w[j + 4]); \
+		uint32_t tt2 = GG##N(e, f, g) + h +  ss1        +  w[j]            ; \
+		d = c;                                                               \
+		c = ROL32(b,  9);                                                    \
+		b = a;                                                               \
+		a =    (tt1);                                                        \
+		h = g;                                                               \
+		g = ROL32(f, 19);                                                    \
+		f = e;                                                               \
+		e = PP0(tt2);                                                        \
 	}
 class SM3Inner {
 	static constexpr auto K = [](uint32_t TT00, uint32_t TT10) {
@@ -41,39 +41,41 @@ public:
 		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
 	};
 	void compress(uint8_t const *src) {
-		uint32_t A = rec[0];
-		uint32_t B = rec[1];
-		uint32_t C = rec[2];
-		uint32_t D = rec[3];
-		uint32_t E = rec[4];
-		uint32_t F = rec[5];
-		uint32_t G = rec[6];
-		uint32_t H = rec[7];
-		uint32_t W[68], TMP;
+		uint32_t a = rec[0];
+		uint32_t b = rec[1];
+		uint32_t c = rec[2];
+		uint32_t d = rec[3];
+		uint32_t e = rec[4];
+		uint32_t f = rec[5];
+		uint32_t g = rec[6];
+		uint32_t h = rec[7];
+		uint32_t w[68], tmp;
 		for (int j =  0; j < 16; j++) {
 			uint8_t const *ref = &src[j << 2];
-			W[j] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
+			w[j] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
 		}
 		for (int j = 16; j < 68; j++) {
-			TMP = W[j - 16] ^ W[j - 9] ^ ROL32(W[j -  3], 15);
-			W[j] = PP1(TMP) ^ W[j - 6] ^ ROL32(W[j - 13],  7);
+			tmp = w[j - 16] ^ w[j - 9] ^ ROL32(w[j -  3], 15);
+			w[j] = PP1(tmp) ^ w[j - 6] ^ ROL32(w[j - 13],  7);
 		}
-		HHN(0, A, B, C, D, E, F, G, H, W, K,  0, 16);
-		HHN(1, A, B, C, D, E, F, G, H, W, K, 16, 64);
-		rec[0] ^= A;
-		rec[1] ^= B;
-		rec[2] ^= C;
-		rec[3] ^= D;
-		rec[4] ^= E;
-		rec[5] ^= F;
-		rec[6] ^= G;
-		rec[7] ^= H;
+		HHN(0, a, b, c, d, e, f, g, h, w, K,  0, 16);
+		HHN(1, a, b, c, d, e, f, g, h, w, K, 16, 64);
+		rec[0] ^= a;
+		rec[1] ^= b;
+		rec[2] ^= c;
+		rec[3] ^= d;
+		rec[4] ^= e;
+		rec[5] ^= f;
+		rec[6] ^= g;
+		rec[7] ^= h;
 	}
 };
-class SM3: public HashInterface<64, 32> {
+class SM3 {
 	SM3Inner inner;
 	uint64_t counter = 0;
 public:
+	static constexpr size_t BLOCK_SIZE = 64;
+	static constexpr size_t DIGEST_SIZE = 32;
 	void push(uint8_t const *src) {
 		inner.compress(src);
 		counter += 512;

@@ -1,12 +1,13 @@
 #pragma once
 #include "block.hpp"
 #include "stream.hpp"
-#define BLK sizeof(typename BlockCipher::blk_t)
+#define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>
-class CTRMode: public StreamCipherInterface<BLK> {
+class CTRMode {
 	BlockCipher bc;
-	typename BlockCipher::blk_t ctr;
+	uint8_t ctr[BLK];
 public:
+	static constexpr size_t SECTION_SIZE = BLK;
 	template <class... vals_t>
 	CTRMode(uint8_t const *civ, vals_t &&...vals):
 		bc(std::forward<vals_t>(vals)...) {

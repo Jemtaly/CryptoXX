@@ -2,20 +2,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <utility> // std::forward
-#define BLK sizeof(typename BlockCipher::blk_t)
-template <size_t blk_s>
-class BlockCipherInterface {
-public:
-	using blk_t = uint8_t[blk_s];
-	virtual ~BlockCipherInterface() = default;
-	virtual void encrypt(uint8_t const *src, uint8_t *dst) const = 0;
-	virtual void decrypt(uint8_t const *src, uint8_t *dst) const = 0;
-};
+#define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>
 class BlockCipherEncrypter {
 	BlockCipher bc;
 	size_t use;
-	typename BlockCipher::blk_t buf;
+	uint8_t buf[BLK];
 public:
 	template <class... vals_t>
 	BlockCipherEncrypter(vals_t &&...vals):
@@ -48,7 +40,7 @@ template <class BlockCipher>
 class BlockCipherDecrypter {
 	BlockCipher bc;
 	size_t use;
-	typename BlockCipher::blk_t buf;
+	uint8_t buf[BLK];
 public:
 	template <class... vals_t>
 	BlockCipherDecrypter(vals_t &&...vals):
