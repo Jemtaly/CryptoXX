@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Hash/md5.hpp"
-#include "Hash/sm3.hpp"
+#include "hash/md5.hpp"
+#include "hash/sm3.hpp"
 #define BUFSIZE 1024
 int main(int argc, char *argv[]) {
 	HashWrapper<MD5> md5;

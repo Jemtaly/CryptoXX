@@ -1,6 +1,6 @@
 #pragma once
-#include "block.hpp"
 #include <array>
+#include "block.hpp"
 typedef uint8_t bits_t;
 class DES {
 	// choose the smallest type that can hold the number of bits

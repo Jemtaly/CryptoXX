@@ -1,5 +1,4 @@
 #pragma once
-#include "block.hpp"
 #include "stream.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>

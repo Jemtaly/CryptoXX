@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Cipher/aes.hpp"
-#include "Cipher/sm4.hpp"
-#include "Cipher/ctr.hpp"
+#include "block/aes.hpp"
+#include "block/sm4.hpp"
+#include "stream/ctr.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 #define BUFSIZE 1024
 #define REC_ERR 1
