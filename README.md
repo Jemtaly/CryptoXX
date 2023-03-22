@@ -14,11 +14,13 @@ A modern, efficient and easy-to-use object-oriented C++ cryptographic library de
 - Stream cipher algorithms / 流密码算法
   - RC4
   - ZUC (祖冲之算法)
-  - ChaCha
+  - ChaCha20
 - Hash Algorithms / 哈希算法
   - CRC
   - MD5
   - SM3
+  - SHA-1
+  - SHA-2 (SHA-256, SHA-224, SHA-512, SHA-384)
   - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
