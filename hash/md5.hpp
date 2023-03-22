@@ -18,7 +18,7 @@
 		c = b;                                                \
 		b += ROL32(s, R[i]);                                  \
 	}
-class MD5Inner {
+struct MD5Inner {
 	static constexpr uint32_t K[64] = {
 		0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
 		0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -47,7 +47,6 @@ class MD5Inner {
 		0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
 		0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
 	};
-public:
 	uint32_t h[4] = {
 		0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
 	};
@@ -86,21 +85,21 @@ public:
 		counter += 512;
 	}
 	void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-		MD5Inner icopy = inner;
+		MD5Inner copy = inner;
 		uint8_t tmp[64];
 		memcpy(tmp, src, len);
 		memset(tmp + len, 0, 64 - len);
 		tmp[len] = 0x80;
 		if (len >= 56) {
-			icopy.compress(tmp);
+			copy.compress(tmp);
 			memset(tmp, 0, 56);
 		}
 		((uint64_t *)tmp)[7] = counter + 8 * len;
-		icopy.compress(tmp);
-		((uint32_t *)dst)[0] = icopy.h[0];
-		((uint32_t *)dst)[1] = icopy.h[1];
-		((uint32_t *)dst)[2] = icopy.h[2];
-		((uint32_t *)dst)[3] = icopy.h[3];
+		copy.compress(tmp);
+		((uint32_t *)dst)[0] = copy.h[0];
+		((uint32_t *)dst)[1] = copy.h[1];
+		((uint32_t *)dst)[2] = copy.h[2];
+		((uint32_t *)dst)[3] = copy.h[3];
 	}
 };
 #undef FF0

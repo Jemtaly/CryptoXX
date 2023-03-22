@@ -7,11 +7,11 @@
 	s[a] += s[b], s[d] ^= s[a], ROL32EQ(s[d],  8); \
 	s[c] += s[d], s[b] ^= s[c], ROL32EQ(s[b],  7); \
 }
-class ChaCha {
+class ChaCha20 {
 	uint32_t input[16];
 public:
 	static constexpr size_t SECTION_SIZE = 64;
-	ChaCha(uint32_t const *key, uint32_t const *counter):
+	ChaCha20(uint32_t const *key, uint32_t const *counter):
 		input{
 			0x61707865, 0x3320646e, 0x79622d32, 0x6b206574, // "expand 32-byte k"
 			key    [0], key    [1], key    [2], key    [3],

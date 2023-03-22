@@ -24,7 +24,7 @@
 		f = e;                                                               \
 		e = PP0(tt2);                                                        \
 	}
-class SM3Inner {
+struct SM3Inner {
 	static constexpr auto K = [](uint32_t TT00, uint32_t TT10) {
 		std::array<uint32_t, 64> K = {};
 		for (int j =  0; j < 16; j++) {
@@ -35,20 +35,19 @@ class SM3Inner {
 		}
 		return K;
 	}(0x79cc4519, 0x7a879d8a);
-public:
-	uint32_t rec[8] = {
+	uint32_t h[8] = {
 		0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
 		0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
 	};
 	void compress(uint8_t const *src) {
-		uint32_t a = rec[0];
-		uint32_t b = rec[1];
-		uint32_t c = rec[2];
-		uint32_t d = rec[3];
-		uint32_t e = rec[4];
-		uint32_t f = rec[5];
-		uint32_t g = rec[6];
-		uint32_t h = rec[7];
+		uint32_t A = h[0];
+		uint32_t B = h[1];
+		uint32_t C = h[2];
+		uint32_t D = h[3];
+		uint32_t E = h[4];
+		uint32_t F = h[5];
+		uint32_t G = h[6];
+		uint32_t H = h[7];
 		uint32_t w[68], tmp;
 		for (int j =  0; j < 16; j++) {
 			uint8_t const *ref = &src[j << 2];
@@ -58,16 +57,16 @@ public:
 			tmp = w[j - 16] ^ w[j - 9] ^ ROL32(w[j -  3], 15);
 			w[j] = PP1(tmp) ^ w[j - 6] ^ ROL32(w[j - 13],  7);
 		}
-		HHN(0, a, b, c, d, e, f, g, h, w, K,  0, 16);
-		HHN(1, a, b, c, d, e, f, g, h, w, K, 16, 64);
-		rec[0] ^= a;
-		rec[1] ^= b;
-		rec[2] ^= c;
-		rec[3] ^= d;
-		rec[4] ^= e;
-		rec[5] ^= f;
-		rec[6] ^= g;
-		rec[7] ^= h;
+		HHN(0, A, B, C, D, E, F, G, H, w, K,  0, 16);
+		HHN(1, A, B, C, D, E, F, G, H, w, K, 16, 64);
+		h[0] ^= A;
+		h[1] ^= B;
+		h[2] ^= C;
+		h[3] ^= D;
+		h[4] ^= E;
+		h[5] ^= F;
+		h[6] ^= G;
+		h[7] ^= H;
 	}
 };
 class SM3 {
@@ -80,33 +79,33 @@ public:
 		inner.compress(src);
 		counter += 512;
 	}
-	void test(uint8_t const *src, size_t slen, uint8_t *dst) const {
-		SM3Inner icopy = inner;
+	void test(uint8_t const *src, size_t len, uint8_t *dst) const {
+		SM3Inner copy = inner;
 		uint8_t tmp[64];
-		memcpy(tmp, src, slen);
-		memset(tmp + slen, 0, 64 - slen);
-		tmp[slen] = 0x80;
-		if (slen >= 56) {
-			icopy.compress(tmp);
+		memcpy(tmp, src, len);
+		memset(tmp + len, 0, 64 - len);
+		tmp[len] = 0x80;
+		if (len >= 56) {
+			copy.compress(tmp);
 			memset(tmp, 0, 56);
 		}
-		uint64_t totaln = counter + 8 * slen;
-		uint8_t *totals = (uint8_t *)&totaln;
-		tmp[63] = totals[0];
-		tmp[62] = totals[1];
-		tmp[61] = totals[2];
-		tmp[60] = totals[3];
-		tmp[59] = totals[4];
-		tmp[58] = totals[5];
-		tmp[57] = totals[6];
-		tmp[56] = totals[7];
-		icopy.compress(tmp);
+		uint64_t ctrxx = counter + 8 * len;
+		uint8_t *ctref = (uint8_t *)&ctrxx;
+		tmp[63] = ctref[0];
+		tmp[62] = ctref[1];
+		tmp[61] = ctref[2];
+		tmp[60] = ctref[3];
+		tmp[59] = ctref[4];
+		tmp[58] = ctref[5];
+		tmp[57] = ctref[6];
+		tmp[56] = ctref[7];
+		copy.compress(tmp);
 		for (int j = 0; j < 8; j++) {
 			uint8_t *ref = &dst[j << 2];
-			ref[0] = icopy.rec[j] >> 24;
-			ref[1] = icopy.rec[j] >> 16;
-			ref[2] = icopy.rec[j] >>  8;
-			ref[3] = icopy.rec[j]      ;
+			ref[0] = copy.h[j] >> 24;
+			ref[1] = copy.h[j] >> 16;
+			ref[2] = copy.h[j] >>  8;
+			ref[3] = copy.h[j]      ;
 		}
 	}
 };
