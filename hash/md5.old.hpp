@@ -9,22 +9,14 @@
 #define GG1(i) (5 * (i) + 1 & 0xf)
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
-#define HH1(N, a, b, c, d, s, w, K, R, i) {      \
-    s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
-    a = b + ROL32(s, R[i]);                      \
-}
-#define HH4(N, a, b, c, d, s, w, K, R, i) {      \
-    HH1(N, a, b, c, d, s, w, K, R, i      );     \
-    HH1(N, d, a, b, c, s, w, K, R, i | 0x1);     \
-    HH1(N, c, d, a, b, s, w, K, R, i | 0x2);     \
-    HH1(N, b, c, d, a, s, w, K, R, i | 0x3);     \
-}
-#define HHX(N, a, b, c, d, s, w, K, R, i) {      \
-    HH4(N, a, b, c, d, s, w, K, R, i      );     \
-    HH4(N, a, b, c, d, s, w, K, R, i | 0x4);     \
-    HH4(N, a, b, c, d, s, w, K, R, i | 0x8);     \
-    HH4(N, a, b, c, d, s, w, K, R, i | 0xc);     \
-}
+#define HHN(N, a, b, c, d, s, w, K, R, X, Y)         \
+    for (int i = X; i < Y; i++) {                    \
+        s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
+        a = d;                                       \
+        d = c;                                       \
+        c = b;                                       \
+        b += ROL32(s, R[i]);                         \
+    }
 struct MD5Inner {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -64,10 +56,10 @@ struct MD5Inner {
         uint32_t d = h[3];
         uint32_t s;
         uint32_t const *w = (uint32_t *)src;
-        HHX(0, a, b, c, d, s, w, K, R, 0x00);
-        HHX(1, a, b, c, d, s, w, K, R, 0x10);
-        HHX(2, a, b, c, d, s, w, K, R, 0x20);
-        HHX(3, a, b, c, d, s, w, K, R, 0x30);
+        HHN(0, a, b, c, d, s, w, K, R,  0, 16);
+        HHN(1, a, b, c, d, s, w, K, R, 16, 32);
+        HHN(2, a, b, c, d, s, w, K, R, 32, 48);
+        HHN(3, a, b, c, d, s, w, K, R, 48, 64);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -110,6 +102,4 @@ public:
 #undef GG1
 #undef GG2
 #undef GG3
-#undef HH1
-#undef HH4
-#undef HHX
+#undef HHN
