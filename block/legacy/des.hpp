@@ -2,6 +2,26 @@
 #include "block.hpp"
 typedef uint8_t bits_t;
 class DES {
+    // choose the smallest type that can hold the number of bits
+    template <int bits>
+    using uint = typename std::conditional<bits <= 32, uint32_t, uint64_t>::type;
+    // permutation function
+    template <int w_in, int w_out>
+    static uint<w_out> permutation(uint<w_in> v_in, bits_t const *A) {
+        uint<w_out> v_out = 0;
+        for (int i = 0; i < w_out; i += 8) {
+            v_out = v_out << 8 |
+                (v_in >> A[i    ] & 1) << 7 |
+                (v_in >> A[i | 1] & 1) << 6 |
+                (v_in >> A[i | 2] & 1) << 5 |
+                (v_in >> A[i | 3] & 1) << 4 |
+                (v_in >> A[i | 4] & 1) << 3 |
+                (v_in >> A[i | 5] & 1) << 2 |
+                (v_in >> A[i | 6] & 1) << 1 |
+                (v_in >> A[i | 7] & 1)     ;
+        }
+        return v_out;
+    }
     static constexpr bits_t PC_1[56] = {
         0x3f, 0x37, 0x2f, 0x27, 0x1f, 0x17, 0x0f, 0x07, // 0x07, 0x0f, 0x17, 0x1f, 0x27, 0x2f, 0x37, 0x3f,
         0x3e, 0x36, 0x2e, 0x26, 0x1e, 0x16, 0x0e, 0x06, // 0x06, 0x0e, 0x16, 0x1e, 0x26, 0x2e, 0x36, 0x3e,
@@ -104,26 +124,6 @@ class DES {
     static constexpr bits_t SHIFT[16] = {
         1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
     };
-    // choose the smallest type that can hold the number of bits
-    template <int bits>
-    using uint = typename std::conditional<bits <= 32, uint32_t, uint64_t>::type;
-    // permutation function
-    template <int w_in, int w_out>
-    static uint<w_out> permutation(uint<w_in> v_in, bits_t const *A) {
-        uint<w_out> v_out = 0;
-        for (int i = 0; i < w_out; i += 8) {
-            v_out = v_out << 8 |
-                (v_in >> A[i    ] & 1) << 7 |
-                (v_in >> A[i | 1] & 1) << 6 |
-                (v_in >> A[i | 2] & 1) << 5 |
-                (v_in >> A[i | 3] & 1) << 4 |
-                (v_in >> A[i | 4] & 1) << 3 |
-                (v_in >> A[i | 5] & 1) << 2 |
-                (v_in >> A[i | 6] & 1) << 1 |
-                (v_in >> A[i | 7] & 1)     ;
-        }
-        return v_out;
-    }
     static uint<32> F(uint<32> r, uint<48> k) {
         uint<48> x = permutation<32, 48>(r, E) ^ k;
         uint<32> f =

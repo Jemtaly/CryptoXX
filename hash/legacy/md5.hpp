@@ -1,8 +1,8 @@
 #pragma once
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define FF0(x, y, z) ((x) & (y) | ~(x) & (z))
-#define FF1(x, y, z) ((z) & (x) | ~(z) & (y))
+#define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
+#define FF1(x, y, z) ((z) & ((x) ^ (y)) ^ (y))
 #define FF2(x, y, z) ((x) ^ (y) ^ (z))
 #define FF3(x, y, z) ((y) ^ ((x) | ~(z)))
 #define GG0(i)      (i)
