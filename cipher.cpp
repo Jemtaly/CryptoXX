@@ -3,7 +3,7 @@
 #include "block/sm4.hpp"
 #include "stream/ctr.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
-#define BUFSIZE 1024
+#define BUFSIZE 65536
 #define REC_ERR 1
 #define REC_OFP 2
 #define REC_IFP 4

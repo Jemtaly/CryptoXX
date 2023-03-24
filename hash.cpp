@@ -6,7 +6,7 @@
 #include "hash/sha512.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
-#define BUFSIZE 1024
+#define BUFSIZE 65536
 #define REC_224 1
 #define REC_256 2
 #define REC_384 4
