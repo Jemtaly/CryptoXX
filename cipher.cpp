@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "block/aes.hpp"
 #include "block/sm4.hpp"
 #include "stream/ctr.hpp"
