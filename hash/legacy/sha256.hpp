@@ -3,24 +3,6 @@
 #define ROR32(x, n) ((x) >> (n) | (x) << (32 - (n)))
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
-#define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) { \
-    s = ROR32(a, 2) ^ ROR32(a, 13) ^ ROR32(a, 22);         \
-    t = ROR32(e, 6) ^ ROR32(e, 11) ^ ROR32(e, 25);         \
-    u = t + CHO(e, f, g) + h + K[i] + w[i];                \
-    v = s + MAJ(a, b, c)                  ;                \
-    d = d + u;                                             \
-    h = u + v;                                             \
-}
-#define FF8(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) { \
-    FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i    );  \
-    FF1(s, t, u, v, h, a, b, c, d, e, f, g, w, K, i + 1);  \
-    FF1(s, t, u, v, g, h, a, b, c, d, e, f, w, K, i + 2);  \
-    FF1(s, t, u, v, f, g, h, a, b, c, d, e, w, K, i + 3);  \
-    FF1(s, t, u, v, e, f, g, h, a, b, c, d, w, K, i + 4);  \
-    FF1(s, t, u, v, d, e, f, g, h, a, b, c, w, K, i + 5);  \
-    FF1(s, t, u, v, c, d, e, f, g, h, a, b, w, K, i + 6);  \
-    FF1(s, t, u, v, b, c, d, e, f, g, h, a, w, K, i + 7);  \
-}
 struct SHA256Inner {
     static constexpr uint32_t K[64] = {
         0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
@@ -60,14 +42,20 @@ struct SHA256Inner {
             t = ROR32(w[i -  2], 17) ^ ROR32(w[i -  2], 19) ^ (w[i -  2] >> 10);
             w[i] = w[i - 16] + s + w[i - 7] + t;
         }
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K,  0);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K,  8);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 16);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 24);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 32);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 40);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 48);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 56);
+        for (int i =  0; i < 64; i++) {
+            s = ROR32(A, 2) ^ ROR32(A, 13) ^ ROR32(A, 22);
+            t = ROR32(E, 6) ^ ROR32(E, 11) ^ ROR32(E, 25);
+            u = t + CHO(E, F, G) + H + K[i] + w[i];
+            v = s + MAJ(A, B, C)                  ;
+            H = G;
+            G = F;
+            F = E;
+            E = D + u;
+            D = C;
+            C = B;
+            B = A;
+            A = u + v;
+        }
         h[0] += A;
         h[1] += B;
         h[2] += C;
@@ -147,5 +135,3 @@ public:
         inner.h[7] = 0xBEFA4FA4;
     }
 };
-#undef FF1
-#undef FF8

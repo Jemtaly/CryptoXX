@@ -9,23 +9,15 @@
 #define KK1 0x6ED9EBA1
 #define KK2 0x8F1BBCDC
 #define KK3 0xCA62C1D6
-#define GG1(N, a, b, c, d, e, w, i) {                     \
-    e = ROL32(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
-    b = ROL32(b, 30);                                     \
-}
-#define GG5(N, a, b, c, d, e, w, i) {                     \
-    GG1(N, a, b, c, d, e, w, i     );                     \
-    GG1(N, e, a, b, c, d, w, i +  1);                     \
-    GG1(N, d, e, a, b, c, w, i +  2);                     \
-    GG1(N, c, d, e, a, b, w, i +  3);                     \
-    GG1(N, b, c, d, e, a, w, i +  4);                     \
-}
-#define GGX(N, a, b, c, d, e, w, i) {                     \
-    GG5(N, a, b, c, d, e, w, i     );                     \
-    GG5(N, a, b, c, d, e, w, i +  5);                     \
-    GG5(N, a, b, c, d, e, w, i + 10);                     \
-    GG5(N, a, b, c, d, e, w, i + 15);                     \
-}
+#define GGN(N, a, b, c, d, e, w, t, X, Y)                     \
+    for (int i = X; i < Y; i++) {                             \
+        t = ROL32(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
+        e = d;                                                \
+        d = c;                                                \
+        c = ROL32(b, 30);                                     \
+        b = a;                                                \
+        a = t;                                                \
+    }
 struct SHAInner {
     uint32_t h[5] = {
         0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
@@ -45,10 +37,10 @@ struct SHAInner {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
             w[i] = ROL32(t, 1);
         }
-        GGX(0, a, b, c, d, e, w,  0);
-        GGX(1, a, b, c, d, e, w, 20);
-        GGX(2, a, b, c, d, e, w, 40);
-        GGX(3, a, b, c, d, e, w, 60);
+        GGN(0, a, b, c, d, e, w, t,  0, 20);
+        GGN(1, a, b, c, d, e, w, t, 20, 40);
+        GGN(2, a, b, c, d, e, w, t, 40, 60);
+        GGN(3, a, b, c, d, e, w, t, 60, 80);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -104,6 +96,4 @@ public:
 #undef KK1
 #undef KK2
 #undef KK3
-#undef GG1
-#undef GG5
-#undef GGX
+#undef GGN

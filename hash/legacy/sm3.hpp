@@ -8,29 +8,22 @@
 #define FF1(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define GG0(x, y, z) ((x) ^ (y) ^ (z))
 #define GG1(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
-#define HH1(N, a, b, c, d, e, f, g, h, w, K, j) {         \
-    r = ROL32(a, 12);                                     \
-    s = r + e + K[j];                                     \
-    t = ROL32(s,  7);                                     \
-    u = FF##N(a, b, c) + d + (t ^ r) + (w[j] ^ w[j + 4]); \
-    v = GG##N(e, f, g) + h +  t      +  w[j]            ; \
-    b = ROL32(b,  9);                                     \
-    f = ROL32(f, 19);                                     \
-    d =     u ;                                           \
-    h = PPE(v);                                           \
-}
-#define HH4(N, a, b, c, d, e, f, g, h, w, K, i) {         \
-    HH1(N, a, b, c, d, e, f, g, h, w, K, i     );         \
-    HH1(N, d, a, b, c, h, e, f, g, w, K, i +  1);         \
-    HH1(N, c, d, a, b, g, h, e, f, w, K, i +  2);         \
-    HH1(N, b, c, d, a, f, g, h, e, w, K, i +  3);         \
-}
-#define HHX(N, a, b, c, d, e, f, g, h, w, K, i) {         \
-    HH4(N, a, b, c, d, e, f, g, h, w, K, i     );         \
-    HH4(N, a, b, c, d, e, f, g, h, w, K, i +  4);         \
-    HH4(N, a, b, c, d, e, f, g, h, w, K, i +  8);         \
-    HH4(N, a, b, c, d, e, f, g, h, w, K, i + 12);         \
-}
+#define HHN(N, a, b, c, d, e, f, g, h, w, K, X, Y)            \
+    for (int j = X; j < Y; j++) {                             \
+        r = ROL32(a, 12);                                     \
+        s = r + e + K[j];                                     \
+        t = ROL32(s,  7);                                     \
+        u = FF##N(a, b, c) + d + (t ^ r) + (w[j] ^ w[j + 4]); \
+        v = GG##N(e, f, g) + h +  t      +  w[j]            ; \
+        d = c;                                                \
+        h = g;                                                \
+        c = ROL32(b,  9);                                     \
+        g = ROL32(f, 19);                                     \
+        b = a;                                                \
+        f = e;                                                \
+        a =     u ;                                           \
+        e = PPE(v);                                           \
+    }
 struct SM3Inner {
     static constexpr auto K = [](uint32_t KK0, uint32_t KK1) {
         std::array<uint32_t, 64> K = {};
@@ -64,10 +57,8 @@ struct SM3Inner {
             t = w[j - 16] ^ w[j - 9] ^ ROL32(w[j -  3], 15);
             w[j] = PPW(t) ^ w[j - 6] ^ ROL32(w[j - 13],  7);
         }
-        HHX(0, A, B, C, D, E, F, G, H, w, K,  0);
-        HHX(1, A, B, C, D, E, F, G, H, w, K, 16);
-        HHX(1, A, B, C, D, E, F, G, H, w, K, 32);
-        HHX(1, A, B, C, D, E, F, G, H, w, K, 48);
+        HHN(0, A, B, C, D, E, F, G, H, w, K,  0, 16);
+        HHN(1, A, B, C, D, E, F, G, H, w, K, 16, 64);
         h[0] ^= A;
         h[1] ^= B;
         h[2] ^= C;
@@ -124,6 +115,4 @@ public:
 #undef FF1
 #undef GG0
 #undef GG1
-#undef HH1
-#undef HH4
-#undef HHX
+#undef HHN
