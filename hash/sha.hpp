@@ -5,10 +5,10 @@
 #define FF1(x, y, z) ((x) ^ (y) ^ (z))
 #define FF2(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define FF3(x, y, z) ((x) ^ (y) ^ (z))
-#define KK0 0x5A827999
-#define KK1 0x6ED9EBA1
-#define KK2 0x8F1BBCDC
-#define KK3 0xCA62C1D6
+#define KK0 0x5A827999U
+#define KK1 0x6ED9EBA1U
+#define KK2 0x8F1BBCDCU
+#define KK3 0xCA62C1D6U
 #define GG1(N, a, b, c, d, e, w, i) {                     \
     e = ROL32(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
     b = ROL32(b, 30);                                     \
