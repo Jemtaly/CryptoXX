@@ -1,7 +1,7 @@
 #pragma once
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define RTL32(x, n) ((x) << ((n) & 31) | (x) >> ((32 - (n)) & 31))
+#define RLX32(x, n) ((x) << ((n) & 31) | (x) >> (-(n) & 31))
 #define PPE(x) ((x) ^ ROL32(x,  9) ^ ROL32(x, 17))
 #define PPW(x) ((x) ^ ROL32(x, 15) ^ ROL32(x, 23))
 #define FF0(x, y, z) ((x) ^ (y) ^ (z))
@@ -12,7 +12,7 @@
 #define KK1 0x7A879D8AU
 #define HH1(N, a, b, c, d, e, f, g, h, w, j) {            \
     r = ROL32(a, 12);                                     \
-    s = r + e + RTL32(KK##N, j);                          \
+    s = r + e + RLX32(KK##N, j);                          \
     t = ROL32(s,  7);                                     \
     u = FF##N(a, b, c) + d + (t ^ r) + (w[j] ^ w[j + 4]); \
     v = GG##N(e, f, g) + h +  t      +  w[j]            ; \
