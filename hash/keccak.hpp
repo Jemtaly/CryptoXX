@@ -3,18 +3,18 @@
 #define ROL64(x, n) ((x) << (n) | (x) >> (64 - (n)))
 #define RLX64(x, n) ((x) << ((n) & 63) | (x) >> (-(n) & 63))
 #define UNROLL_5(F) { F(0); F(1); F(2); F(3); F(4); }
-#define UNROLL_X(F) { \
+#define UNROLL_X(F) {                            \
     F(0, 0); F(0, 1); F(0, 2); F(0, 3); F(0, 4); \
     F(1, 0); F(1, 1); F(1, 2); F(1, 3); F(1, 4); \
     F(2, 0); F(2, 1); F(2, 2); F(2, 3); F(2, 4); \
     F(3, 0); F(3, 1); F(3, 2); F(3, 3); F(3, 4); \
     F(4, 0); F(4, 1); F(4, 2); F(4, 3); F(4, 4); \
 }
-#define CA(x) C[x] = A[0][x] ^ A[1][x] ^ A[2][x] ^ A[3][x] ^ A[4][x]
-#define DC(x) D[x] = C[(x + 4) % 5] ^ ROL64(C[(x + 1) % 5], 1)
-#define AD(x, y) A[y][x] ^= D[x]
-#define BA(x, y) B[(2 * x + 3 * y) % 5][y] = RLX64(A[y][x], r[y][x])
-#define AB(x, y) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
+#define C_A(   x) C[x] = A[0][x] ^ A[1][x] ^ A[2][x] ^ A[3][x] ^ A[4][x]
+#define D_C(   x) D[x] = C[(x + 4) % 5] ^ ROL64(C[(x + 1) % 5], 1)
+#define A_D(y, x) A[y][x] ^= D[x]
+#define B_A(y, x) B[(2 * x + 3 * y) % 5][y] = RLX64(A[y][x], r[y][x])
+#define A_B(y, x) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
 struct KeccakInner {
     static constexpr uint64_t RC[24] = {
         0x0000000000000001, 0x0000000000008082, 0x800000000000808A,
@@ -39,16 +39,16 @@ struct KeccakInner {
             uint64_t C[5];
             uint64_t D[5];
             uint64_t B[5][5];
-            UNROLL_5(CA);
-            UNROLL_5(DC);
-            UNROLL_X(AD);
-            UNROLL_X(BA);
-            UNROLL_X(AB);
+            UNROLL_5(C_A);
+            UNROLL_5(D_C);
+            UNROLL_X(A_D);
+            UNROLL_X(B_A);
+            UNROLL_X(A_B);
             A[0][0] ^= RC[i];
         }
     }
 };
-template <bool MODE, int DIG, int BLK>
+template <bool X, int DIG, int BLK>
 class KeccakTmpl {
     KeccakInner inner;
 public:
@@ -65,7 +65,7 @@ public:
         for (int i = 0; i < len; i++) {
             ((uint8_t*)copy.A)[i] ^= blk[i];
         }
-        ((uint8_t*)copy.A)[len] ^= MODE ? 0x06 : 0x01;
+        ((uint8_t*)copy.A)[len] ^= X ? 0x06 : 0x01;
         ((uint8_t*)copy.A)[BLK - 1] ^= 0x80;
         copy.keccak_f();
         for (int i = 0; i < DIG; i++) {
@@ -77,8 +77,8 @@ template <int BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 51
 using Keccak = KeccakTmpl<0, BIT / 8, (1600 - BIT * 2) / 8>;
 template <int BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
 using SHA3   = KeccakTmpl<1, BIT / 8, (1600 - BIT * 2) / 8>;
-#undef CA
-#undef DC
-#undef AD
-#undef BA
-#undef AB
+#undef C_A
+#undef D_C
+#undef A_D
+#undef B_A
+#undef A_B
