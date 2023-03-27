@@ -21,6 +21,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - SM3
   - SHA-1
   - SHA-2 (SHA-256, SHA-224, SHA-512, SHA-384)
+  - SHA-3 (and Keccak)
   - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
@@ -30,7 +31,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
-clang++ cipher.cpp -std=c++17 -O2 -o cipher.exe
+clang++ cipher.cpp -std=c++20 -O2 -o cipher.exe
 ```
 
 ```sh
@@ -46,7 +47,7 @@ clang++ cipher.cpp -std=c++17 -O2 -o cipher.exe
 - hash.cpp
 
 ```sh
-clang++ hash.cpp -std=c++17 -O2 -o hash.exe
+clang++ hash.cpp -std=c++20 -O2 -o hash.exe
 ```
 
 ```sh
