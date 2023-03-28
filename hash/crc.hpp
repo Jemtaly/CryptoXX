@@ -19,8 +19,7 @@ public:
     static constexpr size_t BLOCK_SIZE = 1;
     static constexpr size_t DIGEST_SIZE = sizeof(digest_t);
     void push(uint8_t const *src) {
-        sta ^= src[0];
-        sta = sta >> 8 ^ box[sta & 0xff];
+        sta = sta >> 8 ^ box[sta & 0xff ^ src[0]];
     }
     void test(uint8_t const *src, size_t len, uint8_t *dst) const {
         digest_t dig = sta ^ CXV;
