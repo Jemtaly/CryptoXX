@@ -21,7 +21,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - SM3
   - SHA-1
   - SHA-2 (SHA-256, SHA-224, SHA-512, SHA-384)
-  - SHA-3 (and Keccak)
+  - SHA-3, Keccak, SHAKE-128, SHAKE-256
   - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
