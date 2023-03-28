@@ -1,46 +1,33 @@
 #pragma once
+#include <array>
 #include "hash.hpp"
-template <size_t N>
+template <std::unsigned_integral digest_t, digest_t EXP, digest_t CIV, digest_t CXV>
 class CRC {
-    uint8_t box[256][N];
-    uint8_t sta[N];
-    uint8_t xrv[N];
+    static constexpr auto box = []() {
+        std::array<digest_t, 256> box;
+        for (int i = 0; i < 256; i++) {
+            digest_t sta = i;
+            for (int j = 0; j < 8; j++) {
+                sta = sta >> 1 ^ (sta & 1 ? EXP : 0);
+            }
+            box[i] = sta;
+        }
+        return box;
+    }();
+    digest_t sta = CIV;
 public:
     static constexpr size_t BLOCK_SIZE = 1;
-    static constexpr size_t NEST_SIZE = N;
-    CRC(uint8_t const *exp, uint8_t const *iv, uint8_t const *xv):
-        box{} {
-        memcpy(xrv, xv, N);
-        memcpy(sta, iv, N);
-        for (int itr = 0; itr < 256; itr++) {
-            uint8_t *ref = &box[itr];
-            ref[0] = itr;
-            for (int i = 0; i < 8; i++) {
-                uint8_t per = 0;
-                for (size_t j = N - 1; j < N; j--) {
-                    uint8_t tmp = ref[j] & 1;
-                    ref[j] = ref[j] >> 1 | per << 7;
-                    per = tmp;
-                }
-                if (per) {
-                    for (size_t j = 0; j < N; j++) {
-                        ref[j] ^= exp[j];
-                    }
-                }
-            }
-        }
-    }
+    static constexpr size_t DIGEST_SIZE = sizeof(digest_t);
     void push(uint8_t const *src) {
-        uint8_t const *ref = &box[sta[0] ^ src[0]];
-        uint8_t const *st1 = &sta[1];
-        for (size_t i = 0; i < N - 1; i++) {
-            sta[i] = ref[i] ^ st1[i];
-        }
-        sta[N - 1] = ref[N - 1];
+        sta ^= src[0];
+        sta = sta >> 8 ^ box[sta & 0xff];
     }
     void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        for (size_t i = 0; i < N; i++) {
-            dst[i] = xrv[i] ^ sta[i];
+        digest_t dig = sta ^ CXV;
+        for (int i = 0; i < sizeof(digest_t); i++) {
+            dst[i] = dig >> (sizeof(digest_t) - i - 1) * 8;
         }
     }
 };
+using CRC32 = CRC<uint32_t, 0xedb88320, 0xffffffff, 0xffffffff>;
+using CRC64 = CRC<uint64_t, 0xc96c5795d7870f42, 0xffffffffffffffff, 0xffffffffffffffff>;
