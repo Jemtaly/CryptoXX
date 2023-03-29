@@ -48,7 +48,7 @@ struct KeccakInner {
         }
     }
 };
-template <uint8_t PAD_BYTE, int DIG, int BLK>
+template <uint8_t PAD_BYTE, int BLK, int DIG>
 class KeccakTmpl {
     KeccakInner inner;
 public:
@@ -74,11 +74,11 @@ public:
     }
 };
 template <int BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
-using Keccak = KeccakTmpl<0x01, BIT / 8, (1600 - BIT * 2) / 8>;
+using Keccak = KeccakTmpl<0x01, (1600 - BIT * 2) / 8, BIT / 8>;
 template <int BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
-using SHA3   = KeccakTmpl<0x06, BIT / 8, (1600 - BIT * 2) / 8>;
+using SHA3   = KeccakTmpl<0x06, (1600 - BIT * 2) / 8, BIT / 8>;
 template <int BIT, int OUT> requires (BIT == 128 || BIT == 256)
-using SHAKE  = KeccakTmpl<0x1f, OUT / 8, (1600 - BIT * 2) / 8>;
+using SHAKE  = KeccakTmpl<0x1f, (1600 - BIT * 2) / 8, OUT / 8>;
 #undef C_A
 #undef D_C
 #undef A_D

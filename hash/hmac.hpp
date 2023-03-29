@@ -7,25 +7,25 @@ requires (DIG < BLK)
 class HMAC {
     Hash inner;
     Hash outer;
-    uint8_t key[BLK] = {};
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
-    HMAC(uint8_t const *kin, size_t len) {
+    HMAC(uint8_t const *key, size_t len) {
+        uint8_t buf[BLK] = {};
         if (len > BLK) {
             HashWrapper<Hash> tmp;
-            tmp.update(kin, kin + len);
-            tmp.digest(key);
+            tmp.update(key, key + len);
+            tmp.digest(buf);
         } else {
-            memcpy(key, kin, len);
+            memcpy(buf, key, len);
         }
-        uint8_t bfi[BLK], bfo[BLK];
+        uint8_t ibf[BLK], obf[BLK];
         for (int j = 0; j < BLK; j++) {
-            bfi[j] = key[j] ^ 0x36;
-            bfo[j] = key[j] ^ 0x5c;
+            ibf[j] = buf[j] ^ 0x36;
+            obf[j] = buf[j] ^ 0x5c;
         }
-        inner.push(bfi);
-        outer.push(bfo);
+        inner.push(ibf);
+        outer.push(obf);
     }
     void push(uint8_t const *src) {
         inner.push(src);
