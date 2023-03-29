@@ -26,7 +26,9 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
 
 ## Compiling and running the sample program / 编译并运行示例程序
 
-- cipher.cpp
+### cipher.cpp
+
+- Compile
 
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
@@ -34,28 +36,68 @@ cd CryptoXX
 clang++ cipher.cpp -std=c++20 -O2 -o cipher.exe
 ```
 
+- Usage
+
+```txt
+Description: SM4/AES Encryption/Decryption Tool
+Usage: cipher.exe [-i INFILE] [-o OUTFILE] (-c IV | -e | -d) (-S KEY | -4 KEY | -6 KEY | -8 KEY)
+Options:
+  -i INFILE   input file (default: stdin)
+  -o OUTFILE  output file (default: stdout)
+  -c IV       counter mode (IV: 128-bit IV in hex)
+  -e          encrypt mode
+  -d          decrypt mode
+  -S KEY      SM4 (KEY: 128-bit key in hex)
+  -4 KEY      AES-128 (KEY: 128-bit key in hex)
+  -6 KEY      AES-192 (KEY: 192-bit key in hex)
+  -8 KEY      AES-256 (KEY: 256-bit key in hex)
+```
+
 ```sh
 ./cipher.exe -6 0123456789abcdeffedcba9876543210 -e -i in.txt -o out.txt
 # Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.txt.
-# (-4 means AES-128, -6 means AES-192, -8 means AES-256, -S means SM4, KEY and IV are entered in hexadecimal format)
+
 ./cipher.exe -6 0123456789abcdeffedcba9876543210 -d -i out.txt
 # Decrypt out.txt and output to command line.
+
 ./cipher.exe -S 0123456789abcdeffedcba9876543210 -c 0123456789abcdeffedcba9876543210 -o out.txt
 # Read from command line and encrypt/decrypt in CTR mode with the SM4 algorithm.
 ```
 
-- hash.cpp
+### hash.cpp
+
+- Compile
 
 ```sh
 clang++ hash.cpp -std=c++20 -O2 -o hash.exe
 ```
 
+- Usage
+
+```
+Description: HMAC/Hash Calculator
+Usage: hash.exe [FILE] (-5 | -6)
+       hash.exe [FILE] (-M | -X | -7 | -8 | -3 | -4 | -S) [-H LEN KEY]
+Options:
+  FILE        input file (default: stdin)
+  -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)
+  -M          MD5
+  -X          SHA-1
+  -7          SHA-224
+  -8          SHA-256
+  -3          SHA-384
+  -4          SHA-512
+  -S          SM3
+  -5          CRC-32
+  -6          CRC-64
+```
+
 ```sh
 cat in.txt | ./hash.exe -M
 # Output the MD5 checksum of in.txt.
-# (-M for MD5, -S for SM3, -X for SHA-1, -8 for SHA-256, -7 for SHA-224, -4 for SHA-512, -3 for SHA-384)
-./hash.exe -8 -i ./hash.exe
-# Output the SHA-256 checksum of hash.exe.
+
+./hash.exe -8 -H 3 6b6579 in.txt
+# Output the SHA-256-HMAC of in.txt with key "\x6b\x65\x79" ("key").
 ```
 
 ## Library usage documentation / 密码库使用说明
