@@ -14,6 +14,8 @@
 #define REC_ENC 128
 #define REC_DEC 256
 #define REC_CTR 512
+#define REC_ALG (REC_SM4 | REC_128 | REC_256 | REC_192)
+#define REC_MOD (REC_ENC | REC_DEC | REC_CTR)
 template <typename StreamCipher, typename... Args>
 void XXC(FILE *ifp, FILE *ofp, Args &&...args) {
     StreamCipherCrypter<StreamCipher> scc(std::forward<Args>(args)...);
@@ -71,43 +73,43 @@ int main(int argc, char *argv[]) {
     for (int i = 1; (rec & REC_ERR) == 0 && i < argc; i++) {
         if (argv[i][0] == '-') {
             if (argv[i][1] == 'c' && argv[i][2] == '\0') {
-                if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
+                if ((rec & REC_MOD) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
                     rec |= REC_CTR;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'd' && argv[i][2] == '\0') {
-                if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0) {
+                if ((rec & REC_MOD) == 0) {
                     rec |= REC_DEC;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'e' && argv[i][2] == '\0') {
-                if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0) {
+                if ((rec & REC_MOD) == 0) {
                     rec |= REC_ENC;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'S' && argv[i][2] == '\0') {
-                if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
                     rec |= REC_SM4;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
-                if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
                     rec |= REC_128;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
-                if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
                     rec |= REC_192;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
-                if ((rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
                     rec |= REC_256;
                 } else {
                     rec |= REC_ERR;
@@ -131,11 +133,22 @@ int main(int argc, char *argv[]) {
             rec |= REC_ERR;
         }
     }
-    if ((rec & (REC_CTR | REC_DEC | REC_ENC)) == 0 || (rec & (REC_SM4 | REC_128 | REC_192 | REC_256)) == 0) {
+    if ((rec & REC_MOD) == 0 || (rec & REC_ALG) == 0) {
         rec |= REC_ERR;
     }
     if ((rec & REC_ERR) != 0) {
-        fprintf(stderr, "usage: %s [-i INFILE] [-o OUTFILE] (-c IV | -e | -d) (-S KEY | -4 KEY | -6 KEY | -8 KEY)\n", argv[0]);
+        fprintf(stderr, "Description: SM4/AES Encryption/Decryption Tool\n");
+        fprintf(stderr, "Usage: %s [-i INFILE] [-o OUTFILE] (-c IV | -e | -d) (-S KEY | -4 KEY | -6 KEY | -8 KEY)\n", argv[0]);
+        fprintf(stderr, "Options:\n");
+        fprintf(stderr, "  -i INFILE   input file (default: stdin)\n");
+        fprintf(stderr, "  -o OUTFILE  output file (default: stdout)\n");
+        fprintf(stderr, "  -c IV       counter mode (IV: 128-bit IV in hex)\n");
+        fprintf(stderr, "  -e          encrypt mode\n");
+        fprintf(stderr, "  -d          decrypt mode\n");
+        fprintf(stderr, "  -S KEY      SM4 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -4 KEY      AES-128 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -6 KEY      AES-192 (KEY: 192-bit key in hex)\n");
+        fprintf(stderr, "  -8 KEY      AES-256 (KEY: 256-bit key in hex)\n");
     } else if ((rec & REC_SM4) != 0) {
         process<SM4>(rec, ifp, ofp, civ, key);
     } else if ((rec & REC_128) != 0) {
