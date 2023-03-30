@@ -6,7 +6,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
 
 ## Currently supported algorithms / 目前支持的算法
 
-- Block cipher algorithms (ECB mode and CTR mode) / 块密码算法 (ECB 模式和 CTR 模式)
+- Block cipher algorithms (ECB, CBC, CFB, OFB and CTR mode) / 块密码算法 (多种工作模式)
   - DES
   - 3DES
   - AES (AES-128, AES-192, AES-256)
@@ -15,7 +15,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - RC4
   - ZUC (祖冲之算法)
   - ChaCha20
-- Hash Algorithms / 哈希算法
+- Hash Algorithms / 哈希算法（及对应的 HMAC 算法）
   - CRC
   - MD5
   - SM3
