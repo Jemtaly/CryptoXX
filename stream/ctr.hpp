@@ -17,4 +17,6 @@ public:
         for (size_t i = BLK - 1; i < BLK && ++ctr[i] == 0; i--) {}
     }
 };
+template <class BlockCipher>
+using CTRModeCrypter = StreamCipherCrypter<CTRMode<BlockCipher>>;
 #undef BLK

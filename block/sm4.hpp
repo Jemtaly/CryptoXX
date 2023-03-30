@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-#define I2ARR(i, a) {          \
+#define PUT32(i, a) {          \
     (a)[0] = (i) >> 24       ; \
     (a)[1] = (i) >> 16 & 0xff; \
     (a)[2] = (i) >>  8 & 0xff; \
@@ -89,10 +89,10 @@ public:
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i];
             t[i + 4] = t[i] ^ LUT_S_0[a & 0xff] ^ LUT_S_1[a >> 8 & 0xff] ^ LUT_S_2[a >> 16 & 0xff] ^ LUT_S_3[a >> 24];
         }
-        I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
-        I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
-        I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
-        I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
+        PUT32(t[35], ((uint8_t(*)[4])dst)[0]);
+        PUT32(t[34], ((uint8_t(*)[4])dst)[1]);
+        PUT32(t[33], ((uint8_t(*)[4])dst)[2]);
+        PUT32(t[32], ((uint8_t(*)[4])dst)[3]);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t[36] = {
@@ -105,9 +105,9 @@ public:
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i];
             t[i + 4] = t[i] ^ LUT_S_0[a & 0xff] ^ LUT_S_1[a >> 8 & 0xff] ^ LUT_S_2[a >> 16 & 0xff] ^ LUT_S_3[a >> 24];
         }
-        I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
-        I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
-        I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
-        I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
+        PUT32(t[35], ((uint8_t(*)[4])dst)[0]);
+        PUT32(t[34], ((uint8_t(*)[4])dst)[1]);
+        PUT32(t[33], ((uint8_t(*)[4])dst)[2]);
+        PUT32(t[32], ((uint8_t(*)[4])dst)[3]);
     }
 };

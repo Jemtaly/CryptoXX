@@ -1,7 +1,7 @@
 #pragma once
 #include "block.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define I2ARR(i, a) {          \
+#define PUT32(i, a) {          \
     (a)[0] = (i) >> 24       ; \
     (a)[1] = (i) >> 16 & 0xff; \
     (a)[2] = (i) >>  8 & 0xff; \
@@ -75,10 +75,10 @@ public:
             uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i]);
             t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
         }
-        I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
-        I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
-        I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
-        I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
+        PUT32(t[35], ((uint8_t(*)[4])dst)[0]);
+        PUT32(t[34], ((uint8_t(*)[4])dst)[1]);
+        PUT32(t[33], ((uint8_t(*)[4])dst)[2]);
+        PUT32(t[32], ((uint8_t(*)[4])dst)[3]);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t[36] = {
@@ -91,9 +91,9 @@ public:
             uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i]);
             t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
         }
-        I2ARR(t[35], ((uint8_t(*)[4])dst)[0]);
-        I2ARR(t[34], ((uint8_t(*)[4])dst)[1]);
-        I2ARR(t[33], ((uint8_t(*)[4])dst)[2]);
-        I2ARR(t[32], ((uint8_t(*)[4])dst)[3]);
+        PUT32(t[35], ((uint8_t(*)[4])dst)[0]);
+        PUT32(t[34], ((uint8_t(*)[4])dst)[1]);
+        PUT32(t[33], ((uint8_t(*)[4])dst)[2]);
+        PUT32(t[32], ((uint8_t(*)[4])dst)[3]);
     }
 };

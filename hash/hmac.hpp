@@ -36,5 +36,7 @@ public:
         outer.test(buf, DIG, dst);
     }
 };
+template <class Hash>
+using HMACWrapper = HashWrapper<HMAC<Hash>>;
 #undef BLK
 #undef DIG
