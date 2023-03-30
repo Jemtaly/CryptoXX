@@ -15,7 +15,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - RC4
   - ZUC (祖冲之算法)
   - ChaCha20
-- Hash Algorithms / 哈希算法（及对应的 HMAC 算法）
+- Hashing Algorithms (and the corresponding HMAC algorithms) / 哈希算法（及对应的 HMAC 算法）
   - CRC
   - MD5
   - SM3
