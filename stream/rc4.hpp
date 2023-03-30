@@ -17,11 +17,11 @@ public:
             m[j] = temp;
         }
     }
-    void generate(uint8_t *dst) {
+    void generate(uint8_t *buf) {
         uint8_t a = m[x += 1];
         uint8_t b = m[y += a];
         m[x] = b;
         m[y] = a;
-        *dst = m[a + b & 255];
+        *buf = m[a + b & 255];
     }
 };

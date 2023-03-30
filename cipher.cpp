@@ -2,11 +2,10 @@
 #include "block/aes.hpp"
 #include "block/sm4.hpp"
 #include "block/cbc.hpp"
-#include "stream/cfb.hpp"
+#include "async/cfb.hpp"
 #include "stream/ofb.hpp"
 #include "stream/ctr.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
-#define SEC StreamCipher::SECTION_SIZE
 #define BUFSIZE 65536
 #define REC_ERR 1
 #define REC_OFP 2
@@ -31,15 +30,15 @@ void sc_xxc(FILE *ifp, FILE *ofp, Args &&...args) {
     uint8_t buf[BUFSIZE];
     while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
-template <typename StreamCipher, typename... Args>
-void sc_enc(FILE *ifp, FILE *ofp, Args &&...args) {
-    StreamCipherEncrypter<StreamCipher> scc(std::forward<Args>(args)...);
+template <typename AsyncCipher, typename... Args>
+void ac_enc(FILE *ifp, FILE *ofp, Args &&...args) {
+    AsyncCipherEncrypter<AsyncCipher> scc(std::forward<Args>(args)...);
     uint8_t buf[BUFSIZE];
     while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
-template <typename StreamCipher, typename... Args>
-void sc_dec(FILE *ifp, FILE *ofp, Args &&...args) {
-    StreamCipherDecrypter<StreamCipher> scc(std::forward<Args>(args)...);
+template <typename AsyncCipher, typename... Args>
+void ac_dec(FILE *ifp, FILE *ofp, Args &&...args) {
+    AsyncCipherDecrypter<AsyncCipher> scc(std::forward<Args>(args)...);
     uint8_t buf[BUFSIZE];
     while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
 }
@@ -70,9 +69,9 @@ void process(int rec, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *k
     } else if ((rec & REC_OFB) != 0) {
         sc_xxc<OFBMode<BlockCipher>>(ifp, ofp, civ, key);
     } else if ((rec & REC_CFB) != 0 && (rec & REC_ENC) != 0) {
-        sc_enc<CFBMode<BlockCipher>>(ifp, ofp, civ, key);
+        ac_enc<CFBMode<BlockCipher>>(ifp, ofp, civ, key);
     } else if ((rec & REC_CFB) != 0 && (rec & REC_DEC) != 0) {
-        sc_dec<CFBMode<BlockCipher>>(ifp, ofp, civ, key);
+        ac_dec<CFBMode<BlockCipher>>(ifp, ofp, civ, key);
     } else if ((rec & REC_CBC) != 0 && (rec & REC_ENC) != 0) {
         bc_enc<CBCMode<BlockCipher>>(ifp, ofp, civ, key);
     } else if ((rec & REC_CBC) != 0 && (rec & REC_DEC) != 0) {

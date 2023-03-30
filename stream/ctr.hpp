@@ -3,7 +3,7 @@
 #define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>
 class CTRMode {
-    BlockCipher bc;
+    BlockCipher const bc;
     uint8_t ctr[BLK];
 public:
     static constexpr size_t SECTION_SIZE = BLK;
@@ -12,8 +12,8 @@ public:
         bc(std::forward<vals_t>(vals)...) {
         memcpy(ctr, civ, BLK);
     }
-    void generate(uint8_t *dst) {
-        bc.encrypt(ctr, dst);
+    void generate(uint8_t *buf) {
+        bc.encrypt(ctr, buf);
         for (size_t i = BLK - 1; i < BLK && ++ctr[i] == 0; i--) {}
     }
 };

@@ -3,7 +3,7 @@
 #define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>
 class OFBMode {
-    BlockCipher bc;
+    BlockCipher const bc;
     uint8_t ofb[BLK];
 public:
     static constexpr size_t SECTION_SIZE = BLK;
@@ -12,9 +12,9 @@ public:
         bc(std::forward<vals_t>(vals)...) {
         memcpy(ofb, civ, BLK);
     }
-    void generate(uint8_t *dst) {
-        bc.encrypt(ofb, dst);
-        memcpy(ofb, dst, BLK);
+    void generate(uint8_t *buf) {
+        bc.encrypt(ofb, buf);
+        memcpy(ofb, buf, BLK);
     }
 };
 template <class BlockCipher>

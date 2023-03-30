@@ -3,7 +3,7 @@
 #include <string.h>
 #include <utility> // std::forward
 #define SEC StreamCipher::SECTION_SIZE
-template <class StreamCipher> // Synchronous Stream Cipher
+template <class StreamCipher>
 class StreamCipherCrypter {
     StreamCipher sc;
     size_t use;
@@ -22,56 +22,6 @@ public:
         }
         for (; src < end; ++use, ++src, ++dst) {
             *dst = *src ^ buf[use];
-        }
-        return dst;
-    }
-};
-template <class StreamCipher> // Self Synchronous Stream Cipher
-class StreamCipherEncrypter {
-    StreamCipher sc;
-    size_t use;
-    uint8_t cfb[SEC];
-public:
-    template <class... vals_t>
-    StreamCipherEncrypter(uint8_t const *civ, vals_t &&...vals):
-        sc(std::forward<vals_t>(vals)...), use(SEC) {
-        memcpy(cfb, civ, SEC);
-    }
-    uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
-        while (SEC + src < end + use) {
-            for (; use < SEC; ++use, ++src, ++dst) {
-                cfb[use] = *dst = *src ^ cfb[use];
-            }
-            sc.generate(cfb, cfb);
-            use -= SEC;
-        }
-        for (; src < end; ++use, ++src, ++dst) {
-            cfb[use] = *dst = *src ^ cfb[use];
-        }
-        return dst;
-    }
-};
-template <class StreamCipher> // Self Synchronous Stream Cipher
-class StreamCipherDecrypter {
-    StreamCipher sc;
-    size_t use;
-    uint8_t cfb[SEC];
-public:
-    template <class... vals_t>
-    StreamCipherDecrypter(uint8_t const *civ, vals_t &&...vals):
-        sc(std::forward<vals_t>(vals)...), use(SEC) {
-        memcpy(cfb, civ, SEC);
-    }
-    uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
-        while (SEC + src < end + use) {
-            for (; use < SEC; ++use, ++src, ++dst) {
-                cfb[use] ^= *dst = *src ^ cfb[use];
-            }
-            sc.generate(cfb, cfb);
-            use -= SEC;
-        }
-        for (; src < end; ++use, ++src, ++dst) {
-            cfb[use] ^= *dst = *src ^ cfb[use];
         }
         return dst;
     }

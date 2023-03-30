@@ -18,7 +18,7 @@ public:
             key    [4], key    [5], key    [6], key    [7],
             counter[0], counter[1], counter[2], counter[3],
         } {}
-    void generate(uint8_t *dst) {
+    void generate(uint8_t *buf) {
         uint32_t state[16] = {
             input[0x0], input[0x1], input[0x2], input[0x3],
             input[0x4], input[0x5], input[0x6], input[0x7],
@@ -36,7 +36,7 @@ public:
             QTR_RND(state,  3,  4,  9, 14);
         }
         for (int i = 0; i < 16; i++) {
-            ((uint32_t *)dst)[i] = state[i] + input[i];
+            ((uint32_t *)buf)[i] = state[i] + input[i];
         }
         for (int i = 12; i < 16 && ++input[i] == 0; i++) {} // increment counter
     }

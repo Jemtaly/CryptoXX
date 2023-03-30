@@ -92,8 +92,8 @@ public:
         }
         update_all<0>();
     }
-    void generate(uint8_t *dst) {
+    void generate(uint8_t *buf) {
         update_all<0>();
-        *(uint32_t *)dst = w ^ x3;
+        *(uint32_t *)buf = w ^ x3;
     }
 };
