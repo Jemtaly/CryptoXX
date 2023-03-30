@@ -40,17 +40,22 @@ clang++ cipher.cpp -std=c++20 -O2 -o cipher.exe
 
 ```txt
 Description: SM4/AES Encryption/Decryption Tool
-Usage: cipher.exe [-i INFILE] [-o OUTFILE] (-c IV | -e | -d) (-S KEY | -4 KEY | -6 KEY | -8 KEY)
+Usage: cipher.exe (-S KEY | -4 KEY | -6 KEY | -8 KEY)
+       [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]
 Options:
-  -i INFILE   input file (default: stdin)
-  -o OUTFILE  output file (default: stdout)
-  -c IV       counter mode (IV: 128-bit IV in hex)
-  -e          encrypt mode
-  -d          decrypt mode
   -S KEY      SM4 (KEY: 128-bit key in hex)
   -4 KEY      AES-128 (KEY: 128-bit key in hex)
   -6 KEY      AES-192 (KEY: 192-bit key in hex)
   -8 KEY      AES-256 (KEY: 256-bit key in hex)
+  -e          encryption
+  -d          decryption
+  -E          ECB mode (default)
+  -N IV       CTR mode (IV: 128-bit IV in hex)
+  -O IV       OFB mode (IV: 128-bit IV in hex)
+  -C IV       CFB mode (IV: 128-bit IV in hex)
+  -H IV       CBC mode (IV: 128-bit IV in hex)
+  -i INFILE   input file (default: stdin)
+  -o OUTFILE  output file (default: stdout)
 ```
 
 ```sh
