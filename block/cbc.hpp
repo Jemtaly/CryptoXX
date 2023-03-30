@@ -3,7 +3,7 @@
 #define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>
 class CBCMode {
-    BlockCipher bc;
+    BlockCipher const bc;
     uint8_t rec[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
@@ -13,15 +13,17 @@ public:
         memcpy(rec, civ, BLK);
     }
     void encrypt(uint8_t const *src, uint8_t *dst) {
-        for (size_t i = 0; i < BLK; i++)
+        for (size_t i = 0; i < BLK; i++) {
             dst[i] = src[i] ^ rec[i];
+        }
         bc.encrypt(dst, dst);
         memcpy(rec, dst, BLK);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) {
         bc.decrypt(src, dst);
-        for (size_t i = 0; i < BLK; i++)
+        for (size_t i = 0; i < BLK; i++) {
             dst[i] ^= rec[i];
+        }
         memcpy(rec, src, BLK);
     }
 };
