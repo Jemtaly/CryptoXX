@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
+#define RLX32(x, n) ((x) << ((n) & 31) | (x) >> (-(n) & 31))
 #define GET32(a) (                                    \
     (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
     (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
@@ -44,7 +45,7 @@ class SM4 {
         std::array<uint32_t, 256> LUT_S_N = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 2 ^ S_BOX[i] << 10 ^ S_BOX[i] << 18 ^ S_BOX[i] << 24;
-            LUT_S_N[i] = b << 8 * N | b >> (32 - 8 * N) % 32;
+            LUT_S_N[i] = RLX32(b, 8 * N);
         }
         return LUT_S_N;
     };
@@ -52,7 +53,7 @@ class SM4 {
         std::array<uint32_t, 256> LUT_K_N = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 13 ^ S_BOX[i] << 23;
-            LUT_K_N[i] = b << 8 * N | b >> (32 - 8 * N) % 32;
+            LUT_K_N[i] = RLX32(b, 8 * N);
         }
         return LUT_K_N;
     };

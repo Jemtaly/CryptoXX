@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include "block.hpp"
+#define ROL28(a, n) ((a) << (n) & 0xFFFFFFF | (a) >> (28 - (n)))
 typedef uint8_t bits_t;
 class DES {
     // choose the smallest type that can hold the number of bits
@@ -145,8 +146,8 @@ public:
         uint<56> t = permutation<64, 56>(*(uint<64> *)mk, PC_1);
         uint<28> l = t >> 28, r = t & 0xfffffff;
         for (int i = 0; i < 16; i++) {
-            l = l << SHIFT[i] & 0xfffffff | l >> (28 - SHIFT[i]);
-            r = r << SHIFT[i] & 0xfffffff | r >> (28 - SHIFT[i]);
+            l = ROL28(l, SHIFT[i]);
+            r = ROL28(r, SHIFT[i]);
             rk[i] = permutation<56, 48>((uint<56>)l << 28 | r, PC_2);
         }
     }

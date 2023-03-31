@@ -160,17 +160,17 @@ protected:
 public:
     static constexpr size_t BLOCK_SIZE = 16;
 };
-template <int RN>
+template <int N>
 class AESTmpl: public AESBase {
 protected:
-    uint32_t rk[RN + 1][4];
+    uint32_t rk[N + 1][4];
     AESTmpl() = default; // not instantiable
 public:
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         memcpy(dst, src, BLOCK_SIZE);
         int round = 0;
         add_round_key(dst, rk[round]);
-        while (++round < RN) {
+        while (++round < N) {
             sub_bytes_enc(dst);
             shift_rows_enc(dst);
             mix_columns_enc(dst);
@@ -182,7 +182,7 @@ public:
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         memcpy(dst, src, BLOCK_SIZE);
-        int round = RN;
+        int round = N;
         add_round_key(dst, rk[round]);
         while (--round > 0) {
             shift_rows_dec(dst);
