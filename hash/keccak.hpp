@@ -56,20 +56,20 @@ public:
     constexpr static int DIGEST_SIZE = DIG;
     void push(uint8_t const *blk) {
         for (int i = 0; i < BLK; i++) {
-            ((uint8_t*)inner.A)[i] ^= blk[i];
+            ((uint8_t *)inner.A)[i] ^= blk[i];
         }
         inner.keccak_f();
     }
     void test(uint8_t const *blk, int len, uint8_t *out) const {
         KeccakInner copy = inner;
         for (int i = 0; i < len; i++) {
-            ((uint8_t*)copy.A)[i] ^= blk[i];
+            ((uint8_t *)copy.A)[i] ^= blk[i];
         }
-        ((uint8_t*)copy.A)[len] ^= PAD_BYTE;
-        ((uint8_t*)copy.A)[BLK - 1] ^= 0x80;
+        ((uint8_t *)copy.A)[len] ^= PAD_BYTE;
+        ((uint8_t *)copy.A)[BLK - 1] ^= 0x80;
         copy.keccak_f();
         for (int i = 0; i < DIG; i++) {
-            out[i] = ((uint8_t*)copy.A)[i];
+            out[i] = ((uint8_t *)copy.A)[i];
         }
     }
 };

@@ -1,16 +1,17 @@
 #pragma once
 #include "block.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define PUT32(i, a) {          \
+#define GET32(a) (                                    \
+    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
+    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
+)
+#define PUT32(a, i) {          \
     (a)[0] = (i) >> 24       ; \
     (a)[1] = (i) >> 16 & 0xff; \
     (a)[2] = (i) >>  8 & 0xff; \
     (a)[3] = (i)       & 0xff; \
 }
 class SM4 {
-    static constexpr uint32_t FK[4] = {
-        0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
-    };
     static constexpr uint32_t CK[32] = {
         0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269,
         0x70777e85, 0x8c939aa1, 0xa8afb6bd, 0xc4cbd2d9,
@@ -49,51 +50,49 @@ class SM4 {
         v[3] = S_BOX[u[3]];
         return b;
     }
-    uint32_t rk[32];
+    uint32_t k[36] = {
+        0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     SM4(uint8_t const *mk) {
-        uint32_t t[36] = {
-            (uint32_t)(mk[0x0] << 24 | mk[0x1] << 16 | mk[0x2] << 8 | mk[0x3]) ^ FK[0],
-            (uint32_t)(mk[0x4] << 24 | mk[0x5] << 16 | mk[0x6] << 8 | mk[0x7]) ^ FK[1],
-            (uint32_t)(mk[0x8] << 24 | mk[0x9] << 16 | mk[0xa] << 8 | mk[0xb]) ^ FK[2],
-            (uint32_t)(mk[0xc] << 24 | mk[0xd] << 16 | mk[0xe] << 8 | mk[0xf]) ^ FK[3],
-        };
+        k[0] ^= GET32(mk + 0x0);
+        k[1] ^= GET32(mk + 0x4);
+        k[2] ^= GET32(mk + 0x8);
+        k[3] ^= GET32(mk + 0xc);
         for (int i = 0; i < 32; i++) {
-            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ CK[i]);
-            rk[i] = t[i + 4] = t[i] ^ b ^ ROL32(b, 13) ^ ROL32(b, 23);
+            uint32_t b = tau(k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i]);
+            k[i + 4] = k[i] ^ b ^ ROL32(b, 13) ^ ROL32(b, 23);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t t[36] = {
-            (uint32_t)(src[0x0] << 24 | src[0x1] << 16 | src[0x2] << 8 | src[0x3]),
-            (uint32_t)(src[0x4] << 24 | src[0x5] << 16 | src[0x6] << 8 | src[0x7]),
-            (uint32_t)(src[0x8] << 24 | src[0x9] << 16 | src[0xa] << 8 | src[0xb]),
-            (uint32_t)(src[0xc] << 24 | src[0xd] << 16 | src[0xe] << 8 | src[0xf]),
-        };
+        uint32_t t[36];
+        t[0] = GET32(src + 0x0);
+        t[1] = GET32(src + 0x4);
+        t[2] = GET32(src + 0x8);
+        t[3] = GET32(src + 0xc);
         for (int i = 0; i < 32; i++) {
-            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[i]);
+            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4]);
             t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
         }
-        PUT32(t[35], ((uint8_t(*)[4])dst)[0]);
-        PUT32(t[34], ((uint8_t(*)[4])dst)[1]);
-        PUT32(t[33], ((uint8_t(*)[4])dst)[2]);
-        PUT32(t[32], ((uint8_t(*)[4])dst)[3]);
+        PUT32(dst + 0x0, t[35]);
+        PUT32(dst + 0x4, t[34]);
+        PUT32(dst + 0x8, t[33]);
+        PUT32(dst + 0xc, t[32]);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t t[36] = {
-            (uint32_t)(src[0x0] << 24 | src[0x1] << 16 | src[0x2] << 8 | src[0x3]),
-            (uint32_t)(src[0x4] << 24 | src[0x5] << 16 | src[0x6] << 8 | src[0x7]),
-            (uint32_t)(src[0x8] << 24 | src[0x9] << 16 | src[0xa] << 8 | src[0xb]),
-            (uint32_t)(src[0xc] << 24 | src[0xd] << 16 | src[0xe] << 8 | src[0xf]),
-        };
+        uint32_t t[36];
+        t[0] = GET32(src + 0x0);
+        t[1] = GET32(src + 0x4);
+        t[2] = GET32(src + 0x8);
+        t[3] = GET32(src + 0xc);
         for (int i = 0; i < 32; i++) {
-            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ rk[31 - i]);
+            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i]);
             t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
         }
-        PUT32(t[35], ((uint8_t(*)[4])dst)[0]);
-        PUT32(t[34], ((uint8_t(*)[4])dst)[1]);
-        PUT32(t[33], ((uint8_t(*)[4])dst)[2]);
-        PUT32(t[32], ((uint8_t(*)[4])dst)[3]);
+        PUT32(dst + 0x0, t[35]);
+        PUT32(dst + 0x4, t[34]);
+        PUT32(dst + 0x8, t[33]);
+        PUT32(dst + 0xc, t[32]);
     }
 };

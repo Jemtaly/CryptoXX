@@ -2,6 +2,26 @@
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
 #define RLX32(x, n) ((x) << ((n) & 31) | (x) >> (-(n) & 31))
+#define GET32(a) (                                    \
+    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
+    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
+)
+#define PUT32(a, i) {          \
+    (a)[0] = (i) >> 24       ; \
+    (a)[1] = (i) >> 16 & 0xff; \
+    (a)[2] = (i) >>  8 & 0xff; \
+    (a)[3] = (i)       & 0xff; \
+}
+#define PUT64(a, i) {          \
+    (a)[0] = (i) >> 56       ; \
+    (a)[1] = (i) >> 48 & 0xff; \
+    (a)[2] = (i) >> 40 & 0xff; \
+    (a)[3] = (i) >> 32 & 0xff; \
+    (a)[4] = (i) >> 24 & 0xff; \
+    (a)[5] = (i) >> 16 & 0xff; \
+    (a)[6] = (i) >>  8 & 0xff; \
+    (a)[7] = (i)       & 0xff; \
+}
 #define PPE(x) ((x) ^ ROL32(x,  9) ^ ROL32(x, 17))
 #define PPW(x) ((x) ^ ROL32(x, 15) ^ ROL32(x, 23))
 #define FF0(x, y, z) ((x) ^ (y) ^ (z))
@@ -42,8 +62,7 @@ struct SM3Inner {
         uint32_t H = h[7];
         uint32_t w[68], t, r, s, u, v;
         for (int j =  0; j < 16; j++) {
-            uint8_t const *ref = &src[j << 2];
-            w[j] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
+            w[j] = GET32(src + 4 * j);
         }
         for (int j = 16; j < 68; j++) {
             t = w[j - 16] ^ w[j - 9] ^ ROL32(w[j -  3], 15);
@@ -81,23 +100,11 @@ public:
             copy.compress(tmp);
             memset(tmp, 0, 56);
         }
-        uint64_t ctrxx = counter + 8 * len;
-        uint8_t *ctref = (uint8_t *)&ctrxx;
-        tmp[63] = ctref[0];
-        tmp[62] = ctref[1];
-        tmp[61] = ctref[2];
-        tmp[60] = ctref[3];
-        tmp[59] = ctref[4];
-        tmp[58] = ctref[5];
-        tmp[57] = ctref[6];
-        tmp[56] = ctref[7];
+        uint64_t cpad = counter + 8 * len;
+        PUT64(tmp + 56, cpad);
         copy.compress(tmp);
         for (int j = 0; j < 8; j++) {
-            uint8_t *ref = &dst[j << 2];
-            ref[0] = copy.h[j] >> 24;
-            ref[1] = copy.h[j] >> 16;
-            ref[2] = copy.h[j] >>  8;
-            ref[3] = copy.h[j]      ;
+            PUT32(dst + 4 * j, copy.h[j]);
         }
     }
 };

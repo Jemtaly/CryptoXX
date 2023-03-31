@@ -1,6 +1,26 @@
 #pragma once
 #include "hash.hpp"
 #define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
+#define GET32(a) (                                    \
+    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
+    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
+)
+#define PUT32(a, i) {          \
+    (a)[0] = (i) >> 24       ; \
+    (a)[1] = (i) >> 16 & 0xff; \
+    (a)[2] = (i) >>  8 & 0xff; \
+    (a)[3] = (i)       & 0xff; \
+}
+#define PUT64(a, i) {          \
+    (a)[0] = (i) >> 56       ; \
+    (a)[1] = (i) >> 48 & 0xff; \
+    (a)[2] = (i) >> 40 & 0xff; \
+    (a)[3] = (i) >> 32 & 0xff; \
+    (a)[4] = (i) >> 24 & 0xff; \
+    (a)[5] = (i) >> 16 & 0xff; \
+    (a)[6] = (i) >>  8 & 0xff; \
+    (a)[7] = (i)       & 0xff; \
+}
 #define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define FF1(x, y, z) ((x) ^ (y) ^ (z))
 #define FF2(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
@@ -38,8 +58,7 @@ struct SHAInner {
         uint32_t e = h[4];
         uint32_t w[80], t;
         for (int i =  0; i < 16; i++) {
-            uint8_t const *ref = &src[i << 2];
-            w[i] = ref[0] << 24 | ref[1] << 16 | ref[2] << 8 | ref[3];
+            w[i] = GET32(src + 4 * i);
         }
         for (int i = 16; i < 80; i++) {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
@@ -76,23 +95,11 @@ public:
             copy.compress(tmp);
             memset(tmp, 0, 56);
         }
-        uint64_t ctrxx = counter + 8 * len;
-        uint8_t *ctref = (uint8_t *)&ctrxx;
-        tmp[63] = ctref[0];
-        tmp[62] = ctref[1];
-        tmp[61] = ctref[2];
-        tmp[60] = ctref[3];
-        tmp[59] = ctref[4];
-        tmp[58] = ctref[5];
-        tmp[57] = ctref[6];
-        tmp[56] = ctref[7];
+        uint64_t cpad = counter + 8 * len;
+        PUT64(tmp + 56, cpad);
         copy.compress(tmp);
         for (int i = 0; i < 5; i++) {
-            uint8_t *ref = &dst[i << 2];
-            ref[0] = copy.h[i] >> 24;
-            ref[1] = copy.h[i] >> 16;
-            ref[2] = copy.h[i] >>  8;
-            ref[3] = copy.h[i]      ;
+            PUT32(dst + 4 * i, copy.h[i]);
         }
     }
 };

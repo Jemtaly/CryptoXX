@@ -167,10 +167,7 @@ protected:
     AESTmpl() = default; // not instantiable
 public:
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        ((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-        ((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-        ((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-        ((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
+        memcpy(dst, src, BLOCK_SIZE);
         int round = 0;
         add_round_key(dst, rk[round]);
         while (++round < RN) {
@@ -184,10 +181,7 @@ public:
         add_round_key(dst, rk[round]);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        ((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-        ((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-        ((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-        ((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
+        memcpy(dst, src, BLOCK_SIZE);
         int round = RN;
         add_round_key(dst, rk[round]);
         while (--round > 0) {

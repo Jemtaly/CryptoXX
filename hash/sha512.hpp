@@ -1,6 +1,22 @@
 #pragma once
 #include "hash.hpp"
 #define ROR64(x, n) ((x) >> (n) | (x) << (64 - (n)))
+#define GET64(p) (                                    \
+    (uint64_t)(p)[0] << 56 | (uint64_t)(p)[1] << 48 | \
+    (uint64_t)(p)[2] << 40 | (uint64_t)(p)[3] << 32 | \
+    (uint64_t)(p)[4] << 24 | (uint64_t)(p)[5] << 16 | \
+    (uint64_t)(p)[6] <<  8 | (uint64_t)(p)[7]         \
+)
+#define PUT64(a, i) {          \
+    (a)[0] = (i) >> 56       ; \
+    (a)[1] = (i) >> 48 & 0xff; \
+    (a)[2] = (i) >> 40 & 0xff; \
+    (a)[3] = (i) >> 32 & 0xff; \
+    (a)[4] = (i) >> 24 & 0xff; \
+    (a)[5] = (i) >> 16 & 0xff; \
+    (a)[6] = (i) >>  8 & 0xff; \
+    (a)[7] = (i)       & 0xff; \
+}
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) { \
@@ -56,10 +72,7 @@ struct SHA512Inner {
         uint64_t H = h[7];
         uint64_t w[80], s, t, u, v;
         for (int i =  0; i < 16; i++) {
-            uint8_t const *ref = &src[i << 3];
-            w[i] =
-                (uint64_t)ref[0] << 56 | (uint64_t)ref[1] << 48 | (uint64_t)ref[2] << 40 | (uint64_t)ref[3] << 32 |
-                (uint64_t)ref[4] << 24 | (uint64_t)ref[5] << 16 | (uint64_t)ref[6] <<  8 | (uint64_t)ref[7]      ;
+            w[i] = GET64(src + 8 * i);
         }
         for (int i = 16; i < 80; i++) {
             s = ROR64(w[i - 15],  1) ^ ROR64(w[i - 15],  8) ^ (w[i - 15] >> 7);
@@ -112,13 +125,11 @@ public:
         }
         uint64_t lo = ctr_lo + len * 8;
         uint64_t hi = ctr_hi + (lo < len * 8);
-        for (int i = 0; i < 8; i++) {
-            tmp[112 + i] = hi >> (56 - i * 8);
-            tmp[120 + i] = lo >> (56 - i * 8);
-        }
+        PUT64(tmp + 112, hi);
+        PUT64(tmp + 120, lo);
         copy.compress(tmp);
-        for (int i = 0; i < DS; i++) {
-            dst[i] = copy.h[i >> 3] >> (56 - (i & 7) * 8);
+        for (int i = 0; i < DS / 8; i++) {
+            PUT64(dst + 8 * i, copy.h[i]);
         }
     }
 };
