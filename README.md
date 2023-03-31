@@ -11,6 +11,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - 3DES
   - AES (AES-128, AES-192, AES-256)
   - SM4
+  - Camellia
 - Stream cipher algorithms / 流密码算法
   - RC4
   - ZUC (祖冲之算法)
