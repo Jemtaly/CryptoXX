@@ -107,26 +107,28 @@ protected:
     SHA512Inner inner;
     SHA512Tmpl() = default; // not instantiable
 public:
-    static const int BLOCK_SIZE = 128;
-    static const int DIGEST_SIZE = DS;
+    static constexpr size_t BLOCK_SIZE = 128;
+    static constexpr size_t DIGEST_SIZE = DS;
     void push(uint8_t const *src) {
+        ctr_lo += 1024;
+        ctr_lo >= 1024 || ctr_hi++;
         inner.compress(src);
-        (ctr_lo += 1024) < 1024 && (ctr_hi++);
     }
     void test(uint8_t const *src, size_t len, uint8_t *dst) const {
         SHA512Inner copy = inner;
-        uint8_t tmp[128];
+        uint64_t cpy_lo = ctr_lo;
+        uint64_t cpy_hi = ctr_hi;
+        cpy_lo += len * 8;
+        cpy_lo >= len * 8 || cpy_hi++;
+        uint8_t tmp[128] = {};
         memcpy(tmp, src, len);
-        memset(tmp + len, 0, 128 - len);
         tmp[len] = 0x80;
         if (len >= 112) {
             copy.compress(tmp);
             memset(tmp, 0, 112);
         }
-        uint64_t lo = ctr_lo + len * 8;
-        uint64_t hi = ctr_hi + (lo < len * 8);
-        PUT64(tmp + 112, hi);
-        PUT64(tmp + 120, lo);
+        PUT64(tmp + 112, cpy_hi);
+        PUT64(tmp + 120, cpy_lo);
         copy.compress(tmp);
         for (int i = 0; i < DS / 8; i++) {
             PUT64(dst + 8 * i, copy.h[i]);

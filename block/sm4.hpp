@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-#define RLX32(x, n) ((x) << ((n) & 31) | (x) >> (-(n) & 31))
 #define GET32(a) (                                    \
     (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
     (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
@@ -41,30 +40,30 @@ class SM4 {
         0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
         0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
     };
-    static constexpr auto generate_LUT_S = [](int N) {
-        std::array<uint32_t, 256> LUT_S_N = {};
-        for (int i = 0; i < 256; i++) {
-            uint32_t b = S_BOX[i] ^ S_BOX[i] << 2 ^ S_BOX[i] << 10 ^ S_BOX[i] << 18 ^ S_BOX[i] << 24;
-            LUT_S_N[i] = RLX32(b, 8 * N);
-        }
-        return LUT_S_N;
-    };
     static constexpr auto generate_LUT_K = [](int N) {
         std::array<uint32_t, 256> LUT_K_N = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 13 ^ S_BOX[i] << 23;
-            LUT_K_N[i] = RLX32(b, 8 * N);
+            LUT_K_N[i] = b << 8 * N | b >> (32 - 8 * N) % 32;
         }
         return LUT_K_N;
     };
-    static constexpr auto LUT_S_0 = generate_LUT_S(0);
-    static constexpr auto LUT_S_1 = generate_LUT_S(1);
-    static constexpr auto LUT_S_2 = generate_LUT_S(2);
-    static constexpr auto LUT_S_3 = generate_LUT_S(3);
+    static constexpr auto generate_LUT_S = [](int N) {
+        std::array<uint32_t, 256> LUT_S_N = {};
+        for (int i = 0; i < 256; i++) {
+            uint32_t b = S_BOX[i] ^ S_BOX[i] << 2 ^ S_BOX[i] << 10 ^ S_BOX[i] << 18 ^ S_BOX[i] << 24;
+            LUT_S_N[i] = b << 8 * N | b >> (32 - 8 * N) % 32;
+        }
+        return LUT_S_N;
+    };
     static constexpr auto LUT_K_0 = generate_LUT_K(0);
     static constexpr auto LUT_K_1 = generate_LUT_K(1);
     static constexpr auto LUT_K_2 = generate_LUT_K(2);
     static constexpr auto LUT_K_3 = generate_LUT_K(3);
+    static constexpr auto LUT_S_0 = generate_LUT_S(0);
+    static constexpr auto LUT_S_1 = generate_LUT_S(1);
+    static constexpr auto LUT_S_2 = generate_LUT_S(2);
+    static constexpr auto LUT_S_3 = generate_LUT_S(3);
     uint32_t k[36] = {
         0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
     };

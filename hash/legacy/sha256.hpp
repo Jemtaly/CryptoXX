@@ -11,16 +11,6 @@
     (a)[2] = (i) >>  8 & 0xff; \
     (a)[3] = (i)       & 0xff; \
 }
-#define PUT64(a, i) {          \
-    (a)[0] = (i) >> 56       ; \
-    (a)[1] = (i) >> 48 & 0xff; \
-    (a)[2] = (i) >> 40 & 0xff; \
-    (a)[3] = (i) >> 32 & 0xff; \
-    (a)[4] = (i) >> 24 & 0xff; \
-    (a)[5] = (i) >> 16 & 0xff; \
-    (a)[6] = (i) >>  8 & 0xff; \
-    (a)[7] = (i)       & 0xff; \
-}
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 struct SHA256Inner {
@@ -87,7 +77,8 @@ struct SHA256Inner {
 };
 template <int DS>
 class SHA256Tmpl {
-    uint64_t counter = 0;
+    uint32_t ctr_lo = 0;
+    uint32_t ctr_hi = 0;
 protected:
     SHA256Inner inner;
     SHA256Tmpl() = default; // not instantiable
@@ -95,21 +86,25 @@ public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DS;
     void push(uint8_t const *src) {
+        ctr_lo += 512;
+        ctr_lo >= 512 || ctr_hi++;
         inner.compress(src);
-        counter += 512;
     }
     void test(uint8_t const *src, size_t len, uint8_t *dst) const {
         SHA256Inner copy = inner;
-        uint8_t tmp[64];
+        uint32_t cpy_lo = ctr_lo;
+        uint32_t cpy_hi = ctr_hi;
+        cpy_lo += len * 8;
+        cpy_lo >= len * 8 || cpy_hi++;
+        uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
-        memset(tmp + len, 0, 64 - len);
         tmp[len] = 0x80;
         if (len >= 56) {
             copy.compress(tmp);
             memset(tmp, 0, 56);
         }
-        uint64_t cpad = counter + 8 * len;
-        PUT64(tmp + 56, cpad);
+        PUT32(tmp + 56, cpy_hi);
+        PUT32(tmp + 60, cpy_lo);
         copy.compress(tmp);
         for (int i = 0; i < DS / 4; i++) {
             PUT32(dst + 4 * i, copy.h[i]);

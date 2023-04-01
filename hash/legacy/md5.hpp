@@ -68,30 +68,35 @@ struct MD5Inner {
 };
 class MD5 {
     MD5Inner inner;
-    uint64_t counter = 0;
+    uint32_t ctr_lo = 0;
+    uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 16;
     void push(uint8_t const *src) {
+        ctr_lo += 512;
+        ctr_lo >= 512 || ctr_hi++;
         inner.compress(src);
-        counter += 512;
     }
     void test(uint8_t const *src, size_t len, uint8_t *dst) const {
         MD5Inner copy = inner;
-        uint8_t tmp[64];
+        uint32_t cpy_lo = ctr_lo;
+        uint32_t cpy_hi = ctr_hi;
+        cpy_lo += len * 8;
+        cpy_lo >= len * 8 || cpy_hi++;
+        uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
-        memset(tmp + len, 0, 64 - len);
         tmp[len] = 0x80;
         if (len >= 56) {
             copy.compress(tmp);
             memset(tmp, 0, 56);
         }
-        ((uint64_t *)tmp)[7] = counter + 8 * len;
+        ((uint32_t *)tmp)[14] = cpy_lo;
+        ((uint32_t *)tmp)[15] = cpy_hi;
         copy.compress(tmp);
-        ((uint32_t *)dst)[0] = copy.h[0];
-        ((uint32_t *)dst)[1] = copy.h[1];
-        ((uint32_t *)dst)[2] = copy.h[2];
-        ((uint32_t *)dst)[3] = copy.h[3];
+        for (int i = 0; i < 4; i++) {
+            ((uint32_t *)dst)[i] = copy.h[i];
+        }
     }
 };
 #undef FF0

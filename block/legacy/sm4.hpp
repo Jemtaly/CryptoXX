@@ -40,16 +40,6 @@ class SM4 {
         0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
         0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
     };
-    static uint32_t tau(uint32_t a) {
-        uint32_t b;
-        uint8_t *u = (uint8_t *)&a;
-        uint8_t *v = (uint8_t *)&b;
-        v[0] = S_BOX[u[0]];
-        v[1] = S_BOX[u[1]];
-        v[2] = S_BOX[u[2]];
-        v[3] = S_BOX[u[3]];
-        return b;
-    }
     uint32_t k[36] = {
         0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
     };
@@ -61,7 +51,8 @@ public:
         k[2] ^= GET32(mk + 0x8);
         k[3] ^= GET32(mk + 0xc);
         for (int i = 0; i < 32; i++) {
-            uint32_t b = tau(k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i]);
+            uint32_t a = k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i];
+            uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
             k[i + 4] = k[i] ^ b ^ ROL32(b, 13) ^ ROL32(b, 23);
         }
     }
@@ -72,7 +63,8 @@ public:
         t[2] = GET32(src + 0x8);
         t[3] = GET32(src + 0xc);
         for (int i = 0; i < 32; i++) {
-            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4]);
+            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
+            uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
             t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
         }
         PUT32(dst + 0x0, t[35]);
@@ -87,7 +79,8 @@ public:
         t[2] = GET32(src + 0x8);
         t[3] = GET32(src + 0xc);
         for (int i = 0; i < 32; i++) {
-            uint32_t b = tau(t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i]);
+            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i];
+            uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
             t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
         }
         PUT32(dst + 0x0, t[35]);

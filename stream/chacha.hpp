@@ -1,11 +1,11 @@
 #pragma once
 #include "stream.hpp"
-#define ROL32EQ(v, n) ((v) = (v) << (n) | (v) >> (32 - (n)))
+#define ROL32(v, n) ((v) << (n) | (v) >> (32 - (n)))
 #define QTR_RND(s, a, b, c, d) {                   \
-    s[a] += s[b], s[d] ^= s[a], ROL32EQ(s[d], 16); \
-    s[c] += s[d], s[b] ^= s[c], ROL32EQ(s[b], 12); \
-    s[a] += s[b], s[d] ^= s[a], ROL32EQ(s[d],  8); \
-    s[c] += s[d], s[b] ^= s[c], ROL32EQ(s[b],  7); \
+    s[a] += s[b], s[d] ^= s[a], s[d] = ROL32(s[d], 16); \
+    s[c] += s[d], s[b] ^= s[c], s[b] = ROL32(s[b], 12); \
+    s[a] += s[b], s[d] ^= s[a], s[d] = ROL32(s[d],  8); \
+    s[c] += s[d], s[b] ^= s[c], s[b] = ROL32(s[b],  7); \
 }
 class ChaCha20 {
     uint32_t input[16];
@@ -41,3 +41,4 @@ public:
         for (int i = 12; i < 16 && ++input[i] == 0; i++) {} // increment counter
     }
 };
+#undef QTR_RND
