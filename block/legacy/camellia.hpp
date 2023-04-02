@@ -29,7 +29,7 @@ protected:
         0xC6EF372FE94F82BE, 0x54FF53A5F1D36F1C,
         0x10E527FADE682D1D, 0xB05688C2B3E6C1FD,
     };
-    static constexpr uint8_t S_BOX[256] = {
+    static constexpr std::array<uint8_t, 256> SBOX_1 = {
         0x70, 0x82, 0x2c, 0xec, 0xb3, 0x27, 0xc0, 0xe5, 0xe4, 0x85, 0x57, 0x35, 0xea, 0x0c, 0xae, 0x41,
         0x23, 0xef, 0x6b, 0x93, 0x45, 0x19, 0xa5, 0x21, 0xed, 0x0e, 0x4f, 0x4e, 0x1d, 0x65, 0x92, 0xbd,
         0x86, 0xb8, 0xaf, 0x8f, 0x7c, 0xeb, 0x1f, 0xce, 0x3e, 0x30, 0xdc, 0x5f, 0x5e, 0xc5, 0x0b, 0x1a,
@@ -47,35 +47,47 @@ protected:
         0x72, 0x07, 0xb9, 0x55, 0xf8, 0xee, 0xac, 0x0a, 0x36, 0x49, 0x2a, 0x68, 0x3c, 0x38, 0xf1, 0xa4,
         0x40, 0x28, 0xd3, 0x7b, 0xbb, 0xc9, 0x43, 0xc1, 0x15, 0xe3, 0xad, 0xf4, 0x77, 0xc7, 0x80, 0x9e,
     };
-    static constexpr auto LUT = []() {
-        std::array<std::array<uint64_t, 256>, 8> LUT;
-        for (int j = 0; j < 256; j++) {
-            uint8_t a = S_BOX[j];
-            uint8_t b = S_BOX[j] << 1 | S_BOX[j] >> 7;
-            uint8_t c = S_BOX[j] << 7 | S_BOX[j] >> 1;
-            uint8_t d = S_BOX[j << 1 & 0xff | j >> 7];
-            LUT[0][j] = a * 0x0101010001000001U;
-            LUT[1][j] = b * 0x0001010101010000U;
-            LUT[2][j] = c * 0x0100010100010100U;
-            LUT[3][j] = d * 0x0101000100000101U;
-            LUT[4][j] = b * 0x0001010100010101U;
-            LUT[5][j] = c * 0x0100010101000101U;
-            LUT[6][j] = d * 0x0101000101010001U;
-            LUT[7][j] = a * 0x0101010001010100U;
+    static constexpr std::array<uint8_t, 256> SBOX_2 = []() {
+        std::array<uint8_t, 256> s;
+        for (int i = 0; i < 256; i++) {
+            s[i] = SBOX_1[i] << 1 | SBOX_1[i] >> 7;
         }
-        return LUT;
+        return s;
+    }();
+    static constexpr std::array<uint8_t, 256> SBOX_3 = []() {
+        std::array<uint8_t, 256> s;
+        for (int i = 0; i < 256; i++) {
+            s[i] = SBOX_1[i] << 7 | SBOX_1[i] >> 1;
+        }
+        return s;
+    }();
+    static constexpr std::array<uint8_t, 256> SBOX_4 = []() {
+        std::array<uint8_t, 256> s;
+        for (int i = 0; i < 256; i++) {
+            s[i] = SBOX_1[(i << 1 | i >> 7) & 255];
+        }
+        return s;
     }();
     static uint64_t f(uint64_t in, uint64_t kx) {
         uint64_t x = in ^ kx;
-        return
-            LUT[0][x >> 56       ] ^
-            LUT[1][x >> 48 & 0xff] ^
-            LUT[2][x >> 40 & 0xff] ^
-            LUT[3][x >> 32 & 0xff] ^
-            LUT[4][x >> 24 & 0xff] ^
-            LUT[5][x >> 16 & 0xff] ^
-            LUT[6][x >>  8 & 0xff] ^
-            LUT[7][x       & 0xff];
+        uint8_t t[8], y[8];
+        t[0] = SBOX_1[x >> 56       ];
+        t[1] = SBOX_2[x >> 48 & 0xff];
+        t[2] = SBOX_3[x >> 40 & 0xff];
+        t[3] = SBOX_4[x >> 32 & 0xff];
+        t[4] = SBOX_2[x >> 24 & 0xff];
+        t[5] = SBOX_3[x >> 16 & 0xff];
+        t[6] = SBOX_4[x >>  8 & 0xff];
+        t[7] = SBOX_1[x       & 0xff];
+        y[0] = t[0] ^ t[2] ^ t[3] ^ t[5] ^ t[6] ^ t[7];
+        y[1] = t[0] ^ t[1] ^ t[3] ^ t[4] ^ t[6] ^ t[7];
+        y[2] = t[0] ^ t[1] ^ t[2] ^ t[4] ^ t[5] ^ t[7];
+        y[3] = t[1] ^ t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[6];
+        y[4] = t[0] ^ t[1] ^ t[5] ^ t[6] ^ t[7];
+        y[5] = t[1] ^ t[2] ^ t[4] ^ t[6] ^ t[7];
+        y[6] = t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[7];
+        y[7] = t[0] ^ t[3] ^ t[4] ^ t[5] ^ t[6];
+        return GET64(y);
     }
     static uint64_t fl(uint64_t in, uint64_t kx) {
         uint32_t xh = in >> 32, xl = in & 0xffffffff;
