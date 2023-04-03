@@ -14,17 +14,18 @@
     a = b + ROL32(s, R[i]);                      \
 }
 #define HH4(N, a, b, c, d, s, w, K, R, i) {      \
-    HH1(N, a, b, c, d, s, w, K, R, i      );     \
-    HH1(N, d, a, b, c, s, w, K, R, i | 0x1);     \
-    HH1(N, c, d, a, b, s, w, K, R, i | 0x2);     \
-    HH1(N, b, c, d, a, s, w, K, R, i | 0x3);     \
+    HH1(N, a, b, c, d, s, w, K, R, i     );      \
+    HH1(N, d, a, b, c, s, w, K, R, i +  1);      \
+    HH1(N, c, d, a, b, s, w, K, R, i +  2);      \
+    HH1(N, b, c, d, a, s, w, K, R, i +  3);      \
 }
 #define HHX(N, a, b, c, d, s, w, K, R, i) {      \
-    HH4(N, a, b, c, d, s, w, K, R, i      );     \
-    HH4(N, a, b, c, d, s, w, K, R, i | 0x4);     \
-    HH4(N, a, b, c, d, s, w, K, R, i | 0x8);     \
-    HH4(N, a, b, c, d, s, w, K, R, i | 0xc);     \
+    HH4(N, a, b, c, d, s, w, K, R, i     );      \
+    HH4(N, a, b, c, d, s, w, K, R, i +  4);      \
+    HH4(N, a, b, c, d, s, w, K, R, i +  8);      \
+    HH4(N, a, b, c, d, s, w, K, R, i + 12);      \
 }
+typedef uint8_t bits_t;
 struct MD5Inner {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -44,7 +45,7 @@ struct MD5Inner {
         0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
         0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
     };
-    static constexpr uint8_t R[64] = {
+    static constexpr bits_t R[64] = {
         0x07, 0x0c, 0x11, 0x16, 0x07, 0x0c, 0x11, 0x16,
         0x07, 0x0c, 0x11, 0x16, 0x07, 0x0c, 0x11, 0x16,
         0x05, 0x09, 0x0e, 0x14, 0x05, 0x09, 0x0e, 0x14,
@@ -57,17 +58,17 @@ struct MD5Inner {
     uint32_t h[4] = {
         0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
     };
-    void compress(uint8_t const *src) {
+    void compress(uint8_t const *blk) {
         uint32_t a = h[0];
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
         uint32_t s;
-        uint32_t const *w = (uint32_t *)src;
-        HHX(0, a, b, c, d, s, w, K, R, 0x00);
-        HHX(1, a, b, c, d, s, w, K, R, 0x10);
-        HHX(2, a, b, c, d, s, w, K, R, 0x20);
-        HHX(3, a, b, c, d, s, w, K, R, 0x30);
+        uint32_t const *w = (uint32_t *)blk;
+        HHX(0, a, b, c, d, s, w, K, R,  0);
+        HHX(1, a, b, c, d, s, w, K, R, 16);
+        HHX(2, a, b, c, d, s, w, K, R, 32);
+        HHX(3, a, b, c, d, s, w, K, R, 48);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -75,23 +76,26 @@ struct MD5Inner {
     }
 };
 class MD5 {
-    MD5Inner inner;
+    MD5Inner save;
     uint32_t ctr_lo = 0;
     uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 16;
-    void push(uint8_t const *src) {
+    void push(uint8_t const *blk) {
         ctr_lo += 512;
         ctr_lo >= 512 || ctr_hi++;
-        inner.compress(src);
+        save.compress(blk);
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        MD5Inner copy = inner;
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
+        MD5Inner copy = save;
         uint32_t cpy_lo = ctr_lo;
         uint32_t cpy_hi = ctr_hi;
         cpy_lo += len * 8;
         cpy_lo >= len * 8 || cpy_hi++;
+        for (; len >= 64; src += 64, len -= 64) {
+            copy.compress(src);
+        }
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;

@@ -3,7 +3,6 @@
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
 template <class Hash>
-requires (DIG < BLK)
 class HMAC {
     Hash inner;
     Hash outer;
@@ -27,13 +26,13 @@ public:
         inner.push(ibf);
         outer.push(obf);
     }
-    void push(uint8_t const *src) {
-        inner.push(src);
+    void push(uint8_t const *blk) {
+        inner.push(blk);
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
         uint8_t buf[DIG];
-        inner.test(src, len, buf);
-        outer.test(buf, DIG, dst);
+        inner.hash(src, len, buf);
+        outer.hash(buf, DIG, dst);
     }
 };
 template <class Hash>

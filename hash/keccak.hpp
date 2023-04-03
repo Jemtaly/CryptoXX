@@ -15,6 +15,8 @@
 #define A_D(y, x) A[y][x] ^= D[x]
 #define B_A(y, x) B[(2 * x + 3 * y) % 5][y] = RLX64(A[y][x], r[y][x])
 #define A_B(y, x) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
+#define XOR(x, y) A[y][x] ^= ((uint64_t (*)[5])blk)[y][x]
+typedef uint8_t bits_t;
 struct KeccakInner {
     static constexpr uint64_t RC[24] = {
         0x0000000000000001, 0x0000000000008082, 0x800000000000808A,
@@ -26,7 +28,7 @@ struct KeccakInner {
         0x000000000000800A, 0x800000008000000A, 0x8000000080008081,
         0x8000000000008080, 0x0000000080000001, 0x8000000080008008,
     };
-    static constexpr uint8_t r[5][5] = {
+    static constexpr bits_t r[5][5] = {
         { 0,  1, 62, 28, 27},
         {36, 44,  6, 55, 20},
         { 3, 10, 43, 25, 39},
@@ -34,7 +36,7 @@ struct KeccakInner {
         {18,  2, 61, 56, 14},
     };
     uint64_t A[5][5] = {};
-    void keccak_f() {
+    void permute() {
         for (int i = 0; i < 24; i++) {
             uint64_t C[5];
             uint64_t D[5];
@@ -50,24 +52,30 @@ struct KeccakInner {
 };
 template <uint8_t PAD_BYTE, int BLK, int DIG>
 class KeccakTmpl {
-    KeccakInner inner;
+    KeccakInner save;
 public:
     constexpr static int BLOCK_SIZE = BLK;
     constexpr static int DIGEST_SIZE = DIG;
     void push(uint8_t const *blk) {
         for (int i = 0; i < BLK; i++) {
-            ((uint8_t *)inner.A)[i] ^= blk[i];
+            ((uint8_t *)save.A)[i] ^= blk[i];
         }
-        inner.keccak_f();
+        save.permute();
     }
-    void test(uint8_t const *blk, int len, uint8_t *out) const {
-        KeccakInner copy = inner;
+    void hash(uint8_t const *src, int len, uint8_t *out) const {
+        KeccakInner copy = save;
+        for (; len >= src; len -= src, src += src) {
+            for (int i = 0; i < src; i++) {
+                ((uint8_t *)copy.A)[i] ^= src[i];
+            }
+            copy.permute();
+        }
         for (int i = 0; i < len; i++) {
-            ((uint8_t *)copy.A)[i] ^= blk[i];
+            ((uint8_t *)copy.A)[i] ^= src[i];
         }
         ((uint8_t *)copy.A)[len] ^= PAD_BYTE;
-        ((uint8_t *)copy.A)[BLK - 1] ^= 0x80;
-        copy.keccak_f();
+        ((uint8_t *)copy.A)[src - 1] ^= 0x80;
+        copy.permute();
         for (int i = 0; i < DIG; i++) {
             out[i] = ((uint8_t *)copy.A)[i];
         }
@@ -84,3 +92,4 @@ using SHAKE  = KeccakTmpl<0x1f, (1600 - BIT * 2) / 8, OUT / 8>;
 #undef A_D
 #undef B_A
 #undef A_B
+#undef XOR

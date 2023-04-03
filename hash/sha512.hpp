@@ -61,7 +61,7 @@ struct SHA512Inner {
         0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817,
     };
     uint64_t h[8];
-    void compress(uint8_t const *src) {
+    void compress(uint8_t const *blk) {
         uint64_t A = h[0];
         uint64_t B = h[1];
         uint64_t C = h[2];
@@ -72,7 +72,7 @@ struct SHA512Inner {
         uint64_t H = h[7];
         uint64_t w[80], s, t, u, v;
         for (int i =  0; i < 16; i++) {
-            w[i] = GET64(src + 8 * i);
+            w[i] = GET64(blk + 8 * i);
         }
         for (int i = 16; i < 80; i++) {
             s = ROR64(w[i - 15],  1) ^ ROR64(w[i - 15],  8) ^ (w[i - 15] >> 7);
@@ -99,27 +99,39 @@ struct SHA512Inner {
         h[7] += H;
     }
 };
-template <int DS>
+template <int DS, typename Derived>
 class SHA512Tmpl {
     uint64_t ctr_lo = 0;
     uint64_t ctr_hi = 0;
 protected:
-    SHA512Inner inner;
-    SHA512Tmpl() = default; // not instantiable
+    SHA512Inner save;
 public:
+    SHA512Tmpl() {
+        save.h[0] = Derived::IV[0];
+        save.h[1] = Derived::IV[1];
+        save.h[2] = Derived::IV[2];
+        save.h[3] = Derived::IV[3];
+        save.h[4] = Derived::IV[4];
+        save.h[5] = Derived::IV[5];
+        save.h[6] = Derived::IV[6];
+        save.h[7] = Derived::IV[7];
+    }
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DS;
-    void push(uint8_t const *src) {
+    void push(uint8_t const *blk) {
         ctr_lo += 1024;
         ctr_lo >= 1024 || ctr_hi++;
-        inner.compress(src);
+        save.compress(blk);
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SHA512Inner copy = inner;
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
+        SHA512Inner copy = save;
         uint64_t cpy_lo = ctr_lo;
         uint64_t cpy_hi = ctr_hi;
         cpy_lo += len * 8;
         cpy_lo >= len * 8 || cpy_hi++;
+        for (; len >= 128; src += 128, len -= 128) {
+            copy.compress(src);
+        }
         uint8_t tmp[128] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;
@@ -135,31 +147,19 @@ public:
         }
     }
 };
-class SHA512: public SHA512Tmpl<64> {
+class SHA512: public SHA512Tmpl<64, SHA512> {
 public:
-    SHA512() {
-        inner.h[0] = 0x6a09e667f3bcc908;
-        inner.h[1] = 0xbb67ae8584caa73b;
-        inner.h[2] = 0x3c6ef372fe94f82b;
-        inner.h[3] = 0xa54ff53a5f1d36f1;
-        inner.h[4] = 0x510e527fade682d1;
-        inner.h[5] = 0x9b05688c2b3e6c1f;
-        inner.h[6] = 0x1f83d9abfb41bd6b;
-        inner.h[7] = 0x5be0cd19137e2179;
-    }
+    static constexpr uint64_t IV[8] = {
+        0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
+        0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
+    };
 };
-class SHA384: public SHA512Tmpl<48> {
+class SHA384: public SHA512Tmpl<48, SHA384> {
 public:
-    SHA384() {
-        inner.h[0] = 0xcbbb9d5dc1059ed8;
-        inner.h[1] = 0x629a292a367cd507;
-        inner.h[2] = 0x9159015a3070dd17;
-        inner.h[3] = 0x152fecd8f70e5939;
-        inner.h[4] = 0x67332667ffc00b31;
-        inner.h[5] = 0x8eb44a8768581511;
-        inner.h[6] = 0xdb0c2e0d64f98fa7;
-        inner.h[7] = 0x47b5481dbefa4fa4;
-    }
+    static constexpr uint64_t IV[8] = {
+        0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,
+        0x67332667ffc00b31, 0x8eb44a8768581511, 0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
+    };
 };
 #undef FF1
 #undef FF8

@@ -96,7 +96,7 @@ public:
 };
 template <int L, int K = L == 2 ? 26 : 34>
 requires (L == 2 || L == 3 || L == 4)
-class CamelliaTmpl : public CamelliaBase {
+class CamelliaTmpl: public CamelliaBase {
     uint64_t kx[K];
 public:
     CamelliaTmpl(const uint8_t *kxy) {
@@ -108,10 +108,10 @@ public:
         uint64_t holder;
         lh = GET64(kxy     );
         ll = GET64(kxy +  8);
-        if (L == 2) {
+        if constexpr (L == 2) {
             rh = 0;
             rl = 0;
-        } else if (L == 3) {
+        } else if constexpr (L == 3) {
             rh = GET64(kxy + 16);
             rl = ~rh;
         } else {
@@ -134,7 +134,7 @@ public:
         dh ^= f(dl, SIGMA[5]);
         bh = dh;
         bl = dl;
-        if (L == 2) {
+        if constexpr (L == 2) {
             RLX128(kx[ 0], kx[ 1], lh, ll,  0);
             RLX128(kx[ 2], kx[ 3], ah, al,  0);
             RLX128(kx[ 4], kx[ 5], lh, ll, 15);

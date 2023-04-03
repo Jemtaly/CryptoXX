@@ -52,7 +52,7 @@ class ZUC {
     uint32_t lfsr[16];
     uint32_t r1, r2, x0, x1, x2, x3, w;
     template <bool INIT>
-    void update_all() {
+    void permute() {
         // The bit-reorganization
         x0 = lfsr[15] <<  1 & 0xffff0000 | lfsr[14]       & 0x0000ffff;
         x1 = lfsr[11] << 16              | lfsr[ 9] >> 15             ;
@@ -88,12 +88,12 @@ public:
             lfsr[i] = k[i] << 23 | EK[i] << 8 | iv[i];
         }
         for (int i = 0; i < 32; i++) {
-            update_all<1>();
+            permute<1>();
         }
-        update_all<0>();
+        permute<0>();
     }
     void generate(uint8_t *buf) {
-        update_all<0>();
+        permute<0>();
         *(uint32_t *)buf = w ^ x3;
     }
 };

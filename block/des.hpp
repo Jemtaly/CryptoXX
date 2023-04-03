@@ -23,8 +23,8 @@ class DES {
     template <int w_in, int w_out>
     static uint<w_out> permutation(uint<w_in> v_in, std::array<std::array<uint<w_out>, 256>, w_in / 8> const &LUT) {
         uint<w_out> v_out = 0;
-        for (int i = 0; i < w_in; i += 8) {
-            v_out |= LUT[i / 8][v_in >> i & 0xff];
+        for (int i = 0; i < w_in / 8; i++) {
+            v_out |= LUT[i][v_in >> i * 8 & 0xff];
         }
         return v_out;
     }

@@ -6,11 +6,11 @@ class CRC {
     static constexpr auto box = []() {
         std::array<digest_t, 256> box;
         for (int i = 0; i < 256; i++) {
-            digest_t sta = i;
+            digest_t tmp = i;
             for (int j = 0; j < 8; j++) {
-                sta = sta >> 1 ^ (sta & 1 ? EXP : 0);
+                tmp = tmp >> 1 ^ (tmp & 1 ? EXP : 0);
             }
-            box[i] = sta;
+            box[i] = tmp;
         }
         return box;
     }();
@@ -18,11 +18,15 @@ class CRC {
 public:
     static constexpr size_t BLOCK_SIZE = 1;
     static constexpr size_t DIGEST_SIZE = sizeof(digest_t);
-    void push(uint8_t const *src) {
-        sta = sta >> 8 ^ box[sta & 0xff ^ src[0]];
+    void push(uint8_t const *blk) {
+        sta = sta >> 8 ^ box[sta & 0xff ^ blk[0]];
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        digest_t dig = sta ^ CXV;
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
+        digest_t dig = sta;
+        for (int i = 0; i < len; i++) {
+            dig = dig >> 8 ^ box[dig & 0xff ^ src[i]];
+        }
+        dig ^= CXV;
         for (int i = 0; i < sizeof(digest_t); i++) {
             dst[i] = dig >> (sizeof(digest_t) - i - 1) * 8;
         }

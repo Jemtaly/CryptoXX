@@ -40,7 +40,7 @@ struct SHAInner {
     uint32_t h[5] = {
         0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
     };
-    void compress(uint8_t const *src) {
+    void compress(uint8_t const *blk) {
         uint32_t a = h[0];
         uint32_t b = h[1];
         uint32_t c = h[2];
@@ -48,7 +48,7 @@ struct SHAInner {
         uint32_t e = h[4];
         uint32_t w[80], t;
         for (int i =  0; i < 16; i++) {
-            w[i] = GET32(src + 4 * i);
+            w[i] = GET32(blk + 4 * i);
         }
         for (int i = 16; i < 80; i++) {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
@@ -66,23 +66,26 @@ struct SHAInner {
     }
 };
 class SHA {
-    SHAInner inner;
+    SHAInner save;
     uint32_t ctr_lo = 0;
     uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 20;
-    void push(uint8_t const *src) {
+    void push(uint8_t const *blk) {
         ctr_lo += 512;
         ctr_lo >= 512 || ctr_hi++;
-        inner.compress(src);
+        save.compress(blk);
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SHAInner copy = inner;
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
+        SHAInner copy = save;
         uint32_t cpy_lo = ctr_lo;
         uint32_t cpy_hi = ctr_hi;
         cpy_lo += len * 8;
         cpy_lo >= len * 8 || cpy_hi++;
+        for (; len >= 64; src += 64, len -= 64) {
+            copy.compress(src);
+        }
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;

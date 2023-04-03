@@ -10,7 +10,7 @@ public:
     template <class... vals_t>
     CFBMode(vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {}
-    void generate(uint8_t const *cfb, uint8_t *buf) const {
+    void crypt(uint8_t const *cfb, uint8_t *buf) const {
         bc.encrypt(cfb, buf);
     }
 };

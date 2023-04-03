@@ -46,13 +46,13 @@ public:
     BlockCipherDecrypter(vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...), use(0) {}
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
-        if (BLK + src < end + use) {
+        if (BLK + src <  end + use) {
             memcpy(buf + use, src, BLK - use);
             bc.decrypt(buf, dst);
             src += BLK - use;
             dst += BLK;
             use -= use;
-            for (; BLK + src < end; src += BLK, dst += BLK) {
+            for (; BLK + src <  end; src += BLK, dst += BLK) {
                 bc.decrypt(src, dst);
             }
         }
@@ -62,9 +62,7 @@ public:
         return dst;
     }
     uint8_t *fflush(uint8_t *dst) {
-        if (use != BLK) { // invalid padding
-            return nullptr;
-        }
+        if (use != BLK) { return nullptr; }
         bc.decrypt(buf, dst);
         use -= use;
         dst += BLK - dst[BLK - 1];

@@ -48,7 +48,7 @@ struct SM3Inner {
         0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
         0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
     };
-    void compress(uint8_t const *src) {
+    void compress(uint8_t const *blk) {
         uint32_t A = h[0];
         uint32_t B = h[1];
         uint32_t C = h[2];
@@ -59,7 +59,7 @@ struct SM3Inner {
         uint32_t H = h[7];
         uint32_t w[68], t, r, s, u, v;
         for (int j =  0; j < 16; j++) {
-            w[j] = GET32(src + 4 * j);
+            w[j] = GET32(blk + 4 * j);
         }
         for (int j = 16; j < 68; j++) {
             t = w[j - 16] ^ w[j - 9] ^ ROL32(w[j -  3], 15);
@@ -80,23 +80,26 @@ struct SM3Inner {
     }
 };
 class SM3 {
-    SM3Inner inner;
+    SM3Inner save;
     uint32_t ctr_lo = 0;
     uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 32;
-    void push(uint8_t const *src) {
+    void push(uint8_t const *blk) {
         ctr_lo += 512;
         ctr_lo >= 512 || ctr_hi++;
-        inner.compress(src);
+        save.compress(blk);
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SM3Inner copy = inner;
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
+        SM3Inner copy = save;
         uint32_t cpy_lo = ctr_lo;
         uint32_t cpy_hi = ctr_hi;
         cpy_lo += len * 8;
         cpy_lo >= len * 8 || cpy_hi++;
+        for (; len >= 64; src += 64, len -= 64) {
+            copy.compress(src);
+        }
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;

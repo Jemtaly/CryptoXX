@@ -33,7 +33,7 @@ struct SHA256Inner {
         0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
     };
     uint32_t h[8];
-    void compress(uint8_t const *src) {
+    void compress(uint8_t const *blk) {
         uint32_t A = h[0];
         uint32_t B = h[1];
         uint32_t C = h[2];
@@ -44,7 +44,7 @@ struct SHA256Inner {
         uint32_t H = h[7];
         uint32_t w[64], s, t, u, v;
         for (int i =  0; i < 16; i++) {
-            w[i] = GET32(src + 4 * i);
+            w[i] = GET32(blk + 4 * i);
         }
         for (int i = 16; i < 64; i++) {
             s = ROR32(w[i - 15],  7) ^ ROR32(w[i - 15], 18) ^ (w[i - 15] >>  3);
@@ -75,27 +75,39 @@ struct SHA256Inner {
         h[7] += H;
     }
 };
-template <int DS>
+template <int DS, typename Derived>
 class SHA256Tmpl {
     uint32_t ctr_lo = 0;
     uint32_t ctr_hi = 0;
 protected:
-    SHA256Inner inner;
-    SHA256Tmpl() = default; // not instantiable
+    SHA256Inner save;
 public:
+    SHA256Tmpl() {
+        save.h[0] = Derived::IV[0];
+        save.h[1] = Derived::IV[1];
+        save.h[2] = Derived::IV[2];
+        save.h[3] = Derived::IV[3];
+        save.h[4] = Derived::IV[4];
+        save.h[5] = Derived::IV[5];
+        save.h[6] = Derived::IV[6];
+        save.h[7] = Derived::IV[7];
+    }
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DS;
-    void push(uint8_t const *src) {
+    void push(uint8_t const *blk) {
         ctr_lo += 512;
         ctr_lo >= 512 || ctr_hi++;
-        inner.compress(src);
+        save.compress(blk);
     }
-    void test(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SHA256Inner copy = inner;
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
+        SHA256Inner copy = save;
         uint32_t cpy_lo = ctr_lo;
         uint32_t cpy_hi = ctr_hi;
         cpy_lo += len * 8;
         cpy_lo >= len * 8 || cpy_hi++;
+        for (; len >= 64; src += 64, len -= 64) {
+            copy.compress(src);
+        }
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;
@@ -111,29 +123,17 @@ public:
         }
     }
 };
-class SHA256 : public SHA256Tmpl<32> {
+class SHA256: public SHA256Tmpl<32, SHA256> {
 public:
-    SHA256() {
-        inner.h[0] = 0x6A09E667;
-        inner.h[1] = 0xBB67AE85;
-        inner.h[2] = 0x3C6EF372;
-        inner.h[3] = 0xA54FF53A;
-        inner.h[4] = 0x510E527F;
-        inner.h[5] = 0x9B05688C;
-        inner.h[6] = 0x1F83D9AB;
-        inner.h[7] = 0x5BE0CD19;
-    }
+    static constexpr uint32_t IV[8] = {
+        0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
+        0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
+    };
 };
-class SHA224 : public SHA256Tmpl<28> {
+class SHA224: public SHA256Tmpl<28, SHA224> {
 public:
-    SHA224() {
-        inner.h[0] = 0xC1059ED8;
-        inner.h[1] = 0x367CD507;
-        inner.h[2] = 0x3070DD17;
-        inner.h[3] = 0xF70E5939;
-        inner.h[4] = 0xFFC00B31;
-        inner.h[5] = 0x68581511;
-        inner.h[6] = 0x64F98FA7;
-        inner.h[7] = 0xBEFA4FA4;
-    }
+    static constexpr uint32_t IV[8] = {
+        0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
+        0xFFC00B31, 0x68581511, 0x64F98FA7, 0xBEFA4FA4,
+    };
 };

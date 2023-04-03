@@ -1,7 +1,7 @@
 #pragma once
 #include "stream.hpp"
 #define ROL32(v, n) ((v) << (n) | (v) >> (32 - (n)))
-#define QTR_RND(s, a, b, c, d) {                   \
+#define QROUND(s, a, b, c, d) {                         \
     s[a] += s[b], s[d] ^= s[a], s[d] = ROL32(s[d], 16); \
     s[c] += s[d], s[b] ^= s[c], s[b] = ROL32(s[b], 12); \
     s[a] += s[b], s[d] ^= s[a], s[d] = ROL32(s[d],  8); \
@@ -26,14 +26,14 @@ public:
             input[0xc], input[0xd], input[0xe], input[0xf],
         };
         for (int i = 0; i < 10; i++) {
-            QTR_RND(state,  0,  4,  8, 12);
-            QTR_RND(state,  1,  5,  9, 13);
-            QTR_RND(state,  2,  6, 10, 14);
-            QTR_RND(state,  3,  7, 11, 15);
-            QTR_RND(state,  0,  5, 10, 15);
-            QTR_RND(state,  1,  6, 11, 12);
-            QTR_RND(state,  2,  7,  8, 13);
-            QTR_RND(state,  3,  4,  9, 14);
+            QROUND(state,  0,  4,  8, 12);
+            QROUND(state,  1,  5,  9, 13);
+            QROUND(state,  2,  6, 10, 14);
+            QROUND(state,  3,  7, 11, 15);
+            QROUND(state,  0,  5, 10, 15);
+            QROUND(state,  1,  6, 11, 12);
+            QROUND(state,  2,  7,  8, 13);
+            QROUND(state,  3,  4,  9, 14);
         }
         for (int i = 0; i < 16; i++) {
             ((uint32_t *)buf)[i] = state[i] + input[i];
@@ -41,4 +41,4 @@ public:
         for (int i = 12; i < 16 && ++input[i] == 0; i++) {} // increment counter
     }
 };
-#undef QTR_RND
+#undef QROUND

@@ -14,12 +14,12 @@ public:
     HashWrapper(vals_t &&...vals):
         hash(std::forward<vals_t>(vals)...), use(0) {}
     void update(uint8_t const *src, uint8_t const *end) {
-        if (BLK + src <= use + end) {
+        if (BLK + src <  use + end) {
             memcpy(mem + use, src, BLK - use);
             hash.push(mem);
             src += BLK - use;
             use -= use;
-            for (; src + BLK <= end; src += BLK) {
+            for (; src + BLK <  end; src += BLK) {
                 hash.push(src);
             }
         }
@@ -28,7 +28,7 @@ public:
         src += end - src;
     }
     void digest(uint8_t *dst) const {
-        hash.test(mem, use, dst);
+        hash.hash(mem, use, dst);
     }
 };
 #undef BLK
