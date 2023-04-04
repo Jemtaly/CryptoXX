@@ -18,7 +18,7 @@
         b += ROL32(s, R[i]);                         \
     }
 typedef uint8_t bits_t;
-struct MD5Inner {
+class MD5 {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
         0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -47,6 +47,8 @@ struct MD5Inner {
         0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
         0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
     };
+    uint32_t lo = 0;
+    uint32_t hi = 0;
     uint32_t h[4] = {
         0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
     };
@@ -66,40 +68,30 @@ struct MD5Inner {
         h[2] += c;
         h[3] += d;
     }
-};
-class MD5 {
-    MD5Inner save;
-    uint32_t ctr_lo = 0;
-    uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 16;
+    static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        ctr_lo += 512;
-        ctr_lo >= 512 || ctr_hi++;
-        save.compress(blk);
+        lo += 512;
+        lo >= 512 || hi++;
+        compress(blk);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
-        MD5Inner copy = save;
-        uint32_t cpy_lo = ctr_lo;
-        uint32_t cpy_hi = ctr_hi;
-        cpy_lo += len * 8;
-        cpy_lo >= len * 8 || cpy_hi++;
-        for (; len >= 64; src += 64, len -= 64) {
-            copy.compress(src);
-        }
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) {
+        lo += len * 8;
+        lo >= len * 8 || hi++;
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;
         if (len >= 56) {
-            copy.compress(tmp);
+            compress(tmp);
             memset(tmp, 0, 56);
         }
-        ((uint32_t *)tmp)[14] = cpy_lo;
-        ((uint32_t *)tmp)[15] = cpy_hi;
-        copy.compress(tmp);
+        ((uint32_t *)tmp)[14] = lo;
+        ((uint32_t *)tmp)[15] = hi;
+        compress(tmp);
         for (int i = 0; i < 4; i++) {
-            ((uint32_t *)dst)[i] = copy.h[i];
+            ((uint32_t *)dst)[i] = h[i];
         }
     }
 };

@@ -36,7 +36,9 @@
         a =     u ;                                           \
         e = PPE(v);                                           \
     }
-struct SM3Inner {
+class SM3 {
+    uint32_t lo = 0;
+    uint32_t hi = 0;
     uint32_t h[8] = {
         0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
         0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
@@ -69,40 +71,30 @@ struct SM3Inner {
         h[6] ^= G;
         h[7] ^= H;
     }
-};
-class SM3 {
-    SM3Inner save;
-    uint32_t ctr_lo = 0;
-    uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 32;
+    static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        ctr_lo += 512;
-        ctr_lo >= 512 || ctr_hi++;
-        save.compress(blk);
+        lo += 512;
+        lo >= 512 || hi++;
+        compress(blk);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SM3Inner copy = save;
-        uint32_t cpy_lo = ctr_lo;
-        uint32_t cpy_hi = ctr_hi;
-        cpy_lo += len * 8;
-        cpy_lo >= len * 8 || cpy_hi++;
-        for (; len >= 64; src += 64, len -= 64) {
-            copy.compress(src);
-        }
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) {
+        lo += len * 8;
+        lo >= len * 8 || hi++;
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;
         if (len >= 56) {
-            copy.compress(tmp);
+            compress(tmp);
             memset(tmp, 0, 56);
         }
-        PUT32(tmp + 56, cpy_hi);
-        PUT32(tmp + 60, cpy_lo);
-        copy.compress(tmp);
+        PUT32(tmp + 56, hi);
+        PUT32(tmp + 60, lo);
+        compress(tmp);
         for (int j = 0; j < 8; j++) {
-            PUT32(dst + 4 * j, copy.h[j]);
+            PUT32(dst + 4 * j, h[j]);
         }
     }
 };

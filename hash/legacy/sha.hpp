@@ -28,7 +28,9 @@
         b = a;                                                \
         a = t;                                                \
     }
-struct SHAInner {
+class SHA {
+    uint32_t lo = 0;
+    uint32_t hi = 0;
     uint32_t h[5] = {
         0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
     };
@@ -56,40 +58,30 @@ struct SHAInner {
         h[3] += d;
         h[4] += e;
     }
-};
-class SHA {
-    SHAInner save;
-    uint32_t ctr_lo = 0;
-    uint32_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 20;
+    static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        ctr_lo += 512;
-        ctr_lo >= 512 || ctr_hi++;
-        save.compress(blk);
+        lo += 512;
+        lo >= 512 || hi++;
+        compress(blk);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SHAInner copy = save;
-        uint32_t cpy_lo = ctr_lo;
-        uint32_t cpy_hi = ctr_hi;
-        cpy_lo += len * 8;
-        cpy_lo >= len * 8 || cpy_hi++;
-        for (; len >= 64; src += 64, len -= 64) {
-            copy.compress(src);
-        }
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) {
+        lo += len * 8;
+        lo >= len * 8 || hi++;
         uint8_t tmp[64] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;
         if (len >= 56) {
-            copy.compress(tmp);
+            compress(tmp);
             memset(tmp, 0, 56);
         }
-        PUT32(tmp + 56, cpy_hi);
-        PUT32(tmp + 60, cpy_lo);
-        copy.compress(tmp);
+        PUT32(tmp + 56, hi);
+        PUT32(tmp + 60, lo);
+        compress(tmp);
         for (int i = 0; i < 5; i++) {
-            PUT32(dst + 4 * i, copy.h[i]);
+            PUT32(dst + 4 * i, h[i]);
         }
     }
 };

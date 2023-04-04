@@ -6,6 +6,9 @@
 #include "hash/crc.hpp"
 #include "hash/sha256.hpp"
 #include "hash/sha512.hpp"
+#include "hash/keccak.hpp"
+#include "hash/blake2s.hpp"
+#include "hash/blake2b.hpp"
 #include "hash/hmac.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
@@ -14,15 +17,21 @@
 #define REC_256 2
 #define REC_384 4
 #define REC_512 8
-#define REC_MD5 16
-#define REC_C32 32
-#define REC_C64 64
-#define REC_SHA 128
-#define REC_SM3 256
-#define REC_IFP 512
-#define REC_MAC 1024
-#define REC_ERR 2048
-#define REC_ALG (REC_224 | REC_256 | REC_384 | REC_512 | REC_MD5 | REC_C32 | REC_C64 | REC_SHA | REC_SM3)
+#define RE3_224 16
+#define RE3_256 32
+#define RE3_384 64
+#define RE3_512 128
+#define REC_C32 256
+#define REC_C64 512
+#define REC_B2S 1024
+#define REC_B2B 2048
+#define REC_MD5 4096
+#define REC_SHA 8192
+#define REC_SM3 16384
+#define REC_ALG (REC_224 | REC_256 | REC_384 | REC_512 | RE3_224 | RE3_256 | RE3_384 | RE3_512 | REC_C32 | REC_C64 | REC_B2S | REC_B2B | REC_MD5 | REC_SHA | REC_SM3)
+#define REC_IFP 32768
+#define REC_MAC 65536
+#define REC_ERR 131072
 template <typename Hash, typename... Args>
 void hash(FILE* file, Args &&...args) {
     HashWrapper<Hash> hash(std::forward<Args>(args)...);
@@ -92,39 +101,75 @@ int main(int argc, char *argv[]) {
                 } else {
                     rec |= REC_ERR;
                 }
-            } else if (argv[i][1] == '7' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0) {
-                    rec |= REC_224;
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0) {
-                    rec |= REC_256;
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '3' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0) {
-                    rec |= REC_384;
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0) {
-                    rec |= REC_512;
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '5' && argv[i][2] == '\0') {
+            } else if (argv[i][1] == '0' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0) {
                     rec |= REC_C32;
                 } else {
                     rec |= REC_ERR;
                 }
-            } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
+            } else if (argv[i][1] == '1' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0) {
                     rec |= REC_C64;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '2' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_224;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '3' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_256;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_384;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '5' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_512;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= RE3_224;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '7' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= RE3_256;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= RE3_384;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '9' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= RE3_512;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == 'b' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_B2B;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == 's' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_B2S;
                 } else {
                     rec |= REC_ERR;
                 }
@@ -142,20 +187,22 @@ int main(int argc, char *argv[]) {
     }
     if ((rec & REC_ERR) != 0) {
         fprintf(stderr, "Description: HMAC/Hash Calculator\n");
-        fprintf(stderr, "Usage: %s [FILE] (-5 | -6)\n", argv[0]);
-        fprintf(stderr, "       %s [FILE] (-M | -X | -7 | -8 | -3 | -4 | -S) [-H LEN KEY]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [FILE] (-0 | -1)\n", argv[0]);
+        fprintf(stderr, "       %s [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s) [-H LEN KEY]\n", argv[0]);
         fprintf(stderr, "Options:\n");
         fprintf(stderr, "  FILE        input file (default: stdin)\n");
         fprintf(stderr, "  -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)\n");
+        fprintf(stderr, "  -0          CRC-32\n");
+        fprintf(stderr, "  -1          CRC-64\n");
         fprintf(stderr, "  -M          MD5\n");
         fprintf(stderr, "  -X          SHA-1\n");
-        fprintf(stderr, "  -7          SHA-224\n");
-        fprintf(stderr, "  -8          SHA-256\n");
-        fprintf(stderr, "  -3          SHA-384\n");
-        fprintf(stderr, "  -4          SHA-512\n");
         fprintf(stderr, "  -S          SM3\n");
-        fprintf(stderr, "  -5          CRC-32\n");
-        fprintf(stderr, "  -6          CRC-64\n");
+        fprintf(stderr, "  -2,  -3     SHA-224, SHA-256\n");
+        fprintf(stderr, "  -4,  -5     SHA-384, SHA-512\n");
+        fprintf(stderr, "  -6,  -7     SHA3-224, SHA3-256\n");
+        fprintf(stderr, "  -8,  -9     SHA3-384, SHA3-512\n");
+        fprintf(stderr, "  -s          BLAKE2s\n");
+        fprintf(stderr, "  -b          BLAKE2b\n");
     } else if ((rec & REC_C32) != 0) {
         hash<CRC32>(fp);
     } else if ((rec & REC_C64) != 0) {
@@ -174,6 +221,18 @@ int main(int argc, char *argv[]) {
         process<SHA384>(rec, fp, key, len);
     } else if ((rec & REC_512) != 0) {
         process<SHA512>(rec, fp, key, len);
+    } else if ((rec & RE3_224) != 0) {
+        process<SHA3<224>>(rec, fp, key, len);
+    } else if ((rec & RE3_256) != 0) {
+        process<SHA3<256>>(rec, fp, key, len);
+    } else if ((rec & RE3_384) != 0) {
+        process<SHA3<384>>(rec, fp, key, len);
+    } else if ((rec & RE3_512) != 0) {
+        process<SHA3<512>>(rec, fp, key, len);
+    } else if ((rec & REC_B2S) != 0) {
+        process<BLAKE2s256>(rec, fp, key, len);
+    } else if ((rec & REC_B2B) != 0) {
+        process<BLAKE2b512>(rec, fp, key, len);
     }
     if (key) {
         delete[] key;

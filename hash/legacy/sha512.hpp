@@ -19,7 +19,8 @@
 }
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
-struct SHA512Inner {
+class SHA512Base {
+protected:
     static constexpr uint64_t K[80] = {
         0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
         0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,
@@ -42,7 +43,15 @@ struct SHA512Inner {
         0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c,
         0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817,
     };
-    uint64_t h[8];
+};
+template <int DS, typename Derived>
+class SHA512Tmpl: public SHA512Base {
+    uint64_t lo = 0;
+    uint64_t hi = 0;
+    uint64_t h[8] = {
+        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+    };
     void compress(uint8_t const *blk) {
         uint64_t A = h[0];
         uint64_t B = h[1];
@@ -84,52 +93,31 @@ struct SHA512Inner {
         h[6] += G;
         h[7] += H;
     }
-};
-template <int DS, typename Derived>
-class SHA512Tmpl {
-    uint64_t ctr_lo = 0;
-    uint64_t ctr_hi = 0;
-protected:
-    SHA512Inner save;
 public:
-    SHA512Tmpl() {
-        save.h[0] = Derived::IV[0];
-        save.h[1] = Derived::IV[1];
-        save.h[2] = Derived::IV[2];
-        save.h[3] = Derived::IV[3];
-        save.h[4] = Derived::IV[4];
-        save.h[5] = Derived::IV[5];
-        save.h[6] = Derived::IV[6];
-        save.h[7] = Derived::IV[7];
-    }
+    SHA512Tmpl() {}
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DS;
+    static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        ctr_lo += 1024;
-        ctr_lo >= 1024 || ctr_hi++;
-        save.compress(blk);
+        lo += 1024;
+        lo >= 1024 || hi++;
+        compress(blk);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dst) const {
-        SHA512Inner copy = save;
-        uint64_t cpy_lo = ctr_lo;
-        uint64_t cpy_hi = ctr_hi;
-        cpy_lo += len * 8;
-        cpy_lo >= len * 8 || cpy_hi++;
-        for (; len >= 128; src += 128, len -= 128) {
-            copy.compress(src);
-        }
+    void hash(uint8_t const *src, size_t len, uint8_t *dst) {
+        lo += len * 8;
+        lo >= len * 8 || hi++;
         uint8_t tmp[128] = {};
         memcpy(tmp, src, len);
         tmp[len] = 0x80;
         if (len >= 112) {
-            copy.compress(tmp);
+            compress(tmp);
             memset(tmp, 0, 112);
         }
-        PUT64(tmp + 112, cpy_hi);
-        PUT64(tmp + 120, cpy_lo);
-        copy.compress(tmp);
+        PUT64(tmp + 112, hi);
+        PUT64(tmp + 120, lo);
+        compress(tmp);
         for (int i = 0; i < DS / 8; i++) {
-            PUT64(dst + 8 * i, copy.h[i]);
+            PUT64(dst + 8 * i, h[i]);
         }
     }
 };

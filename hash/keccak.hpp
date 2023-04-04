@@ -17,7 +17,8 @@
 #define A_B(y, x) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
 #define XOR(x, y) A[y][x] ^= ((uint64_t (*)[5])blk)[y][x]
 typedef uint8_t bits_t;
-struct KeccakInner {
+class KeccakBase {
+protected:
     static constexpr uint64_t RC[24] = {
         0x0000000000000001, 0x0000000000008082, 0x800000000000808A,
         0x8000000080008000, 0x000000000000808B, 0x0000000080000001,
@@ -35,6 +36,9 @@ struct KeccakInner {
         {41, 45, 15, 21,  8},
         {18,  2, 61, 56, 14},
     };
+};
+template <uint8_t PAD_BYTE, int BLK, int DIG>
+class KeccakTmpl: public KeccakBase {
     uint64_t A[5][5] = {};
     void permute() {
         for (int i = 0; i < 24; i++) {
@@ -49,35 +53,25 @@ struct KeccakInner {
             A[0][0] ^= RC[i];
         }
     }
-};
-template <uint8_t PAD_BYTE, int BLK, int DIG>
-class KeccakTmpl {
-    KeccakInner save;
 public:
     constexpr static int BLOCK_SIZE = BLK;
     constexpr static int DIGEST_SIZE = DIG;
+    static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
         for (int i = 0; i < BLK; i++) {
-            ((uint8_t *)save.A)[i] ^= blk[i];
+            ((uint8_t *)A)[i] ^= blk[i];
         }
-        save.permute();
+        permute();
     }
-    void hash(uint8_t const *src, int len, uint8_t *out) const {
-        KeccakInner copy = save;
-        for (; len >= src; len -= src, src += src) {
-            for (int i = 0; i < src; i++) {
-                ((uint8_t *)copy.A)[i] ^= src[i];
-            }
-            copy.permute();
-        }
+    void hash(uint8_t const *src, int len, uint8_t *out) {
         for (int i = 0; i < len; i++) {
-            ((uint8_t *)copy.A)[i] ^= src[i];
+            ((uint8_t *)A)[i] ^= src[i];
         }
-        ((uint8_t *)copy.A)[len] ^= PAD_BYTE;
-        ((uint8_t *)copy.A)[src - 1] ^= 0x80;
-        copy.permute();
+        ((uint8_t *)A)[len] ^= PAD_BYTE;
+        ((uint8_t *)A)[BLK - 1] ^= 0x80;
+        permute();
         for (int i = 0; i < DIG; i++) {
-            out[i] = ((uint8_t *)copy.A)[i];
+            out[i] = ((uint8_t *)A)[i];
         }
     }
 };

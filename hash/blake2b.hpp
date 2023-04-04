@@ -18,7 +18,8 @@
     QROUND(v, m, S, i,  3,  4,  9, 14, 14, 15); \
 }
 typedef uint8_t bits_t;
-struct BLAKE2bInner {
+class BLAKE2bBase {
+protected:
     static constexpr bits_t SIGMA[10][16] = {
         { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15},
         {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
@@ -31,17 +32,25 @@ struct BLAKE2bInner {
         { 6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5},
         {10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13,  0},
     };
-    uint64_t h[8];
-    uint64_t i[8];
-    void compress(uint8_t const *blk, uint64_t hi, uint64_t lo, bool mask) {
+};
+template <size_t DS, typename Derived>
+class BLAKE2bTmpl: public BLAKE2bBase {
+    uint64_t hi = 0;
+    uint64_t lo = 0;
+    uint64_t h[8] = {
+        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+    };
+    void compress(uint8_t const *blk, bool fin) {
+        uint64_t const *m = (uint64_t *)blk;
         uint64_t sta[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
-            i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7],
+            Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+            Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
         };
         sta[12] ^= lo;
         sta[13] ^= hi;
-        sta[14] = mask ? ~sta[14] : sta[14];
-        uint64_t const *m = (uint64_t *)blk;
+        sta[14] = fin ? ~sta[14] : sta[14];
         DROUND(sta, m, SIGMA, 0);
         DROUND(sta, m, SIGMA, 1);
         DROUND(sta, m, SIGMA, 2);
@@ -63,55 +72,34 @@ struct BLAKE2bInner {
         h[6] ^= sta[6] ^ sta[14];
         h[7] ^= sta[7] ^ sta[15];
     }
-};
-template <size_t DS, typename Derived>
-class BLAKE2bTmpl {
-    BLAKE2bInner save;
-    uint64_t ctr_lo = 0;
-    uint64_t ctr_hi = 0;
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DS;
+    static constexpr bool NO_PADDING = true;
     BLAKE2bTmpl(uint8_t const *key, size_t len) {
-        save.h[0] = save.i[0] = Derived::IV[0];
-        save.h[1] = save.i[1] = Derived::IV[1];
-        save.h[2] = save.i[2] = Derived::IV[2];
-        save.h[3] = save.i[3] = Derived::IV[3];
-        save.h[4] = save.i[4] = Derived::IV[4];
-        save.h[5] = save.i[5] = Derived::IV[5];
-        save.h[6] = save.i[6] = Derived::IV[6];
-        save.h[7] = save.i[7] = Derived::IV[7];
-        save.h[0] ^= 0x01010000 ^ len << 8 ^ DS;
+        h[0] ^= 0x01010000 ^ len << 8 ^ DS;
         if (len > 0) {
             uint8_t tmp[128] = {};
             memcpy(tmp, key, len);
-            ctr_lo += 128;
-            ctr_lo >= 128 || ++ctr_hi;
-            save.compress(tmp, ctr_hi, ctr_lo, 0);
+            lo += 128;
+            lo >= 128 || ++hi;
+            compress(tmp, 0);
         }
     }
     BLAKE2bTmpl(): BLAKE2bTmpl(nullptr, 0) {}
     void push(uint8_t const *blk) {
-        ctr_lo += 128;
-        ctr_lo >= 128 || ++ctr_hi;
-        save.compress(blk, ctr_hi, ctr_lo, 0);
+        lo += 128;
+        lo >= 128 || ++hi;
+        compress(blk, 0);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dig) const {
-        BLAKE2bInner copy = save;
-        uint64_t cpy_lo = ctr_lo;
-        uint64_t cpy_hi = ctr_hi;
-        for (; len > 128; src += 128, len -= 128) {
-            cpy_lo += 128;
-            cpy_lo >= 128 || ++cpy_hi;
-            copy.compress(src, cpy_hi, cpy_lo, 0);
-        }
+    void hash(uint8_t const *src, size_t len, uint8_t *dig) {
         uint8_t tmp[128] = {};
         memcpy(tmp, src, len);
-        cpy_lo += len;
-        cpy_lo >= len || ++cpy_hi;
-        copy.compress(tmp, cpy_hi, cpy_lo, 1);
+        lo += len;
+        lo >= len || ++hi;
+        compress(tmp, 1);
         for (size_t i = 0; i < DS / 8; ++i) {
-            ((uint64_t *)dig)[i] = copy.h[i];
+            ((uint64_t *)dig)[i] = h[i];
         }
     }
 };
