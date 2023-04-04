@@ -84,20 +84,22 @@ clang++ hash.cpp -std=c++20 -O2 -o hash.exe
 
 ```
 Description: HMAC/Hash Calculator
-Usage: hash.exe [FILE] (-5 | -6)
-       hash.exe [FILE] (-M | -X | -7 | -8 | -3 | -4 | -S) [-H LEN KEY]
+Usage: ./a.out [FILE] (-0 | -1)
+       ./a.out [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s) [-H LEN KEY]
 Options:
   FILE        input file (default: stdin)
   -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)
+  -0          CRC-32
+  -1          CRC-64
   -M          MD5
   -X          SHA-1
-  -7          SHA-224
-  -8          SHA-256
-  -3          SHA-384
-  -4          SHA-512
   -S          SM3
-  -5          CRC-32
-  -6          CRC-64
+  -2,  -3     SHA-224, SHA-256
+  -4,  -5     SHA-384, SHA-512
+  -6,  -7     SHA3-224, SHA3-256
+  -8,  -9     SHA3-384, SHA3-512
+  -s          BLAKE2s
+  -b          BLAKE2b
 ```
 
 ```sh
