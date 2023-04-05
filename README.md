@@ -43,13 +43,16 @@ clang++ cipher.cpp -std=c++20 -O2 -o cipher.exe
 
 ```txt
 Description: SM4/AES Encryption/Decryption Tool
-Usage: cipher.exe (-S KEY | -4 KEY | -6 KEY | -8 KEY)
+Usage: cipher.exe (-S KEY | -2 ~ -4 KEY | -5 ~ -7 KEY)
        [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]
 Options:
   -S KEY      SM4 (KEY: 128-bit key in hex)
-  -4 KEY      AES-128 (KEY: 128-bit key in hex)
-  -6 KEY      AES-192 (KEY: 192-bit key in hex)
-  -8 KEY      AES-256 (KEY: 256-bit key in hex)
+  -2 KEY      AES-128 (KEY: 128-bit key in hex)
+  -3 KEY      AES-192 (KEY: 192-bit key in hex)
+  -4 KEY      AES-256 (KEY: 256-bit key in hex)
+  -5 KEY      Camellia-128 (KEY: 128-bit key in hex)
+  -6 KEY      Camellia-192 (KEY: 192-bit key in hex)
+  -7 KEY      Camellia-256 (KEY: 256-bit key in hex)
   -e          encryption
   -d          decryption
   -E          ECB mode (default)
@@ -84,8 +87,8 @@ clang++ hash.cpp -std=c++20 -O2 -o hash.exe
 
 ```
 Description: HMAC/Hash Calculator
-Usage: ./a.out [FILE] (-0 | -1)
-       ./a.out [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s) [-H LEN KEY]
+Usage: hash.exe [FILE] (-0 | -1)
+       hash.exe [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s) [-H LEN KEY]
 Options:
   FILE        input file (default: stdin)
   -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)
