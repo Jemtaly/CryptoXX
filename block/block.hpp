@@ -1,6 +1,5 @@
 #pragma once
-#include <stdint.h>
-#include <string.h>
+#include "../bits.hpp"
 #include <utility> // std::forward
 #define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>

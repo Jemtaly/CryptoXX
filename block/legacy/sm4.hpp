@@ -1,16 +1,5 @@
 #pragma once
 #include "block.hpp"
-#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define GET32(a) (                                    \
-    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
-    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
-)
-#define PUT32(a, i) {          \
-    (a)[0] = (i) >> 24       ; \
-    (a)[1] = (i) >> 16 & 0xff; \
-    (a)[2] = (i) >>  8 & 0xff; \
-    (a)[3] = (i)       & 0xff; \
-}
 class SM4 {
     static constexpr uint32_t CK[32] = {
         0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269,
@@ -46,46 +35,46 @@ class SM4 {
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     SM4(uint8_t const *mk) {
-        k[0] ^= GET32(mk + 0x0);
-        k[1] ^= GET32(mk + 0x4);
-        k[2] ^= GET32(mk + 0x8);
-        k[3] ^= GET32(mk + 0xc);
+        k[0] ^= GET_BE<uint32_t>(mk + 0x0);
+        k[1] ^= GET_BE<uint32_t>(mk + 0x4);
+        k[2] ^= GET_BE<uint32_t>(mk + 0x8);
+        k[3] ^= GET_BE<uint32_t>(mk + 0xc);
         for (int i = 0; i < 32; i++) {
             uint32_t a = k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
-            k[i + 4] = k[i] ^ b ^ ROL32(b, 13) ^ ROL32(b, 23);
+            k[i + 4] = k[i] ^ b ^ ROTL(b, 13) ^ ROTL(b, 23);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t[36];
-        t[0] = GET32(src + 0x0);
-        t[1] = GET32(src + 0x4);
-        t[2] = GET32(src + 0x8);
-        t[3] = GET32(src + 0xc);
+        t[0] = GET_BE<uint32_t>(src + 0x0);
+        t[1] = GET_BE<uint32_t>(src + 0x4);
+        t[2] = GET_BE<uint32_t>(src + 0x8);
+        t[3] = GET_BE<uint32_t>(src + 0xc);
         for (int i = 0; i < 32; i++) {
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
-            t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
+            t[i + 4] = t[i] ^ b ^ ROTL(b, 2) ^ ROTL(b, 10) ^ ROTL(b, 18) ^ ROTL(b, 24);
         }
-        PUT32(dst + 0x0, t[35]);
-        PUT32(dst + 0x4, t[34]);
-        PUT32(dst + 0x8, t[33]);
-        PUT32(dst + 0xc, t[32]);
+        PUT_BE(dst + 0x0, t[35]);
+        PUT_BE(dst + 0x4, t[34]);
+        PUT_BE(dst + 0x8, t[33]);
+        PUT_BE(dst + 0xc, t[32]);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t[36];
-        t[0] = GET32(src + 0x0);
-        t[1] = GET32(src + 0x4);
-        t[2] = GET32(src + 0x8);
-        t[3] = GET32(src + 0xc);
+        t[0] = GET_BE<uint32_t>(src + 0x0);
+        t[1] = GET_BE<uint32_t>(src + 0x4);
+        t[2] = GET_BE<uint32_t>(src + 0x8);
+        t[3] = GET_BE<uint32_t>(src + 0xc);
         for (int i = 0; i < 32; i++) {
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
-            t[i + 4] = t[i] ^ b ^ ROL32(b, 2) ^ ROL32(b, 10) ^ ROL32(b, 18) ^ ROL32(b, 24);
+            t[i + 4] = t[i] ^ b ^ ROTL(b, 2) ^ ROTL(b, 10) ^ ROTL(b, 18) ^ ROTL(b, 24);
         }
-        PUT32(dst + 0x0, t[35]);
-        PUT32(dst + 0x4, t[34]);
-        PUT32(dst + 0x8, t[33]);
-        PUT32(dst + 0xc, t[32]);
+        PUT_BE(dst + 0x0, t[35]);
+        PUT_BE(dst + 0x4, t[34]);
+        PUT_BE(dst + 0x8, t[33]);
+        PUT_BE(dst + 0xc, t[32]);
     }
 };

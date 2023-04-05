@@ -1,11 +1,10 @@
 #pragma once
 #include "hash.hpp"
-#define ROR32(x, n) ((x) >> (n) | (x) << (32 - (n)))
-#define QROUND(v, m, S, i, a, b, c, d, x, y) {                       \
-    v[a] += v[b] + m[S[i][x]]; v[d] ^= v[a]; v[d] = ROR32(v[d], 16); \
-    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROR32(v[b], 12); \
-    v[a] += v[b] + m[S[i][y]]; v[d] ^= v[a]; v[d] = ROR32(v[d],  8); \
-    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROR32(v[b],  7); \
+#define QROUND(v, m, S, i, a, b, c, d, x, y) {                      \
+    v[a] += v[b] + m[S[i][x]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 16); \
+    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROTR(v[b], 12); \
+    v[a] += v[b] + m[S[i][y]]; v[d] ^= v[a]; v[d] = ROTR(v[d],  8); \
+    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROTR(v[b],  7); \
 }
 typedef uint8_t bits_t;
 class BLAKE2sBase {
@@ -32,14 +31,16 @@ class BLAKE2sTmpl: public BLAKE2sBase {
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
     };
     void compress(uint8_t const *blk, bool fin) {
-        uint32_t const *m = (uint32_t *)blk;
         uint32_t sta[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
-            i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7],
+            Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+            Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
         };
+        uint32_t m[16];
+        READ_LE(m, blk, 16);
         sta[12] ^= lo;
         sta[13] ^= hi;
-        sta[14] = mask ? ~sta[14] : sta[14];
+        sta[14] = fin ? ~sta[14] : sta[14];
         for (int i = 0; i < 10; ++i) {
             QROUND(sta, m, SIGMA, i,  0,  4,  8, 12,  0,  1);
             QROUND(sta, m, SIGMA, i,  1,  5,  9, 13,  2,  3);
@@ -85,9 +86,7 @@ public:
         lo += len;
         lo >= len || ++hi;
         compress(tmp, 1);
-        for (size_t i = 0; i < DS / 4; ++i) {
-            ((uint32_t *)dig)[i] = h[i];
-        }
+        WRITE_LE(dig, h, DS / 4);
     }
 };
 class BLAKE2s256: public BLAKE2sTmpl<32, BLAKE2s256> {

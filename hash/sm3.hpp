@@ -1,19 +1,7 @@
 #pragma once
 #include "hash.hpp"
-#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define RLX32(x, n) ((x) << ((n) & 31) | (x) >> (-(n) & 31))
-#define GET32(a) (                                    \
-    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
-    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
-)
-#define PUT32(a, i) {          \
-    (a)[0] = (i) >> 24       ; \
-    (a)[1] = (i) >> 16 & 0xff; \
-    (a)[2] = (i) >>  8 & 0xff; \
-    (a)[3] = (i)       & 0xff; \
-}
-#define PPE(x) ((x) ^ ROL32(x,  9) ^ ROL32(x, 17))
-#define PPW(x) ((x) ^ ROL32(x, 15) ^ ROL32(x, 23))
+#define PPE(x) ((x) ^ ROTL(x,  9) ^ ROTL(x, 17))
+#define PPW(x) ((x) ^ ROTL(x, 15) ^ ROTL(x, 23))
 #define FF0(x, y, z) ((x) ^ (y) ^ (z))
 #define FF1(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define GG0(x, y, z) ((x) ^ (y) ^ (z))
@@ -21,13 +9,13 @@
 #define KK0 0x79CC4519U
 #define KK1 0x7A879D8AU
 #define HH1(N, a, b, c, d, e, f, g, h, w, j) {            \
-    r = ROL32(a, 12);                                     \
-    s = r + e + RLX32(KK##N, j);                          \
-    t = ROL32(s,  7);                                     \
+    r = ROTL(a, 12);                                      \
+    s = r + e + ROTL(KK##N, j);                           \
+    t = ROTL(s,  7);                                      \
     u = FF##N(a, b, c) + d + (t ^ r) + (w[j] ^ w[j + 4]); \
     v = GG##N(e, f, g) + h +  t      +  w[j]            ; \
-    b = ROL32(b,  9);                                     \
-    f = ROL32(f, 19);                                     \
+    b = ROTL(b,  9);                                      \
+    f = ROTL(f, 19);                                      \
     d =     u ;                                           \
     h = PPE(v);                                           \
 }
@@ -60,12 +48,10 @@ class SM3 {
         uint32_t G = h[6];
         uint32_t H = h[7];
         uint32_t w[68], t, r, s, u, v;
-        for (int j =  0; j < 16; j++) {
-            w[j] = GET32(blk + 4 * j);
-        }
+        READ_BE(w, blk, 16);
         for (int j = 16; j < 68; j++) {
-            t = w[j - 16] ^ w[j - 9] ^ ROL32(w[j -  3], 15);
-            w[j] = PPW(t) ^ w[j - 6] ^ ROL32(w[j - 13],  7);
+            t = w[j - 16] ^ w[j - 9] ^ ROTL(w[j -  3], 15);
+            w[j] = PPW(t) ^ w[j - 6] ^ ROTL(w[j - 13],  7);
         }
         HHX(0, A, B, C, D, E, F, G, H, w,  0);
         HHX(1, A, B, C, D, E, F, G, H, w, 16);
@@ -99,12 +85,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 56);
         }
-        PUT32(tmp + 56, hi);
-        PUT32(tmp + 60, lo);
+        PUT_BE(tmp + 56, hi);
+        PUT_BE(tmp + 60, lo);
         compress(tmp);
-        for (int j = 0; j < 8; j++) {
-            PUT32(dst + 4 * j, h[j]);
-        }
+        WRITE_BE(dst, h, 8);
     }
 };
 #undef PPE

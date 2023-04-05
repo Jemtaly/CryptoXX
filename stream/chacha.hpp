@@ -1,11 +1,10 @@
 #pragma once
 #include "stream.hpp"
-#define ROL32(v, n) ((v) << (n) | (v) >> (32 - (n)))
-#define QROUND(s, a, b, c, d) {                         \
-    s[a] += s[b], s[d] ^= s[a], s[d] = ROL32(s[d], 16); \
-    s[c] += s[d], s[b] ^= s[c], s[b] = ROL32(s[b], 12); \
-    s[a] += s[b], s[d] ^= s[a], s[d] = ROL32(s[d],  8); \
-    s[c] += s[d], s[b] ^= s[c], s[b] = ROL32(s[b],  7); \
+#define QROUND(s, a, b, c, d) {                        \
+    s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d], 16); \
+    s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b], 12); \
+    s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d],  8); \
+    s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b],  7); \
 }
 class ChaCha20 {
     uint32_t input[16];
@@ -36,7 +35,7 @@ public:
             QROUND(state,  3,  4,  9, 14);
         }
         for (int i = 0; i < 16; i++) {
-            ((uint32_t *)buf)[i] = state[i] + input[i];
+            PUT_LE(buf, state[i] + input[i]);
         }
         for (int i = 12; i < 16 && ++input[i] == 0; i++) {} // increment counter
     }

@@ -1,7 +1,6 @@
 #pragma once
 #include "stream.hpp"
-#define ROL31(x, n) ((x) << (n) & 0x7FFFFFFF | (x) >> (31 - (n)))
-#define ROL32(x, n) ((x) << (n)              | (x) >> (32 - (n)))
+#define ROTL31(x, n) ((x) << (n) & 0x7FFFFFFF | (x) >> (31 - (n)))
 class ZUC {
     static constexpr uint8_t S0[256] = {
         0x3e, 0x72, 0x5b, 0x47, 0xca, 0xe0, 0x00, 0x33, 0x04, 0xd1, 0x54, 0x98, 0x09, 0xb9, 0x6d, 0xcb,
@@ -65,17 +64,17 @@ class ZUC {
         w2 = r2 ^ x2;
         c1 = w1 << 16 | w2 >> 16;
         c2 = w2 << 16 | w1 >> 16;
-        l1 = c1 ^ ROL32(c1, 2) ^ ROL32(c1, 10) ^ ROL32(c1, 18) ^ ROL32(c1, 24);
-        l2 = c2 ^ ROL32(c2, 8) ^ ROL32(c2, 14) ^ ROL32(c2, 22) ^ ROL32(c2, 30);
+        l1 = c1 ^ ROTL(c1, 2) ^ ROTL(c1, 10) ^ ROTL(c1, 18) ^ ROTL(c1, 24);
+        l2 = c2 ^ ROTL(c2, 8) ^ ROTL(c2, 14) ^ ROTL(c2, 22) ^ ROTL(c2, 30);
         r1 = S0[l1 >> 24] << 24 | S1[l1 >> 16 & 0xff] << 16 | S0[l1 >> 8 & 0xff] << 8 | S1[l1 & 0xff];
         r2 = S0[l2 >> 24] << 24 | S1[l2 >> 16 & 0xff] << 16 | S0[l2 >> 8 & 0xff] << 8 | S1[l2 & 0xff];
         // The linear feedback shift register (LFSR)
         uint32_t f = lfsr[0];
-        f = mod_add(f, ROL31(lfsr[ 0],  8));
-        f = mod_add(f, ROL31(lfsr[ 4], 20));
-        f = mod_add(f, ROL31(lfsr[10], 21));
-        f = mod_add(f, ROL31(lfsr[13], 17));
-        f = mod_add(f, ROL31(lfsr[15], 15));
+        f = mod_add(f, ROTL31(lfsr[ 0],  8));
+        f = mod_add(f, ROTL31(lfsr[ 4], 20));
+        f = mod_add(f, ROTL31(lfsr[10], 21));
+        f = mod_add(f, ROTL31(lfsr[13], 17));
+        f = mod_add(f, ROTL31(lfsr[15], 15));
         for (int i = 0; i < 15; ++i) {
             lfsr[i] = lfsr[i + 1];
         }
@@ -87,13 +86,13 @@ public:
         for (int i = 0; i < 16; ++i) {
             lfsr[i] = k[i] << 23 | EK[i] << 8 | iv[i];
         }
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < 32; ++i) {
             permute<1>();
         }
         permute<0>();
     }
     void generate(uint8_t *buf) {
         permute<0>();
-        *(uint32_t *)buf = w ^ x3;
+        PUT_BE(buf, w ^ x3);
     }
 };

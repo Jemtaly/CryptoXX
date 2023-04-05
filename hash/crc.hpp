@@ -21,13 +21,10 @@ public:
     static constexpr size_t DIGEST_SIZE = DIG;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        sta = sta >> 8 ^ box[sta & 0xff ^ blk[0]];
+        sta = sta >> 8 ^ box[sta & 0xff ^ *blk];
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
-        sta ^= CXV;
-        for (int i = 0; i < DIG; i++) {
-            dst[i] = sta >> (DIG - i - 1) * 8;
-        }
+        PUT_BE<digest_t>(dst, sta ^ CXV);
     }
 };
 using CRC32 = CRC<uint32_t, 0xedb88320, 0xffffffff, 0xffffffff>;

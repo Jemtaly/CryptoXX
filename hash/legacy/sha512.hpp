@@ -1,22 +1,5 @@
 #pragma once
 #include "hash.hpp"
-#define ROR64(x, n) ((x) >> (n) | (x) << (64 - (n)))
-#define GET64(p) (                                    \
-    (uint64_t)(p)[0] << 56 | (uint64_t)(p)[1] << 48 | \
-    (uint64_t)(p)[2] << 40 | (uint64_t)(p)[3] << 32 | \
-    (uint64_t)(p)[4] << 24 | (uint64_t)(p)[5] << 16 | \
-    (uint64_t)(p)[6] <<  8 | (uint64_t)(p)[7]         \
-)
-#define PUT64(a, i) {          \
-    (a)[0] = (i) >> 56       ; \
-    (a)[1] = (i) >> 48 & 0xff; \
-    (a)[2] = (i) >> 40 & 0xff; \
-    (a)[3] = (i) >> 32 & 0xff; \
-    (a)[4] = (i) >> 24 & 0xff; \
-    (a)[5] = (i) >> 16 & 0xff; \
-    (a)[6] = (i) >>  8 & 0xff; \
-    (a)[7] = (i)       & 0xff; \
-}
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 class SHA512Base {
@@ -62,17 +45,15 @@ class SHA512Tmpl: public SHA512Base {
         uint64_t G = h[6];
         uint64_t H = h[7];
         uint64_t w[80], s, t, u, v;
-        for (int i =  0; i < 16; i++) {
-            w[i] = GET64(blk + 8 * i);
-        }
+        READ_BE(w, blk, 16);
         for (int i = 16; i < 80; i++) {
-            s = ROR64(w[i - 15],  1) ^ ROR64(w[i - 15],  8) ^ (w[i - 15] >> 7);
-            t = ROR64(w[i -  2], 19) ^ ROR64(w[i -  2], 61) ^ (w[i -  2] >> 6);
+            s = ROTR(w[i - 15],  1) ^ ROTR(w[i - 15],  8) ^ (w[i - 15] >> 7);
+            t = ROTR(w[i -  2], 19) ^ ROTR(w[i -  2], 61) ^ (w[i -  2] >> 6);
             w[i] = w[i - 16] + s + w[i - 7] + t;
         }
         for (int i =  0; i < 80; i++) {
-            s = ROR64(A, 28) ^ ROR64(A, 34) ^ ROR64(A, 39);
-            t = ROR64(E, 14) ^ ROR64(E, 18) ^ ROR64(E, 41);
+            s = ROTR(A, 28) ^ ROTR(A, 34) ^ ROTR(A, 39);
+            t = ROTR(E, 14) ^ ROTR(E, 18) ^ ROTR(E, 41);
             u = t + CHO(E, F, G) + H + K[i] + w[i];
             v = s + MAJ(A, B, C)                  ;
             H = G;
@@ -94,10 +75,10 @@ class SHA512Tmpl: public SHA512Base {
         h[7] += H;
     }
 public:
-    SHA512Tmpl() {}
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DS;
     static constexpr bool NO_PADDING = false;
+    SHA512Tmpl() {}
     void push(uint8_t const *blk) {
         lo += 1024;
         lo >= 1024 || hi++;
@@ -113,12 +94,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 112);
         }
-        PUT64(tmp + 112, hi);
-        PUT64(tmp + 120, lo);
+        PUT_BE(tmp + 112, hi);
+        PUT_BE(tmp + 120, lo);
         compress(tmp);
-        for (int i = 0; i < DS / 8; i++) {
-            PUT64(dst + 8 * i, h[i]);
-        }
+        WRITE_BE(dst, h, DS / 8);
     }
 };
 class SHA512: public SHA512Tmpl<64, SHA512> {

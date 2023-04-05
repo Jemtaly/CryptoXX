@@ -1,11 +1,10 @@
 #pragma once
 #include "hash.hpp"
-#define ROR64(x, n) ((x) >> (n) | (x) << (64 - (n)))
-#define QROUND(v, m, S, i, a, b, c, d, x, y) {                       \
-    v[a] += v[b] + m[S[i][x]]; v[d] ^= v[a]; v[d] = ROR64(v[d], 32); \
-    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROR64(v[b], 24); \
-    v[a] += v[b] + m[S[i][y]]; v[d] ^= v[a]; v[d] = ROR64(v[d], 16); \
-    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROR64(v[b], 63); \
+#define QROUND(v, m, S, i, a, b, c, d, x, y) {                      \
+    v[a] += v[b] + m[S[i][x]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 32); \
+    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROTR(v[b], 24); \
+    v[a] += v[b] + m[S[i][y]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 16); \
+    v[c] += v[d]             ; v[b] ^= v[c]; v[b] = ROTR(v[b], 63); \
 }
 typedef uint8_t bits_t;
 class BLAKE2bBase {
@@ -34,12 +33,13 @@ class BLAKE2bTmpl: public BLAKE2bBase {
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
     };
     void compress(uint8_t const *blk, bool fin) {
-        uint64_t const *m = (uint64_t *)blk;
         uint64_t sta[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
             Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
             Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
         };
+        uint64_t m[16];
+        READ_LE(m, blk, 16);
         sta[12] ^= lo;
         sta[13] ^= hi;
         sta[14] = fin ? ~sta[14] : sta[14];
@@ -88,9 +88,7 @@ public:
         lo += len;
         lo >= len || ++hi;
         compress(tmp, 1);
-        for (size_t i = 0; i < DS / 8; ++i) {
-            ((uint64_t *)dig)[i] = h[i];
-        }
+        WRITE_LE(dig, h, DS / 8);
     }
 };
 class BLAKE2b512: public BLAKE2bTmpl<64, BLAKE2b512> {

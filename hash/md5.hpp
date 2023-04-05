@@ -1,6 +1,5 @@
 #pragma once
 #include "hash.hpp"
-#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
 #define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define FF1(x, y, z) ((z) & ((x) ^ (y)) ^ (y))
 #define FF2(x, y, z) ((x) ^ (y) ^ (z))
@@ -11,7 +10,7 @@
 #define GG3(i) (7 * (i)     & 0xf)
 #define HH1(N, a, b, c, d, s, w, K, R, i) {      \
     s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
-    a = b + ROL32(s, R[i]);                      \
+    a = b + ROTL(s, R[i]);                       \
 }
 #define HH4(N, a, b, c, d, s, w, K, R, i) {      \
     HH1(N, a, b, c, d, s, w, K, R, i     );      \
@@ -65,8 +64,8 @@ class MD5 {
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
-        uint32_t s;
-        uint32_t const *w = (uint32_t *)blk;
+        uint32_t s, w[16];
+        READ_LE(w, blk, 16);
         HHX(0, a, b, c, d, s, w, K, R,  0);
         HHX(1, a, b, c, d, s, w, K, R, 16);
         HHX(2, a, b, c, d, s, w, K, R, 32);
@@ -95,12 +94,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 56);
         }
-        ((uint32_t *)tmp)[14] = lo;
-        ((uint32_t *)tmp)[15] = hi;
+        PUT_LE(tmp + 56, lo);
+        PUT_LE(tmp + 60, hi);
         compress(tmp);
-        for (int i = 0; i < 4; i++) {
-            ((uint32_t *)dst)[i] = h[i];
-        }
+        WRITE_LE(dst, h, 4);
     }
 };
 #undef FF0

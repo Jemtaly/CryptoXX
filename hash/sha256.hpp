@@ -1,21 +1,10 @@
 #pragma once
 #include "hash.hpp"
-#define ROR32(x, n) ((x) >> (n) | (x) << (32 - (n)))
-#define GET32(a) (                                    \
-    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
-    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
-)
-#define PUT32(a, i) {          \
-    (a)[0] = (i) >> 24       ; \
-    (a)[1] = (i) >> 16 & 0xff; \
-    (a)[2] = (i) >>  8 & 0xff; \
-    (a)[3] = (i)       & 0xff; \
-}
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) { \
-    s = ROR32(a, 2) ^ ROR32(a, 13) ^ ROR32(a, 22);         \
-    t = ROR32(e, 6) ^ ROR32(e, 11) ^ ROR32(e, 25);         \
+    s = ROTR(a, 2) ^ ROTR(a, 13) ^ ROTR(a, 22);            \
+    t = ROTR(e, 6) ^ ROTR(e, 11) ^ ROTR(e, 25);            \
     u = t + CHO(e, f, g) + h + K[i] + w[i];                \
     v = s + MAJ(a, b, c)                  ;                \
     d = d + u;                                             \
@@ -70,12 +59,10 @@ class SHA256Tmpl: public SHA256Base {
         uint32_t G = h[6];
         uint32_t H = h[7];
         uint32_t w[64], s, t, u, v;
-        for (int i =  0; i < 16; i++) {
-            w[i] = GET32(blk + 4 * i);
-        }
+        READ_BE(w, blk, 16);
         for (int i = 16; i < 64; i++) {
-            s = ROR32(w[i - 15],  7) ^ ROR32(w[i - 15], 18) ^ (w[i - 15] >>  3);
-            t = ROR32(w[i -  2], 17) ^ ROR32(w[i -  2], 19) ^ (w[i -  2] >> 10);
+            s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
+            t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
             w[i] = w[i - 16] + s + w[i - 7] + t;
         }
         FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K,  0);
@@ -115,12 +102,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 56);
         }
-        PUT32(tmp + 56, hi);
-        PUT32(tmp + 60, lo);
+        PUT_BE(tmp + 56, hi);
+        PUT_BE(tmp + 60, lo);
         compress(tmp);
-        for (int i = 0; i < DS / 4; i++) {
-            PUT32(dst + 4 * i, h[i]);
-        }
+        WRITE_BE(dst, h, DS / 4);
     }
 };
 class SHA256: public SHA256Tmpl<32, SHA256> {

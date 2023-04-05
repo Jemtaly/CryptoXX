@@ -1,23 +1,14 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-#define GET32(a) (                                    \
-    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
-    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
-)
-#define PUT32(a, i) {          \
-    (a)[0] = (i) >> 24       ; \
-    (a)[1] = (i) >> 16 & 0xff; \
-    (a)[2] = (i) >>  8 & 0xff; \
-    (a)[3] = (i)       & 0xff; \
-}
 class Blowfish {
     uint32_t P[18] = {
         0x243F6A88L, 0x85A308D3L, 0x13198A2EL, 0x03707344L,
         0xA4093822L, 0x299F31D0L, 0x082EFA98L, 0xEC4E6C89L,
         0x452821E6L, 0x38D01377L, 0xBE5466CFL, 0x34E90C6CL,
         0xC0AC29B7L, 0xC97C50DDL, 0x3F84D5B5L, 0xB5470917L,
-        0x9216D5D9L, 0x8979FB1BL};
+        0x9216D5D9L, 0x8979FB1BL,
+    };
     uint32_t S[4][256] = {
         0xD1310BA6L, 0x98DFB5ACL, 0x2FFD72DBL, 0xD01ADFB7L,
         0xB8E1AFEDL, 0x6A267E96L, 0xBA7C9045L, 0xF12C7F99L,
@@ -236,7 +227,7 @@ class Blowfish {
         0x7533D928L, 0xB155FDF5L, 0x03563482L, 0x8ABA3CBBL,
         0x28517711L, 0xC20AD9F8L, 0xABCC5167L, 0xCCAD925FL,
         0x4DE81751L, 0x3830DC8EL, 0x379D5862L, 0x9320F991L,
-        0xEA7A90C2L, 0xFB3E7BCEL, 0x5121CE64L, 0x774FBE32L,
+        0xEA7A90C2L, 0xFB3E7BCEL, 0x5121CE64L, 0x774FBEL,
         0xA8B6E37EL, 0xC3293D46L, 0x48DE5369L, 0x6413E680L,
         0xA2AE0810L, 0xDD6DB224L, 0x69852DFDL, 0x09072166L,
         0xB39A460AL, 0x6445C0DDL, 0x586CDECFL, 0x1C20C8AEL,
@@ -284,18 +275,18 @@ public:
             buf[i] = key[i % len];
         }
         for (int i = 0; i < 18; i++) {
-            P[i] ^= GET32(buf + i * 4);
+            P[i] ^= GET_BE<uint32_t>(buf + i * 4);
         }
         uint8_t itr[8] = {};
         for (int i = 0; i < 1042;) {
             encrypt(itr, itr);
-            P[i++] = GET32(itr + 0);
-            P[i++] = GET32(itr + 4);
+            ((uint32_t *)P)[i++] = GET_BE<uint32_t>(itr + 0);
+            ((uint32_t *)P)[i++] = GET_BE<uint32_t>(itr + 4);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t L = GET32(src + 0);
-        uint32_t R = GET32(src + 4);
+        uint32_t L = GET_BE<uint32_t>(src + 0);
+        uint32_t R = GET_BE<uint32_t>(src + 4);
         for (int r = 0;;) {
             L ^= P[r++];
             R ^= P[r++];
@@ -303,12 +294,12 @@ public:
             R ^= ((S[0][L >> 24] + S[1][L >> 16 & 0xff]) ^ S[2][L >> 8 & 0xff]) + S[3][L & 0xff];
             L ^= ((S[0][R >> 24] + S[1][R >> 16 & 0xff]) ^ S[2][R >> 8 & 0xff]) + S[3][R & 0xff];
         }
-        PUT32(dst + 0, R);
-        PUT32(dst + 4, L);
+        PUT_BE(dst + 0, R);
+        PUT_BE(dst + 4, L);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t L = GET32(src + 0);
-        uint32_t R = GET32(src + 4);
+        uint32_t L = GET_BE<uint32_t>(src + 0);
+        uint32_t R = GET_BE<uint32_t>(src + 4);
         for (int r = 18;;) {
             L ^= P[--r];
             R ^= P[--r];
@@ -316,7 +307,7 @@ public:
             R ^= ((S[0][L >> 24] + S[1][L >> 16 & 0xff]) ^ S[2][L >> 8 & 0xff]) + S[3][L & 0xff];
             L ^= ((S[0][R >> 24] + S[1][R >> 16 & 0xff]) ^ S[2][R >> 8 & 0xff]) + S[3][R & 0xff];
         }
-        PUT32(dst + 0, R);
-        PUT32(dst + 4, L);
+        PUT_BE(dst + 0, R);
+        PUT_BE(dst + 4, L);
     }
 };

@@ -1,26 +1,9 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define RLX128(dh, dl, sh, sl, n) {              \
-    (dh) = sh << ((n) & 63) | sl >> (-(n) & 63); \
-    (dl) = sl << ((n) & 63) | sh >> (-(n) & 63); \
-}
-#define GET64(p) (                                    \
-    (uint64_t)(p)[0] << 56 | (uint64_t)(p)[1] << 48 | \
-    (uint64_t)(p)[2] << 40 | (uint64_t)(p)[3] << 32 | \
-    (uint64_t)(p)[4] << 24 | (uint64_t)(p)[5] << 16 | \
-    (uint64_t)(p)[6] <<  8 | (uint64_t)(p)[7]         \
-)
-#define PUT64(a, i) {          \
-    (a)[0] = (i) >> 56       ; \
-    (a)[1] = (i) >> 48 & 0xff; \
-    (a)[2] = (i) >> 40 & 0xff; \
-    (a)[3] = (i) >> 32 & 0xff; \
-    (a)[4] = (i) >> 24 & 0xff; \
-    (a)[5] = (i) >> 16 & 0xff; \
-    (a)[6] = (i) >>  8 & 0xff; \
-    (a)[7] = (i)       & 0xff; \
+#define ROTL128(dh, dl, sh, sl, n) {                   \
+    (dh) = sh << (n) | (n > 0 ? sl >> (64 - (n)) : 0); \
+    (dl) = sl << (n) | (n > 0 ? sh >> (64 - (n)) : 0); \
 }
 class CamelliaBase {
 protected:
@@ -87,20 +70,20 @@ protected:
         y[5] = t[1] ^ t[2] ^ t[4] ^ t[6] ^ t[7];
         y[6] = t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[7];
         y[7] = t[0] ^ t[3] ^ t[4] ^ t[5] ^ t[6];
-        return GET64(y);
+        return GET_BE<uint64_t>(y);
     }
     static uint64_t fl(uint64_t in, uint64_t kx) {
-        uint32_t xh = in >> 32, xl = in & 0xffffffff;
-        uint32_t kh = kx >> 32, kl = kx & 0xffffffff;
-        xl ^= ROL32(xh & kh, 1);
+        uint32_t xh = in >> 32, xl = in & 0xFFFFFFFF;
+        uint32_t kh = kx >> 32, kl = kx & 0xFFFFFFFF;
+        xl ^= ROTL(xh & kh, 1);
         xh ^=       xl | kl    ;
         return (uint64_t)xh << 32 | (uint64_t)xl;
     }
     static uint64_t lf(uint64_t in, uint64_t kx) {
-        uint32_t yh = in >> 32, yl = in & 0xffffffff;
-        uint32_t kh = kx >> 32, kl = kx & 0xffffffff;
+        uint32_t yh = in >> 32, yl = in & 0xFFFFFFFF;
+        uint32_t kh = kx >> 32, kl = kx & 0xFFFFFFFF;
         yh ^=       yl | kl    ;
-        yl ^= ROL32(yh & kh, 1);
+        yl ^= ROTL(yh & kh, 1);
         return (uint64_t)yh << 32 | (uint64_t)yl;
     }
 public:
@@ -118,17 +101,17 @@ public:
         uint64_t bh, bl;
         uint64_t dh, dl;
         uint64_t holder;
-        lh = GET64(kxy     );
-        ll = GET64(kxy +  8);
-        if (L == 2) {
+        lh = GET_BE<uint64_t>(kxy     );
+        ll = GET_BE<uint64_t>(kxy +  8);
+        if constexpr (L == 2) {
             rh = 0;
             rl = 0;
-        } else if (L == 3) {
-            rh = GET64(kxy + 16);
+        } else if constexpr (L == 3) {
+            rh = GET_BE<uint64_t>(kxy + 16);
             rl = ~rh;
         } else {
-            rh = GET64(kxy + 16);
-            rl = GET64(kxy + 24);
+            rh = GET_BE<uint64_t>(kxy + 16);
+            rl = GET_BE<uint64_t>(kxy + 24);
         }
         dh = lh ^ rh;
         dl = ll ^ rl;
@@ -146,45 +129,45 @@ public:
         dh ^= f(dl, SIGMA[5]);
         bh = dh;
         bl = dl;
-        if (L == 2) {
-            RLX128(kx[ 0], kx[ 1], lh, ll,  0);
-            RLX128(kx[ 2], kx[ 3], ah, al,  0);
-            RLX128(kx[ 4], kx[ 5], lh, ll, 15);
-            RLX128(kx[ 6], kx[ 7], ah, al, 15);
-            RLX128(kx[ 8], kx[ 9], ah, al, 30);
-            RLX128(kx[10], kx[11], lh, ll, 45);
-            RLX128(kx[12], holder, ah, al, 45);
-            RLX128(holder, kx[13], lh, ll, 60);
-            RLX128(kx[14], kx[15], ah, al, 60);
-            RLX128(kx[16], kx[17], ll, lh, 13);
-            RLX128(kx[18], kx[19], ll, lh, 30);
-            RLX128(kx[20], kx[21], al, ah, 30);
-            RLX128(kx[22], kx[23], ll, lh, 47);
-            RLX128(kx[24], kx[25], al, ah, 47);
+        if constexpr (L == 2) {
+            ROTL128(kx[ 0], kx[ 1], lh, ll,  0);
+            ROTL128(kx[ 2], kx[ 3], ah, al,  0);
+            ROTL128(kx[ 4], kx[ 5], lh, ll, 15);
+            ROTL128(kx[ 6], kx[ 7], ah, al, 15);
+            ROTL128(kx[ 8], kx[ 9], ah, al, 30);
+            ROTL128(kx[10], kx[11], lh, ll, 45);
+            ROTL128(kx[12], holder, ah, al, 45);
+            ROTL128(holder, kx[13], lh, ll, 60);
+            ROTL128(kx[14], kx[15], ah, al, 60);
+            ROTL128(kx[16], kx[17], ll, lh, 13);
+            ROTL128(kx[18], kx[19], ll, lh, 30);
+            ROTL128(kx[20], kx[21], al, ah, 30);
+            ROTL128(kx[22], kx[23], ll, lh, 47);
+            ROTL128(kx[24], kx[25], al, ah, 47);
         } else {
-            RLX128(kx[ 0], kx[ 1], lh, ll,  0);
-            RLX128(kx[ 2], kx[ 3], bh, bl,  0);
-            RLX128(kx[ 4], kx[ 5], rh, rl, 15);
-            RLX128(kx[ 6], kx[ 7], ah, al, 15);
-            RLX128(kx[ 8], kx[ 9], rh, rl, 30);
-            RLX128(kx[10], kx[11], bh, bl, 30);
-            RLX128(kx[12], kx[13], lh, ll, 45);
-            RLX128(kx[14], kx[15], ah, al, 45);
-            RLX128(kx[16], kx[17], lh, ll, 60);
-            RLX128(kx[18], kx[19], rh, rl, 60);
-            RLX128(kx[20], kx[21], bh, bl, 60);
-            RLX128(kx[22], kx[23], ll, lh, 13);
-            RLX128(kx[24], kx[25], al, ah, 13);
-            RLX128(kx[26], kx[27], rl, rh, 30);
-            RLX128(kx[28], kx[29], al, ah, 30);
-            RLX128(kx[30], kx[31], ll, lh, 47);
-            RLX128(kx[32], kx[33], bl, bh, 47);
+            ROTL128(kx[ 0], kx[ 1], lh, ll,  0);
+            ROTL128(kx[ 2], kx[ 3], bh, bl,  0);
+            ROTL128(kx[ 4], kx[ 5], rh, rl, 15);
+            ROTL128(kx[ 6], kx[ 7], ah, al, 15);
+            ROTL128(kx[ 8], kx[ 9], rh, rl, 30);
+            ROTL128(kx[10], kx[11], bh, bl, 30);
+            ROTL128(kx[12], kx[13], lh, ll, 45);
+            ROTL128(kx[14], kx[15], ah, al, 45);
+            ROTL128(kx[16], kx[17], lh, ll, 60);
+            ROTL128(kx[18], kx[19], rh, rl, 60);
+            ROTL128(kx[20], kx[21], bh, bl, 60);
+            ROTL128(kx[22], kx[23], ll, lh, 13);
+            ROTL128(kx[24], kx[25], al, ah, 13);
+            ROTL128(kx[26], kx[27], rl, rh, 30);
+            ROTL128(kx[28], kx[29], al, ah, 30);
+            ROTL128(kx[30], kx[31], ll, lh, 47);
+            ROTL128(kx[32], kx[33], bl, bh, 47);
         }
     }
     void encrypt(const uint8_t *src, uint8_t *dst) const {
         uint64_t d1, d2;
-        d1 = GET64(src    );
-        d2 = GET64(src + 8);
+        d1 = GET_BE<uint64_t>(src    );
+        d2 = GET_BE<uint64_t>(src + 8);
         int i = 0;
         d1 ^= kx[i++];
         d2 ^= kx[i++];
@@ -201,13 +184,13 @@ public:
         }
         d2 ^= kx[i++];
         d1 ^= kx[i++];
-        PUT64(dst    , d2);
-        PUT64(dst + 8, d1);
+        PUT_BE(dst    , d2);
+        PUT_BE(dst + 8, d1);
     }
     void decrypt(const uint8_t *src, uint8_t *dst) const {
         uint64_t d1, d2;
-        d2 = GET64(src    );
-        d1 = GET64(src + 8);
+        d2 = GET_BE<uint64_t>(src    );
+        d1 = GET_BE<uint64_t>(src + 8);
         int i = K;
         d1 ^= kx[--i];
         d2 ^= kx[--i];
@@ -224,8 +207,8 @@ public:
         }
         d2 ^= kx[--i];
         d1 ^= kx[--i];
-        PUT64(dst    , d1);
-        PUT64(dst + 8, d2);
+        PUT_BE(dst    , d1);
+        PUT_BE(dst + 8, d2);
     }
 };
 using Camellia128 = CamelliaTmpl<2>;

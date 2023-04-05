@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "block/aes.hpp"
 #include "block/sm4.hpp"
+#include "block/camellia.hpp"
 #include "block/cbc.hpp"
 #include "async/cfb.hpp"
 #include "stream/ofb.hpp"
@@ -11,17 +12,20 @@
 #define REC_OFP 2
 #define REC_IFP 4
 #define REC_SM4 8
-#define REC_128 16
-#define REC_256 32
-#define REC_192 64
-#define REC_ENC 128
-#define REC_DEC 256
-#define REC_ECB 512
-#define REC_CBC 1024
-#define REC_CFB 2048
-#define REC_OFB 4096
-#define REC_CTR 8192
-#define REC_ALG (REC_SM4 | REC_128 | REC_256 | REC_192)
+#define AES_128 16
+#define AES_256 32
+#define AES_192 64
+#define CAM_128 128
+#define CAM_256 256
+#define CAM_192 512
+#define REC_ENC 1024
+#define REC_DEC 2048
+#define REC_ECB 4096
+#define REC_CBC 8192
+#define REC_CFB 16384
+#define REC_OFB 32768
+#define REC_CTR 65536
+#define REC_ALG (REC_SM4 | AES_128 | AES_192 | AES_256 | CAM_128 | CAM_192 | CAM_256)
 #define REC_MOD (REC_ECB | REC_CBC | REC_CFB | REC_OFB | REC_CTR)
 #define REC_OPM (REC_ENC | REC_DEC)
 template <typename StreamCipher, typename... Args>
@@ -150,21 +154,39 @@ int main(int argc, char *argv[]) {
                 } else {
                     rec |= REC_ERR;
                 }
-            } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
+            } else if (argv[i][1] == '2' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
-                    rec |= REC_128;
+                    rec |= AES_128;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '3' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
+                    rec |= AES_192;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
+                    rec |= AES_256;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '5' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                    rec |= CAM_128;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
-                    rec |= REC_192;
+                    rec |= CAM_192;
                 } else {
                     rec |= REC_ERR;
                 }
-            } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
+            } else if (argv[i][1] == '7' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
-                    rec |= REC_256;
+                    rec |= CAM_256;
                 } else {
                     rec |= REC_ERR;
                 }
@@ -192,13 +214,16 @@ int main(int argc, char *argv[]) {
     }
     if ((rec & REC_ERR) != 0) {
         fprintf(stderr, "Description: SM4/AES Encryption/Decryption Tool\n");
-        fprintf(stderr, "Usage: %s (-S KEY | -4 KEY | -6 KEY | -8 KEY)\n", argv[0]);
+        fprintf(stderr, "Usage: %s (-S KEY | -2 ~ -4 KEY | -5 ~ -7 KEY)\n", argv[0]);
         fprintf(stderr, "       [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]\n");
         fprintf(stderr, "Options:\n");
         fprintf(stderr, "  -S KEY      SM4 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -4 KEY      AES-128 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -6 KEY      AES-192 (KEY: 192-bit key in hex)\n");
-        fprintf(stderr, "  -8 KEY      AES-256 (KEY: 256-bit key in hex)\n");
+        fprintf(stderr, "  -2 KEY      AES-128 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -3 KEY      AES-192 (KEY: 192-bit key in hex)\n");
+        fprintf(stderr, "  -4 KEY      AES-256 (KEY: 256-bit key in hex)\n");
+        fprintf(stderr, "  -5 KEY      Camellia-128 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -6 KEY      Camellia-192 (KEY: 192-bit key in hex)\n");
+        fprintf(stderr, "  -7 KEY      Camellia-256 (KEY: 256-bit key in hex)\n");
         fprintf(stderr, "  -e          encryption\n");
         fprintf(stderr, "  -d          decryption\n");
         fprintf(stderr, "  -E          ECB mode (default)\n");
@@ -210,12 +235,18 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "  -o OUTFILE  output file (default: stdout)\n");
     } else if ((rec & REC_SM4) != 0) {
         process<SM4>(rec, ifp, ofp, civ, key);
-    } else if ((rec & REC_128) != 0) {
+    } else if ((rec & AES_128) != 0) {
         process<AES128>(rec, ifp, ofp, civ, key);
-    } else if ((rec & REC_192) != 0) {
+    } else if ((rec & AES_192) != 0) {
         process<AES192>(rec, ifp, ofp, civ, key);
-    } else if ((rec & REC_256) != 0) {
+    } else if ((rec & AES_256) != 0) {
         process<AES256>(rec, ifp, ofp, civ, key);
+    } else if ((rec & CAM_128) != 0) {
+        process<Camellia128>(rec, ifp, ofp, civ, key);
+    } else if ((rec & CAM_192) != 0) {
+        process<Camellia192>(rec, ifp, ofp, civ, key);
+    } else if ((rec & CAM_256) != 0) {
+        process<Camellia256>(rec, ifp, ofp, civ, key);
     }
     if (key) {
         delete[] key;

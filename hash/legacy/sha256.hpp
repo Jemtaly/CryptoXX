@@ -1,16 +1,5 @@
 #pragma once
 #include "hash.hpp"
-#define ROR32(x, n) ((x) >> (n) | (x) << (32 - (n)))
-#define GET32(a) (                                    \
-    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
-    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
-)
-#define PUT32(a, i) {          \
-    (a)[0] = (i) >> 24       ; \
-    (a)[1] = (i) >> 16 & 0xff; \
-    (a)[2] = (i) >>  8 & 0xff; \
-    (a)[3] = (i)       & 0xff; \
-}
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 class SHA256Base {
@@ -36,8 +25,8 @@ protected:
 };
 template <int DS, typename Derived>
 class SHA256Tmpl: public SHA256Base {
-    uint32_t lo = 0;
     uint32_t hi = 0;
+    uint32_t lo = 0;
     uint32_t h[8] = {
         Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
@@ -52,17 +41,15 @@ class SHA256Tmpl: public SHA256Base {
         uint32_t G = h[6];
         uint32_t H = h[7];
         uint32_t w[64], s, t, u, v;
-        for (int i =  0; i < 16; i++) {
-            w[i] = GET32(blk + 4 * i);
-        }
+        READ_BE(w, blk, 16);
         for (int i = 16; i < 64; i++) {
-            s = ROR32(w[i - 15],  7) ^ ROR32(w[i - 15], 18) ^ (w[i - 15] >>  3);
-            t = ROR32(w[i -  2], 17) ^ ROR32(w[i -  2], 19) ^ (w[i -  2] >> 10);
+            s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
+            t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
             w[i] = w[i - 16] + s + w[i - 7] + t;
         }
         for (int i =  0; i < 64; i++) {
-            s = ROR32(A, 2) ^ ROR32(A, 13) ^ ROR32(A, 22);
-            t = ROR32(E, 6) ^ ROR32(E, 11) ^ ROR32(E, 25);
+            s = ROTR(A, 2) ^ ROTR(A, 13) ^ ROTR(A, 22);
+            t = ROTR(E, 6) ^ ROTR(E, 11) ^ ROTR(E, 25);
             u = t + CHO(E, F, G) + H + K[i] + w[i];
             v = s + MAJ(A, B, C)                  ;
             H = G;
@@ -84,10 +71,10 @@ class SHA256Tmpl: public SHA256Base {
         h[7] += H;
     }
 public:
-    SHA256Tmpl() {}
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DS;
     static constexpr bool NO_PADDING = false;
+    SHA256Tmpl() {}
     void push(uint8_t const *blk) {
         lo += 512;
         lo >= 512 || hi++;
@@ -103,12 +90,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 56);
         }
-        PUT32(tmp + 56, hi);
-        PUT32(tmp + 60, lo);
+        PUT_BE(tmp + 56, hi);
+        PUT_BE(tmp + 60, lo);
         compress(tmp);
-        for (int i = 0; i < DS / 4; i++) {
-            PUT32(dst + 4 * i, h[i]);
-        }
+        WRITE_BE(dst, h, DS / 4);
     }
 };
 class SHA256: public SHA256Tmpl<32, SHA256> {

@@ -1,16 +1,5 @@
 #pragma once
 #include "hash.hpp"
-#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
-#define GET32(a) (                                    \
-    (uint32_t)(a)[0] << 24 | (uint32_t)(a)[1] << 16 | \
-    (uint32_t)(a)[2] <<  8 | (uint32_t)(a)[3]         \
-)
-#define PUT32(a, i) {          \
-    (a)[0] = (i) >> 24       ; \
-    (a)[1] = (i) >> 16 & 0xff; \
-    (a)[2] = (i) >>  8 & 0xff; \
-    (a)[3] = (i)       & 0xff; \
-}
 #define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define FF1(x, y, z) ((x) ^ (y) ^ (z))
 #define FF2(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
@@ -19,14 +8,14 @@
 #define KK1 0x6ED9EBA1U
 #define KK2 0x8F1BBCDCU
 #define KK3 0xCA62C1D6U
-#define GGN(N, a, b, c, d, e, w, t, X, Y)                     \
-    for (int i = X; i < Y; i++) {                             \
-        t = ROL32(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
-        e = d;                                                \
-        d = c;                                                \
-        c = ROL32(b, 30);                                     \
-        b = a;                                                \
-        a = t;                                                \
+#define GGN(N, a, b, c, d, e, w, t, X, Y)                    \
+    for (int i = X; i < Y; i++) {                            \
+        t = ROTL(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
+        e = d;                                               \
+        d = c;                                               \
+        c = ROTL(b, 30);                                     \
+        b = a;                                               \
+        a = t;                                               \
     }
 class SHA {
     uint32_t lo = 0;
@@ -41,12 +30,10 @@ class SHA {
         uint32_t d = h[3];
         uint32_t e = h[4];
         uint32_t w[80], t;
-        for (int i =  0; i < 16; i++) {
-            w[i] = GET32(blk + 4 * i);
-        }
+        READ_BE(w, blk, 16);
         for (int i = 16; i < 80; i++) {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
-            w[i] = ROL32(t, 1);
+            w[i] = ROTL(t, 1);
         }
         GGN(0, a, b, c, d, e, w, t,  0, 20);
         GGN(1, a, b, c, d, e, w, t, 20, 40);
@@ -77,12 +64,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 56);
         }
-        PUT32(tmp + 56, hi);
-        PUT32(tmp + 60, lo);
+        PUT_BE(tmp + 56, hi);
+        PUT_BE(tmp + 60, lo);
         compress(tmp);
-        for (int i = 0; i < 5; i++) {
-            PUT32(dst + 4 * i, h[i]);
-        }
+        WRITE_BE(dst, h, 5);
     }
 };
 #undef FF0

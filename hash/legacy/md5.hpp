@@ -1,6 +1,5 @@
 #pragma once
 #include "hash.hpp"
-#define ROL32(x, n) ((x) << (n) | (x) >> (32 - (n)))
 #define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define FF1(x, y, z) ((z) & ((x) ^ (y)) ^ (y))
 #define FF2(x, y, z) ((x) ^ (y) ^ (z))
@@ -15,7 +14,7 @@
         a = d;                                       \
         d = c;                                       \
         c = b;                                       \
-        b += ROL32(s, R[i]);                         \
+        b += ROTL(s, R[i]);                          \
     }
 typedef uint8_t bits_t;
 class MD5 {
@@ -57,8 +56,8 @@ class MD5 {
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
-        uint32_t s;
-        uint32_t const *w = (uint32_t *)blk;
+        uint32_t s, w[16];
+        READ_LE(w, blk, 16);
         HHN(0, a, b, c, d, s, w, K, R,  0, 16);
         HHN(1, a, b, c, d, s, w, K, R, 16, 32);
         HHN(2, a, b, c, d, s, w, K, R, 32, 48);
@@ -87,12 +86,10 @@ public:
             compress(tmp);
             memset(tmp, 0, 56);
         }
-        ((uint32_t *)tmp)[14] = lo;
-        ((uint32_t *)tmp)[15] = hi;
+        PUT_LE(tmp + 56, lo);
+        PUT_LE(tmp + 60, hi);
         compress(tmp);
-        for (int i = 0; i < 4; i++) {
-            ((uint32_t *)dst)[i] = h[i];
-        }
+        WRITE_LE(dst, h, 4);
     }
 };
 #undef FF0

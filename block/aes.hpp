@@ -65,97 +65,73 @@ protected:
     static constexpr auto LUT_D_1 = coef_mult(0x0d090e0b);
     static constexpr auto LUT_D_2 = coef_mult(0x090e0b0d);
     static constexpr auto LUT_D_3 = coef_mult(0x0e0b0d09);
-    static void mix_columns_enc(uint8_t *state) {
-        ((uint32_t *)state)[0] = LUT_E_0[state[0x0]] ^ LUT_E_1[state[0x1]] ^ LUT_E_2[state[0x2]] ^ LUT_E_3[state[0x3]];
-        ((uint32_t *)state)[1] = LUT_E_0[state[0x4]] ^ LUT_E_1[state[0x5]] ^ LUT_E_2[state[0x6]] ^ LUT_E_3[state[0x7]];
-        ((uint32_t *)state)[2] = LUT_E_0[state[0x8]] ^ LUT_E_1[state[0x9]] ^ LUT_E_2[state[0xa]] ^ LUT_E_3[state[0xb]];
-        ((uint32_t *)state)[3] = LUT_E_0[state[0xc]] ^ LUT_E_1[state[0xd]] ^ LUT_E_2[state[0xe]] ^ LUT_E_3[state[0xf]];
+    static void add_round_key(uint32_t *q, uint32_t const *k) {
+        q[0] ^= k[0];
+        q[1] ^= k[1];
+        q[2] ^= k[2];
+        q[3] ^= k[3];
     }
-    static void mix_columns_dec(uint8_t *state) {
-        ((uint32_t *)state)[0] = LUT_D_0[state[0x0]] ^ LUT_D_1[state[0x1]] ^ LUT_D_2[state[0x2]] ^ LUT_D_3[state[0x3]];
-        ((uint32_t *)state)[1] = LUT_D_0[state[0x4]] ^ LUT_D_1[state[0x5]] ^ LUT_D_2[state[0x6]] ^ LUT_D_3[state[0x7]];
-        ((uint32_t *)state)[2] = LUT_D_0[state[0x8]] ^ LUT_D_1[state[0x9]] ^ LUT_D_2[state[0xa]] ^ LUT_D_3[state[0xb]];
-        ((uint32_t *)state)[3] = LUT_D_0[state[0xc]] ^ LUT_D_1[state[0xd]] ^ LUT_D_2[state[0xe]] ^ LUT_D_3[state[0xf]];
+    static void sub_bytes_enc(uint32_t *q) {
+        q[0] = S_BOX[q[0] & 0xff] | S_BOX[q[0] >> 8 & 0xff] << 8 | S_BOX[q[0] >> 16 & 0xff] << 16 | S_BOX[q[0] >> 24] << 24;
+        q[1] = S_BOX[q[1] & 0xff] | S_BOX[q[1] >> 8 & 0xff] << 8 | S_BOX[q[1] >> 16 & 0xff] << 16 | S_BOX[q[1] >> 24] << 24;
+        q[2] = S_BOX[q[2] & 0xff] | S_BOX[q[2] >> 8 & 0xff] << 8 | S_BOX[q[2] >> 16 & 0xff] << 16 | S_BOX[q[2] >> 24] << 24;
+        q[3] = S_BOX[q[3] & 0xff] | S_BOX[q[3] >> 8 & 0xff] << 8 | S_BOX[q[3] >> 16 & 0xff] << 16 | S_BOX[q[3] >> 24] << 24;
     }
-    static void shift_rows_enc(uint8_t *state) {
-        uint8_t temp_value;
-        temp_value = state[0x1];
-        state[0x1] = state[0x5];
-        state[0x5] = state[0x9];
-        state[0x9] = state[0xd];
-        state[0xd] = temp_value;
-        temp_value = state[0x2];
-        state[0x2] = state[0xa];
-        state[0xa] = temp_value;
-        temp_value = state[0x6];
-        state[0x6] = state[0xe];
-        state[0xe] = temp_value;
-        temp_value = state[0xf];
-        state[0xf] = state[0xb];
-        state[0xb] = state[0x7];
-        state[0x7] = state[0x3];
-        state[0x3] = temp_value;
+    static void sub_bytes_dec(uint32_t *q) {
+        q[0] = I_BOX[q[0] & 0xff] | I_BOX[q[0] >> 8 & 0xff] << 8 | I_BOX[q[0] >> 16 & 0xff] << 16 | I_BOX[q[0] >> 24] << 24;
+        q[1] = I_BOX[q[1] & 0xff] | I_BOX[q[1] >> 8 & 0xff] << 8 | I_BOX[q[1] >> 16 & 0xff] << 16 | I_BOX[q[1] >> 24] << 24;
+        q[2] = I_BOX[q[2] & 0xff] | I_BOX[q[2] >> 8 & 0xff] << 8 | I_BOX[q[2] >> 16 & 0xff] << 16 | I_BOX[q[2] >> 24] << 24;
+        q[3] = I_BOX[q[3] & 0xff] | I_BOX[q[3] >> 8 & 0xff] << 8 | I_BOX[q[3] >> 16 & 0xff] << 16 | I_BOX[q[3] >> 24] << 24;
     }
-    static void shift_rows_dec(uint8_t *state) {
-        uint8_t temp_value;
-        temp_value = state[0xd];
-        state[0xd] = state[0x9];
-        state[0x9] = state[0x5];
-        state[0x5] = state[0x1];
-        state[0x1] = temp_value;
-        temp_value = state[0x2];
-        state[0x2] = state[0xa];
-        state[0xa] = temp_value;
-        temp_value = state[0x6];
-        state[0x6] = state[0xe];
-        state[0xe] = temp_value;
-        temp_value = state[0x3];
-        state[0x3] = state[0x7];
-        state[0x7] = state[0xb];
-        state[0xb] = state[0xf];
-        state[0xf] = temp_value;
+    static void mix_columns_enc(uint32_t *q) {
+        q[0] = LUT_E_0[BYTE_LE(q, 0x0)] ^ LUT_E_1[BYTE_LE(q, 0x1)] ^ LUT_E_2[BYTE_LE(q, 0x2)] ^ LUT_E_3[BYTE_LE(q, 0x3)];
+        q[1] = LUT_E_0[BYTE_LE(q, 0x4)] ^ LUT_E_1[BYTE_LE(q, 0x5)] ^ LUT_E_2[BYTE_LE(q, 0x6)] ^ LUT_E_3[BYTE_LE(q, 0x7)];
+        q[2] = LUT_E_0[BYTE_LE(q, 0x8)] ^ LUT_E_1[BYTE_LE(q, 0x9)] ^ LUT_E_2[BYTE_LE(q, 0xa)] ^ LUT_E_3[BYTE_LE(q, 0xb)];
+        q[3] = LUT_E_0[BYTE_LE(q, 0xc)] ^ LUT_E_1[BYTE_LE(q, 0xd)] ^ LUT_E_2[BYTE_LE(q, 0xe)] ^ LUT_E_3[BYTE_LE(q, 0xf)];
     }
-    static void sub_bytes_enc(uint8_t *state) {
-        state[0x0] = S_BOX[state[0x0]];
-        state[0x1] = S_BOX[state[0x1]];
-        state[0x2] = S_BOX[state[0x2]];
-        state[0x3] = S_BOX[state[0x3]];
-        state[0x4] = S_BOX[state[0x4]];
-        state[0x5] = S_BOX[state[0x5]];
-        state[0x6] = S_BOX[state[0x6]];
-        state[0x7] = S_BOX[state[0x7]];
-        state[0x8] = S_BOX[state[0x8]];
-        state[0x9] = S_BOX[state[0x9]];
-        state[0xa] = S_BOX[state[0xa]];
-        state[0xb] = S_BOX[state[0xb]];
-        state[0xc] = S_BOX[state[0xc]];
-        state[0xd] = S_BOX[state[0xd]];
-        state[0xe] = S_BOX[state[0xe]];
-        state[0xf] = S_BOX[state[0xf]];
+    static void mix_columns_dec(uint32_t *q) {
+        q[0] = LUT_D_0[BYTE_LE(q, 0x0)] ^ LUT_D_1[BYTE_LE(q, 0x1)] ^ LUT_D_2[BYTE_LE(q, 0x2)] ^ LUT_D_3[BYTE_LE(q, 0x3)];
+        q[1] = LUT_D_0[BYTE_LE(q, 0x4)] ^ LUT_D_1[BYTE_LE(q, 0x5)] ^ LUT_D_2[BYTE_LE(q, 0x6)] ^ LUT_D_3[BYTE_LE(q, 0x7)];
+        q[2] = LUT_D_0[BYTE_LE(q, 0x8)] ^ LUT_D_1[BYTE_LE(q, 0x9)] ^ LUT_D_2[BYTE_LE(q, 0xa)] ^ LUT_D_3[BYTE_LE(q, 0xb)];
+        q[3] = LUT_D_0[BYTE_LE(q, 0xc)] ^ LUT_D_1[BYTE_LE(q, 0xd)] ^ LUT_D_2[BYTE_LE(q, 0xe)] ^ LUT_D_3[BYTE_LE(q, 0xf)];
     }
-    static void sub_bytes_dec(uint8_t *state) {
-        state[0x0] = I_BOX[state[0x0]];
-        state[0x1] = I_BOX[state[0x1]];
-        state[0x2] = I_BOX[state[0x2]];
-        state[0x3] = I_BOX[state[0x3]];
-        state[0x4] = I_BOX[state[0x4]];
-        state[0x5] = I_BOX[state[0x5]];
-        state[0x6] = I_BOX[state[0x6]];
-        state[0x7] = I_BOX[state[0x7]];
-        state[0x8] = I_BOX[state[0x8]];
-        state[0x9] = I_BOX[state[0x9]];
-        state[0xa] = I_BOX[state[0xa]];
-        state[0xb] = I_BOX[state[0xb]];
-        state[0xc] = I_BOX[state[0xc]];
-        state[0xd] = I_BOX[state[0xd]];
-        state[0xe] = I_BOX[state[0xe]];
-        state[0xf] = I_BOX[state[0xf]];
+    static void shift_rows_enc(uint32_t *q) {
+        uint8_t swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0x1);
+        BYTE_LE(q, 0x1) = BYTE_LE(q, 0x5);
+        BYTE_LE(q, 0x5) = BYTE_LE(q, 0x9);
+        BYTE_LE(q, 0x9) = BYTE_LE(q, 0xd);
+        BYTE_LE(q, 0xd) = swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0x2);
+        BYTE_LE(q, 0x2) = BYTE_LE(q, 0xa);
+        BYTE_LE(q, 0xa) = swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0x6);
+        BYTE_LE(q, 0x6) = BYTE_LE(q, 0xe);
+        BYTE_LE(q, 0xe) = swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0xf);
+        BYTE_LE(q, 0xf) = BYTE_LE(q, 0xb);
+        BYTE_LE(q, 0xb) = BYTE_LE(q, 0x7);
+        BYTE_LE(q, 0x7) = BYTE_LE(q, 0x3);
+        BYTE_LE(q, 0x3) = swap_temp_value;
     }
-    static void add_round_key(uint8_t *state, uint32_t const *k) {
-        ((uint32_t *)state)[0] ^= k[0];
-        ((uint32_t *)state)[1] ^= k[1];
-        ((uint32_t *)state)[2] ^= k[2];
-        ((uint32_t *)state)[3] ^= k[3];
+    static void shift_rows_dec(uint32_t *q) {
+        uint8_t swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0xd);
+        BYTE_LE(q, 0xd) = BYTE_LE(q, 0x9);
+        BYTE_LE(q, 0x9) = BYTE_LE(q, 0x5);
+        BYTE_LE(q, 0x5) = BYTE_LE(q, 0x1);
+        BYTE_LE(q, 0x1) = swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0x2);
+        BYTE_LE(q, 0x2) = BYTE_LE(q, 0xa);
+        BYTE_LE(q, 0xa) = swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0x6);
+        BYTE_LE(q, 0x6) = BYTE_LE(q, 0xe);
+        BYTE_LE(q, 0xe) = swap_temp_value;
+        swap_temp_value = BYTE_LE(q, 0x3);
+        BYTE_LE(q, 0x3) = BYTE_LE(q, 0x7);
+        BYTE_LE(q, 0x7) = BYTE_LE(q, 0xb);
+        BYTE_LE(q, 0xb) = BYTE_LE(q, 0xf);
+        BYTE_LE(q, 0xf) = swap_temp_value;
     }
 public:
     static constexpr size_t BLOCK_SIZE = 16;
@@ -167,78 +143,76 @@ protected:
     AESTmpl() = default; // not instantiable
 public:
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        ((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-        ((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-        ((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-        ((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
+        uint32_t q[4];
+        READ_LE(q, src, 4);
         int round = 0;
-        add_round_key(dst, rk[round]);
+        add_round_key(q, rk[round]);
         while (++round < N) {
-            sub_bytes_enc(dst);
-            shift_rows_enc(dst);
-            mix_columns_enc(dst);
-            add_round_key(dst, rk[round]);
+            sub_bytes_enc(q);
+            shift_rows_enc(q);
+            mix_columns_enc(q);
+            add_round_key(q, rk[round]);
         }
-        sub_bytes_enc(dst);
-        shift_rows_enc(dst);
-        add_round_key(dst, rk[round]);
+        sub_bytes_enc(q);
+        shift_rows_enc(q);
+        add_round_key(q, rk[round]);
+        WRITE_LE(dst, q, 4);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        ((uint32_t *)dst)[0] = ((uint32_t *)src)[0];
-        ((uint32_t *)dst)[1] = ((uint32_t *)src)[1];
-        ((uint32_t *)dst)[2] = ((uint32_t *)src)[2];
-        ((uint32_t *)dst)[3] = ((uint32_t *)src)[3];
+        uint32_t q[4];
+        READ_LE(q, src, 4);
         int round = N;
-        add_round_key(dst, rk[round]);
+        add_round_key(q, rk[round]);
         while (--round > 0) {
-            shift_rows_dec(dst);
-            sub_bytes_dec(dst);
-            add_round_key(dst, rk[round]);
-            mix_columns_dec(dst);
+            shift_rows_dec(q);
+            sub_bytes_dec(q);
+            add_round_key(q, rk[round]);
+            mix_columns_dec(q);
         }
-        shift_rows_dec(dst);
-        sub_bytes_dec(dst);
-        add_round_key(dst, rk[round]);
+        shift_rows_dec(q);
+        sub_bytes_dec(q);
+        add_round_key(q, rk[round]);
+        WRITE_LE(dst, q, 4);
     }
 };
 class AES128: public AESTmpl<10> {
 public:
     AES128(uint8_t const *mk) {
-        memcpy(rk, mk, 16);
+        READ_LE((uint32_t *)rk, mk, 4);
         for (int i = 4; i < 44; ++i) {
-            uint32_t a = (*rk)[i - 1];
+            uint32_t a = ((uint32_t *)rk)[i - 1];
             if (i % 4 == 0) {
                 a = S_BOX[a >> 16 & 0xff] << 8 | S_BOX[a >> 24] << 16 | S_BOX[a & 0xff] << 24 | S_BOX[a >> 8 & 0xff] ^ R_CON[i / 4];
             }
-            (*rk)[i] = (*rk)[i - 4] ^ a;
+            ((uint32_t *)rk)[i] = ((uint32_t *)rk)[i - 4] ^ a;
         }
     }
 };
 class AES192: public AESTmpl<12> {
 public:
     AES192(uint8_t const *mk) {
-        memcpy(rk, mk, 24);
+        READ_LE((uint32_t *)rk, mk, 6);
         for (int i = 6; i < 52; ++i) {
-            uint32_t a = (*rk)[i - 1];
+            uint32_t a = ((uint32_t *)rk)[i - 1];
             if (i % 6 == 0) {
                 a = S_BOX[a >> 16 & 0xff] << 8 | S_BOX[a >> 24] << 16 | S_BOX[a & 0xff] << 24 | S_BOX[a >> 8 & 0xff] ^ R_CON[i / 6];
             }
-            (*rk)[i] = (*rk)[i - 6] ^ a;
+            ((uint32_t *)rk)[i] = ((uint32_t *)rk)[i - 6] ^ a;
         }
     }
 };
 class AES256: public AESTmpl<14> {
 public:
     AES256(uint8_t const *mk) {
-        memcpy(rk, mk, 32);
+        READ_LE((uint32_t *)rk, mk, 8);
         for (int i = 8; i < 60; ++i) {
-            uint32_t a = (*rk)[i - 1];
+            uint32_t a = ((uint32_t *)rk)[i - 1];
             if (i % 8 == 0) {
                 a = S_BOX[a >> 16 & 0xff] << 8 | S_BOX[a >> 24] << 16 | S_BOX[a & 0xff] << 24 | S_BOX[a >> 8 & 0xff] ^ R_CON[i / 8];
             } else if (i % 8 == 4) {
                 a = S_BOX[a & 0xff] | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 24] << 24;
             }
-            (*rk)[i] = (*rk)[i - 8] ^ a;
+            ((uint32_t *)rk)[i] = ((uint32_t *)rk)[i - 8] ^ a;
         }
     }
 };
