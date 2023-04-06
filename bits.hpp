@@ -3,28 +3,28 @@
 #include <string.h>
 #include <concepts>
 template <std::unsigned_integral T>
-constexpr inline T ROTL(const T x, const uint8_t n) {
+constexpr inline T ROTL(T const x, uint8_t const n) {
     return (x << (n & (sizeof(T) * 8 - 1)) | (x) >> (-n & (sizeof(T) * 8 - 1)));
 }
 template <std::unsigned_integral T>
-constexpr inline T ROTR(const T x, const uint8_t n) {
+constexpr inline T ROTR(T const x, uint8_t const n) {
     return (x >> (n & (sizeof(T) * 8 - 1)) | (x) << (-n & (sizeof(T) * 8 - 1)));
 }
 template <std::unsigned_integral T>
-constexpr inline T GET_LE(const uint8_t *arr);
+constexpr inline T GET_LE(uint8_t const *arr);
 template <>
-constexpr inline uint16_t GET_LE(const uint8_t *arr) {
+constexpr inline uint16_t GET_LE(uint8_t const *arr) {
     return
         (uint16_t)(arr)[0]       | (uint16_t)(arr)[1] <<  8;
 }
 template <>
-constexpr inline uint32_t GET_LE(const uint8_t *arr) {
+constexpr inline uint32_t GET_LE(uint8_t const *arr) {
     return
         (uint32_t)(arr)[0]       | (uint32_t)(arr)[1] <<  8 |
         (uint32_t)(arr)[2] << 16 | (uint32_t)(arr)[3] << 24;
 }
 template <>
-constexpr inline uint64_t GET_LE(const uint8_t *arr) {
+constexpr inline uint64_t GET_LE(uint8_t const *arr) {
     return
         (uint64_t)(arr)[0]       | (uint64_t)(arr)[1] <<  8 |
         (uint64_t)(arr)[2] << 16 | (uint64_t)(arr)[3] << 24 |
@@ -32,20 +32,20 @@ constexpr inline uint64_t GET_LE(const uint8_t *arr) {
         (uint64_t)(arr)[6] << 48 | (uint64_t)(arr)[7] << 56;
 }
 template <std::unsigned_integral T>
-constexpr inline T GET_BE(const uint8_t *arr);
+constexpr inline T GET_BE(uint8_t const *arr);
 template <>
-constexpr inline uint16_t GET_BE(const uint8_t *arr) {
+constexpr inline uint16_t GET_BE(uint8_t const *arr) {
     return
         (uint16_t)(arr)[0] <<  8 | (uint16_t)(arr)[1]      ;
 }
 template <>
-constexpr inline uint32_t GET_BE(const uint8_t *arr) {
+constexpr inline uint32_t GET_BE(uint8_t const *arr) {
     return
         (uint32_t)(arr)[0] << 24 | (uint32_t)(arr)[1] << 16 |
         (uint32_t)(arr)[2] <<  8 | (uint32_t)(arr)[3]      ;
 }
 template <>
-constexpr inline uint64_t GET_BE(const uint8_t *arr) {
+constexpr inline uint64_t GET_BE(uint8_t const *arr) {
     return
         (uint64_t)(arr)[0] << 56 | (uint64_t)(arr)[1] << 48 |
         (uint64_t)(arr)[2] << 40 | (uint64_t)(arr)[3] << 32 |
@@ -103,21 +103,21 @@ constexpr inline void PUT_BE(uint8_t *arr, uint64_t w) {
     arr[7] = w       & 0xff;
 }
 template <std::unsigned_integral T>
-constexpr inline void READ_LE(T *a, const uint8_t *arr, int n) {
+constexpr inline void READ_LE(T *a, uint8_t const *arr, int n) {
     memcpy(a, arr, sizeof(T) * n);
 }
 template <std::unsigned_integral T>
-constexpr inline void READ_BE(T *a, const uint8_t *arr, int n) {
+constexpr inline void READ_BE(T *a, uint8_t const *arr, int n) {
     for (int i = 0; i < n; i++) {
         a[i] = GET_BE<T>(arr + sizeof(T) * i);
     }
 }
 template <std::unsigned_integral T>
-constexpr inline void WRITE_LE(uint8_t *arr, const T *a, int n) {
+constexpr inline void WRITE_LE(uint8_t *arr, T const *a, int n) {
     memcpy(arr, a, sizeof(T) * n);
 }
 template <std::unsigned_integral T>
-constexpr inline void WRITE_BE(uint8_t *arr, const T *a, int n) {
+constexpr inline void WRITE_BE(uint8_t *arr, T const *a, int n) {
     for (int i = 0; i < n; i++) {
         PUT_BE(arr + sizeof(T) * i, a[i]);
     }

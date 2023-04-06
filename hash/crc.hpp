@@ -9,7 +9,7 @@ class CRC {
         for (int i = 0; i < 256; i++) {
             digest_t tmp = i;
             for (int j = 0; j < 8; j++) {
-                tmp = tmp >> 1 ^ (tmp & 1 ? EXP : 0);
+                tmp = tmp >> 1 ^ (tmp & 0x1 ? EXP : 0x0);
             }
             box[i] = tmp;
         }

@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "block/aes.hpp"
 #include "block/sm4.hpp"
-#include "block/camellia.hpp"
+#include "block/twofish.hpp"
+#include "block/serpent.hpp"
 #include "block/cbc.hpp"
 #include "async/cfb.hpp"
 #include "stream/ofb.hpp"
@@ -15,9 +16,9 @@
 #define AES_128 16
 #define AES_256 32
 #define AES_192 64
-#define CAM_128 128
-#define CAM_256 256
-#define CAM_192 512
+#define TWO_128 128
+#define TWO_256 256
+#define TWO_192 512
 #define REC_ENC 1024
 #define REC_DEC 2048
 #define REC_ECB 4096
@@ -25,7 +26,10 @@
 #define REC_CFB 16384
 #define REC_OFB 32768
 #define REC_CTR 65536
-#define REC_ALG (REC_SM4 | AES_128 | AES_192 | AES_256 | CAM_128 | CAM_192 | CAM_256)
+#define SER_128 131072
+#define SER_192 262144
+#define SER_256 524288
+#define REC_ALG (REC_SM4 | AES_128 | AES_192 | AES_256 | TWO_128 | TWO_192 | TWO_256 | SER_128 | SER_192 | SER_256)
 #define REC_MOD (REC_ECB | REC_CBC | REC_CFB | REC_OFB | REC_CTR)
 #define REC_OPM (REC_ENC | REC_DEC)
 template <typename StreamCipher, typename... Args>
@@ -174,19 +178,37 @@ int main(int argc, char *argv[]) {
                 }
             } else if (argv[i][1] == '5' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
-                    rec |= CAM_128;
+                    rec |= TWO_128;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
-                    rec |= CAM_192;
+                    rec |= TWO_192;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '7' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
-                    rec |= CAM_256;
+                    rec |= TWO_256;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                    rec |= SER_128;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '9' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
+                    rec |= SER_192;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == '0' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
+                    rec |= SER_256;
                 } else {
                     rec |= REC_ERR;
                 }
@@ -209,21 +231,24 @@ int main(int argc, char *argv[]) {
             rec |= REC_ERR;
         }
     }
-    if ((rec & REC_ALG) == 0 || (rec & REC_OPM) == 0 && (rec & (REC_ECB | REC_CBC | REC_CFB)) != 0) {
+    if ((rec & REC_ALG) == 0 || (rec & REC_OPM) == 0 && (rec & (REC_OFB | REC_CTR)) == 0) {
         rec |= REC_ERR;
     }
     if ((rec & REC_ERR) != 0) {
         fprintf(stderr, "Description: SM4/AES Encryption/Decryption Tool\n");
-        fprintf(stderr, "Usage: %s (-S KEY | -2 ~ -4 KEY | -5 ~ -7 KEY)\n", argv[0]);
+        fprintf(stderr, "Usage: %s (-1 KEY | -2 ~ -4 KEY | -5 ~ -7 KEY | -8 ~ -0 KEY)\n", argv[0]);
         fprintf(stderr, "       [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]\n");
         fprintf(stderr, "Options:\n");
-        fprintf(stderr, "  -S KEY      SM4 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -1 KEY      SM4 (KEY: 128-bit key in hex)\n");
         fprintf(stderr, "  -2 KEY      AES-128 (KEY: 128-bit key in hex)\n");
         fprintf(stderr, "  -3 KEY      AES-192 (KEY: 192-bit key in hex)\n");
         fprintf(stderr, "  -4 KEY      AES-256 (KEY: 256-bit key in hex)\n");
-        fprintf(stderr, "  -5 KEY      Camellia-128 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -6 KEY      Camellia-192 (KEY: 192-bit key in hex)\n");
-        fprintf(stderr, "  -7 KEY      Camellia-256 (KEY: 256-bit key in hex)\n");
+        fprintf(stderr, "  -5 KEY      Twofish-128 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -6 KEY      Twofish-192 (KEY: 192-bit key in hex)\n");
+        fprintf(stderr, "  -7 KEY      Twofish-256 (KEY: 256-bit key in hex)\n");
+        fprintf(stderr, "  -8 KEY      Serpent-128 (KEY: 128-bit key in hex)\n");
+        fprintf(stderr, "  -9 KEY      Serpent-192 (KEY: 192-bit key in hex)\n");
+        fprintf(stderr, "  -0 KEY      Serpent-256 (KEY: 256-bit key in hex)\n");
         fprintf(stderr, "  -e          encryption\n");
         fprintf(stderr, "  -d          decryption\n");
         fprintf(stderr, "  -E          ECB mode (default)\n");
@@ -241,12 +266,18 @@ int main(int argc, char *argv[]) {
         process<AES192>(rec, ifp, ofp, civ, key);
     } else if ((rec & AES_256) != 0) {
         process<AES256>(rec, ifp, ofp, civ, key);
-    } else if ((rec & CAM_128) != 0) {
-        process<Camellia128>(rec, ifp, ofp, civ, key);
-    } else if ((rec & CAM_192) != 0) {
-        process<Camellia192>(rec, ifp, ofp, civ, key);
-    } else if ((rec & CAM_256) != 0) {
-        process<Camellia256>(rec, ifp, ofp, civ, key);
+    } else if ((rec & TWO_128) != 0) {
+        process<Twofish128>(rec, ifp, ofp, civ, key);
+    } else if ((rec & TWO_192) != 0) {
+        process<Twofish192>(rec, ifp, ofp, civ, key);
+    } else if ((rec & TWO_256) != 0) {
+        process<Twofish256>(rec, ifp, ofp, civ, key);
+    } else if ((rec & SER_128) != 0) {
+        process<Serpent128>(rec, ifp, ofp, civ, key);
+    } else if ((rec & SER_192) != 0) {
+        process<Serpent192>(rec, ifp, ofp, civ, key);
+    } else if ((rec & SER_256) != 0) {
+        process<Serpent256>(rec, ifp, ofp, civ, key);
     }
     if (key) {
         delete[] key;

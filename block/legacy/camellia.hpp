@@ -76,24 +76,23 @@ protected:
         uint32_t xh = in >> 32, xl = in & 0xFFFFFFFF;
         uint32_t kh = kx >> 32, kl = kx & 0xFFFFFFFF;
         xl ^= ROTL(xh & kh, 1);
-        xh ^=       xl | kl    ;
+        xh ^=      xl | kl    ;
         return (uint64_t)xh << 32 | (uint64_t)xl;
     }
     static uint64_t lf(uint64_t in, uint64_t kx) {
         uint32_t yh = in >> 32, yl = in & 0xFFFFFFFF;
         uint32_t kh = kx >> 32, kl = kx & 0xFFFFFFFF;
-        yh ^=       yl | kl    ;
+        yh ^=      yl | kl    ;
         yl ^= ROTL(yh & kh, 1);
         return (uint64_t)yh << 32 | (uint64_t)yl;
     }
-public:
-    static constexpr size_t BLOCK_SIZE = 16;
 };
 template <int L, int K = L == 2 ? 26 : 34>
 requires (L == 2 || L == 3 || L == 4)
 class CamelliaTmpl: public CamelliaBase {
     uint64_t kx[K];
 public:
+    static constexpr size_t BLOCK_SIZE = 16;
     CamelliaTmpl(const uint8_t *kxy) {
         uint64_t lh, ll;
         uint64_t rh, rl;

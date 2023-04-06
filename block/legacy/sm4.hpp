@@ -35,10 +35,10 @@ class SM4 {
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     SM4(uint8_t const *mk) {
-        k[0] ^= GET_BE<uint32_t>(mk + 0x0);
-        k[1] ^= GET_BE<uint32_t>(mk + 0x4);
-        k[2] ^= GET_BE<uint32_t>(mk + 0x8);
-        k[3] ^= GET_BE<uint32_t>(mk + 0xc);
+        k[0] ^= GET_BE<uint32_t>(mk     );
+        k[1] ^= GET_BE<uint32_t>(mk +  4);
+        k[2] ^= GET_BE<uint32_t>(mk +  8);
+        k[3] ^= GET_BE<uint32_t>(mk + 12);
         for (int i = 0; i < 32; i++) {
             uint32_t a = k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
@@ -47,34 +47,34 @@ public:
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t[36];
-        t[0] = GET_BE<uint32_t>(src + 0x0);
-        t[1] = GET_BE<uint32_t>(src + 0x4);
-        t[2] = GET_BE<uint32_t>(src + 0x8);
-        t[3] = GET_BE<uint32_t>(src + 0xc);
+        t[0] = GET_BE<uint32_t>(src     );
+        t[1] = GET_BE<uint32_t>(src +  4);
+        t[2] = GET_BE<uint32_t>(src +  8);
+        t[3] = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i++) {
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
             t[i + 4] = t[i] ^ b ^ ROTL(b, 2) ^ ROTL(b, 10) ^ ROTL(b, 18) ^ ROTL(b, 24);
         }
-        PUT_BE(dst + 0x0, t[35]);
-        PUT_BE(dst + 0x4, t[34]);
-        PUT_BE(dst + 0x8, t[33]);
-        PUT_BE(dst + 0xc, t[32]);
+        PUT_BE(dst     , t[35]);
+        PUT_BE(dst +  4, t[34]);
+        PUT_BE(dst +  8, t[33]);
+        PUT_BE(dst + 12, t[32]);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t[36];
-        t[0] = GET_BE<uint32_t>(src + 0x0);
-        t[1] = GET_BE<uint32_t>(src + 0x4);
-        t[2] = GET_BE<uint32_t>(src + 0x8);
-        t[3] = GET_BE<uint32_t>(src + 0xc);
+        t[0] = GET_BE<uint32_t>(src     );
+        t[1] = GET_BE<uint32_t>(src +  4);
+        t[2] = GET_BE<uint32_t>(src +  8);
+        t[3] = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i++) {
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
             t[i + 4] = t[i] ^ b ^ ROTL(b, 2) ^ ROTL(b, 10) ^ ROTL(b, 18) ^ ROTL(b, 24);
         }
-        PUT_BE(dst + 0x0, t[35]);
-        PUT_BE(dst + 0x4, t[34]);
-        PUT_BE(dst + 0x8, t[33]);
-        PUT_BE(dst + 0xc, t[32]);
+        PUT_BE(dst     , t[35]);
+        PUT_BE(dst +  4, t[34]);
+        PUT_BE(dst +  8, t[33]);
+        PUT_BE(dst + 12, t[32]);
     }
 };

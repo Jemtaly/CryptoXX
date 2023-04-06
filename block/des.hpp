@@ -79,7 +79,7 @@ class DES {
         0x1e, 0x18, 0x08, 0x12, 0x00, 0x05, 0x1d, 0x17,
         0x0d, 0x13, 0x02, 0x1a, 0x0a, 0x15, 0x1c, 0x07,
     });
-    static constexpr bits_t S_BOX[8][64] = {
+    static constexpr uint8_t S_BOX[8][64] = {
         0xe, 0x0, 0x4, 0xf, 0xd, 0x7, 0x1, 0x4, 0x2, 0xe, 0xf, 0x2, 0xb, 0xd, 0x8, 0x1,
         0x3, 0xa, 0xa, 0x6, 0x6, 0xc, 0xc, 0xb, 0x5, 0x9, 0x9, 0x5, 0x0, 0x3, 0x7, 0x8,
         0x4, 0xf, 0x1, 0xc, 0xe, 0x8, 0x8, 0x2, 0xd, 0x4, 0x6, 0x9, 0x2, 0x1, 0xb, 0x7,
@@ -129,7 +129,7 @@ class DES {
 public:
     static constexpr size_t BLOCK_SIZE = 8;
     DES(uint8_t const *mk) {
-        uint<56> t = permutation<64, 56>(GET_BE<uint64_t>(mk), PC_1);
+        uint<56> t = permutation<64, 56>(GET_BE<uint<64>>(mk), PC_1);
         uint<28> l = t >> 28, r = t & 0x0FFFFFFF;
         for (int i = 0; i < 16; i++) {
             l = ROTL28(l, SHIFT[i]);
@@ -138,7 +138,7 @@ public:
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        uint<64> t = permutation<64, 64>(GET_BE<uint64_t>(src), IP);
+        uint<64> t = permutation<64, 64>(GET_BE<uint<64>>(src), IP);
         uint<32> l = t >> 32, r = t & 0xFFFFFFFF;
         for (int i = 0; i < 16;) {
             l ^= F(r, rk[i++]);
@@ -147,7 +147,7 @@ public:
         PUT_BE(dst, permutation<64, 64>((uint<64>)r << 32 | l, FP));
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        uint<64> t = permutation<64, 64>(GET_BE<uint64_t>(src), IP);
+        uint<64> t = permutation<64, 64>(GET_BE<uint<64>>(src), IP);
         uint<32> l = t >> 32, r = t & 0xFFFFFFFF;
         for (int i = 16; i > 0;) {
             l ^= F(r, rk[--i]);

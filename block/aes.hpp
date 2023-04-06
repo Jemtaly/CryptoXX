@@ -80,57 +80,55 @@ protected:
         q[3] = I_BOX[q[3] & 0xff] | I_BOX[q[3] >> 8 & 0xff] << 8 | I_BOX[q[3] >> 16 & 0xff] << 16 | I_BOX[q[3] >> 24] << 24;
     }
     static void mix_columns_enc(uint32_t *q) {
-        q[0] = LUT_E[0][BYTE_LE(q, 0x0)] ^ LUT_E[1][BYTE_LE(q, 0x1)] ^ LUT_E[2][BYTE_LE(q, 0x2)] ^ LUT_E[3][BYTE_LE(q, 0x3)];
-        q[1] = LUT_E[0][BYTE_LE(q, 0x4)] ^ LUT_E[1][BYTE_LE(q, 0x5)] ^ LUT_E[2][BYTE_LE(q, 0x6)] ^ LUT_E[3][BYTE_LE(q, 0x7)];
-        q[2] = LUT_E[0][BYTE_LE(q, 0x8)] ^ LUT_E[1][BYTE_LE(q, 0x9)] ^ LUT_E[2][BYTE_LE(q, 0xa)] ^ LUT_E[3][BYTE_LE(q, 0xb)];
-        q[3] = LUT_E[0][BYTE_LE(q, 0xc)] ^ LUT_E[1][BYTE_LE(q, 0xd)] ^ LUT_E[2][BYTE_LE(q, 0xe)] ^ LUT_E[3][BYTE_LE(q, 0xf)];
+        q[0] = LUT_E[0][BYTE_LE(q,  0)] ^ LUT_E[1][BYTE_LE(q,  1)] ^ LUT_E[2][BYTE_LE(q,  2)] ^ LUT_E[3][BYTE_LE(q,  3)];
+        q[1] = LUT_E[0][BYTE_LE(q,  4)] ^ LUT_E[1][BYTE_LE(q,  5)] ^ LUT_E[2][BYTE_LE(q,  6)] ^ LUT_E[3][BYTE_LE(q,  7)];
+        q[2] = LUT_E[0][BYTE_LE(q,  8)] ^ LUT_E[1][BYTE_LE(q,  9)] ^ LUT_E[2][BYTE_LE(q, 10)] ^ LUT_E[3][BYTE_LE(q, 11)];
+        q[3] = LUT_E[0][BYTE_LE(q, 12)] ^ LUT_E[1][BYTE_LE(q, 13)] ^ LUT_E[2][BYTE_LE(q, 14)] ^ LUT_E[3][BYTE_LE(q, 15)];
     }
     static void mix_columns_dec(uint32_t *q) {
-        q[0] = LUT_D[0][BYTE_LE(q, 0x0)] ^ LUT_D[1][BYTE_LE(q, 0x1)] ^ LUT_D[2][BYTE_LE(q, 0x2)] ^ LUT_D[3][BYTE_LE(q, 0x3)];
-        q[1] = LUT_D[0][BYTE_LE(q, 0x4)] ^ LUT_D[1][BYTE_LE(q, 0x5)] ^ LUT_D[2][BYTE_LE(q, 0x6)] ^ LUT_D[3][BYTE_LE(q, 0x7)];
-        q[2] = LUT_D[0][BYTE_LE(q, 0x8)] ^ LUT_D[1][BYTE_LE(q, 0x9)] ^ LUT_D[2][BYTE_LE(q, 0xa)] ^ LUT_D[3][BYTE_LE(q, 0xb)];
-        q[3] = LUT_D[0][BYTE_LE(q, 0xc)] ^ LUT_D[1][BYTE_LE(q, 0xd)] ^ LUT_D[2][BYTE_LE(q, 0xe)] ^ LUT_D[3][BYTE_LE(q, 0xf)];
+        q[0] = LUT_D[0][BYTE_LE(q,  0)] ^ LUT_D[1][BYTE_LE(q,  1)] ^ LUT_D[2][BYTE_LE(q,  2)] ^ LUT_D[3][BYTE_LE(q,  3)];
+        q[1] = LUT_D[0][BYTE_LE(q,  4)] ^ LUT_D[1][BYTE_LE(q,  5)] ^ LUT_D[2][BYTE_LE(q,  6)] ^ LUT_D[3][BYTE_LE(q,  7)];
+        q[2] = LUT_D[0][BYTE_LE(q,  8)] ^ LUT_D[1][BYTE_LE(q,  9)] ^ LUT_D[2][BYTE_LE(q, 10)] ^ LUT_D[3][BYTE_LE(q, 11)];
+        q[3] = LUT_D[0][BYTE_LE(q, 12)] ^ LUT_D[1][BYTE_LE(q, 13)] ^ LUT_D[2][BYTE_LE(q, 14)] ^ LUT_D[3][BYTE_LE(q, 15)];
     }
     static void shift_rows_enc(uint32_t *q) {
-        uint8_t swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0x1);
-        BYTE_LE(q, 0x1) = BYTE_LE(q, 0x5);
-        BYTE_LE(q, 0x5) = BYTE_LE(q, 0x9);
-        BYTE_LE(q, 0x9) = BYTE_LE(q, 0xd);
-        BYTE_LE(q, 0xd) = swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0x2);
-        BYTE_LE(q, 0x2) = BYTE_LE(q, 0xa);
-        BYTE_LE(q, 0xa) = swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0x6);
-        BYTE_LE(q, 0x6) = BYTE_LE(q, 0xe);
-        BYTE_LE(q, 0xe) = swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0xf);
-        BYTE_LE(q, 0xf) = BYTE_LE(q, 0xb);
-        BYTE_LE(q, 0xb) = BYTE_LE(q, 0x7);
-        BYTE_LE(q, 0x7) = BYTE_LE(q, 0x3);
-        BYTE_LE(q, 0x3) = swap_temp_value;
+        uint8_t swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q,  1);
+        BYTE_LE(q,  1) = BYTE_LE(q,  5);
+        BYTE_LE(q,  5) = BYTE_LE(q,  9);
+        BYTE_LE(q,  9) = BYTE_LE(q, 13);
+        BYTE_LE(q, 13) = swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q,  2);
+        BYTE_LE(q,  2) = BYTE_LE(q, 10);
+        BYTE_LE(q, 10) = swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q,  6);
+        BYTE_LE(q,  6) = BYTE_LE(q, 14);
+        BYTE_LE(q, 14) = swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q, 15);
+        BYTE_LE(q, 15) = BYTE_LE(q, 11);
+        BYTE_LE(q, 11) = BYTE_LE(q,  7);
+        BYTE_LE(q,  7) = BYTE_LE(q,  3);
+        BYTE_LE(q,  3) = swap_tmp_value;
     }
     static void shift_rows_dec(uint32_t *q) {
-        uint8_t swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0xd);
-        BYTE_LE(q, 0xd) = BYTE_LE(q, 0x9);
-        BYTE_LE(q, 0x9) = BYTE_LE(q, 0x5);
-        BYTE_LE(q, 0x5) = BYTE_LE(q, 0x1);
-        BYTE_LE(q, 0x1) = swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0x2);
-        BYTE_LE(q, 0x2) = BYTE_LE(q, 0xa);
-        BYTE_LE(q, 0xa) = swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0x6);
-        BYTE_LE(q, 0x6) = BYTE_LE(q, 0xe);
-        BYTE_LE(q, 0xe) = swap_temp_value;
-        swap_temp_value = BYTE_LE(q, 0x3);
-        BYTE_LE(q, 0x3) = BYTE_LE(q, 0x7);
-        BYTE_LE(q, 0x7) = BYTE_LE(q, 0xb);
-        BYTE_LE(q, 0xb) = BYTE_LE(q, 0xf);
-        BYTE_LE(q, 0xf) = swap_temp_value;
+        uint8_t swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q, 13);
+        BYTE_LE(q, 13) = BYTE_LE(q,  9);
+        BYTE_LE(q,  9) = BYTE_LE(q,  5);
+        BYTE_LE(q,  5) = BYTE_LE(q,  1);
+        BYTE_LE(q,  1) = swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q, 14);
+        BYTE_LE(q, 14) = BYTE_LE(q,  6);
+        BYTE_LE(q,  6) = swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q, 10);
+        BYTE_LE(q, 10) = BYTE_LE(q,  2);
+        BYTE_LE(q,  2) = swap_tmp_value;
+        swap_tmp_value = BYTE_LE(q,  3);
+        BYTE_LE(q,  3) = BYTE_LE(q,  7);
+        BYTE_LE(q,  7) = BYTE_LE(q, 11);
+        BYTE_LE(q, 11) = BYTE_LE(q, 15);
+        BYTE_LE(q, 15) = swap_tmp_value;
     }
-public:
-    static constexpr size_t BLOCK_SIZE = 16;
 };
 template <int N>
 class AESTmpl: public AESBase {
@@ -138,6 +136,7 @@ protected:
     uint32_t rk[N + 1][4];
     AESTmpl() = default; // not instantiable
 public:
+    static constexpr size_t BLOCK_SIZE = 16;
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t q[4];
         READ_LE(q, src, 4);

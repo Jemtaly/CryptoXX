@@ -9,10 +9,9 @@
 #define KK0 0x79CC4519U
 #define KK1 0x7A879D8AU
 #define HH1(N, a, b, c, d, e, f, g, h, w, j) {            \
-    r = ROTL(a, 12);                                      \
-    s = r + e + ROTL(KK##N, j);                           \
-    t = ROTL(s,  7);                                      \
-    u = FF##N(a, b, c) + d + (t ^ r) + (w[j] ^ w[j + 4]); \
+    s = ROTL(a, 12);                                      \
+    t = ROTL(s + e + ROTL(KK##N, j), 7);                  \
+    u = FF##N(a, b, c) + d + (t ^ s) + (w[j] ^ w[j + 4]); \
     v = GG##N(e, f, g) + h +  t      +  w[j]            ; \
     b = ROTL(b,  9);                                      \
     f = ROTL(f, 19);                                      \
@@ -47,7 +46,7 @@ class SM3 {
         uint32_t F = h[5];
         uint32_t G = h[6];
         uint32_t H = h[7];
-        uint32_t w[68], t, r, s, u, v;
+        uint32_t w[68], t, s, u, v;
         READ_BE(w, blk, 16);
         for (int j = 16; j < 68; j++) {
             t = w[j - 16] ^ w[j - 9] ^ ROTL(w[j -  3], 15);
