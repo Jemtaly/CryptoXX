@@ -43,7 +43,7 @@ protected:
         0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     };
     static constexpr auto coef_mult = [](uint32_t X) {
-        std::array<uint32_t, 256> coef_mult_X = {};
+        std::array<std::array<uint32_t, 256>, 4> LUT = {};
         for (int j = 0; j < 256; j++) {
             for (int i = 0; i < 4; i++) {
                 uint8_t a = X >> 8 * i, b = j, p = 0;
@@ -52,19 +52,15 @@ protected:
                     a = a << 1 ^ (a >> 7) * 0x1b;
                     b = b >> 1;
                 }
-                coef_mult_X[j] |= p << 8 * i;
+                for (int k = 0; k < 4; k++) {
+                    LUT[k][j] |= p << 8 * ((i + k) % 4);
+                }
             }
         }
-        return coef_mult_X;
+        return LUT;
     };
-    static constexpr auto LUT_E_0 = coef_mult(0x03010102);
-    static constexpr auto LUT_E_1 = coef_mult(0x01010203);
-    static constexpr auto LUT_E_2 = coef_mult(0x01020301);
-    static constexpr auto LUT_E_3 = coef_mult(0x02030101);
-    static constexpr auto LUT_D_0 = coef_mult(0x0b0d090e);
-    static constexpr auto LUT_D_1 = coef_mult(0x0d090e0b);
-    static constexpr auto LUT_D_2 = coef_mult(0x090e0b0d);
-    static constexpr auto LUT_D_3 = coef_mult(0x0e0b0d09);
+    static constexpr auto LUT_E = coef_mult(0x03010102);
+    static constexpr auto LUT_D = coef_mult(0x0b0d090e);
     static void add_round_key(uint32_t *q, uint32_t const *k) {
         q[0] ^= k[0];
         q[1] ^= k[1];
@@ -84,16 +80,16 @@ protected:
         q[3] = I_BOX[q[3] & 0xff] | I_BOX[q[3] >> 8 & 0xff] << 8 | I_BOX[q[3] >> 16 & 0xff] << 16 | I_BOX[q[3] >> 24] << 24;
     }
     static void mix_columns_enc(uint32_t *q) {
-        q[0] = LUT_E_0[BYTE_LE(q, 0x0)] ^ LUT_E_1[BYTE_LE(q, 0x1)] ^ LUT_E_2[BYTE_LE(q, 0x2)] ^ LUT_E_3[BYTE_LE(q, 0x3)];
-        q[1] = LUT_E_0[BYTE_LE(q, 0x4)] ^ LUT_E_1[BYTE_LE(q, 0x5)] ^ LUT_E_2[BYTE_LE(q, 0x6)] ^ LUT_E_3[BYTE_LE(q, 0x7)];
-        q[2] = LUT_E_0[BYTE_LE(q, 0x8)] ^ LUT_E_1[BYTE_LE(q, 0x9)] ^ LUT_E_2[BYTE_LE(q, 0xa)] ^ LUT_E_3[BYTE_LE(q, 0xb)];
-        q[3] = LUT_E_0[BYTE_LE(q, 0xc)] ^ LUT_E_1[BYTE_LE(q, 0xd)] ^ LUT_E_2[BYTE_LE(q, 0xe)] ^ LUT_E_3[BYTE_LE(q, 0xf)];
+        q[0] = LUT_E[0][BYTE_LE(q, 0x0)] ^ LUT_E[1][BYTE_LE(q, 0x1)] ^ LUT_E[2][BYTE_LE(q, 0x2)] ^ LUT_E[3][BYTE_LE(q, 0x3)];
+        q[1] = LUT_E[0][BYTE_LE(q, 0x4)] ^ LUT_E[1][BYTE_LE(q, 0x5)] ^ LUT_E[2][BYTE_LE(q, 0x6)] ^ LUT_E[3][BYTE_LE(q, 0x7)];
+        q[2] = LUT_E[0][BYTE_LE(q, 0x8)] ^ LUT_E[1][BYTE_LE(q, 0x9)] ^ LUT_E[2][BYTE_LE(q, 0xa)] ^ LUT_E[3][BYTE_LE(q, 0xb)];
+        q[3] = LUT_E[0][BYTE_LE(q, 0xc)] ^ LUT_E[1][BYTE_LE(q, 0xd)] ^ LUT_E[2][BYTE_LE(q, 0xe)] ^ LUT_E[3][BYTE_LE(q, 0xf)];
     }
     static void mix_columns_dec(uint32_t *q) {
-        q[0] = LUT_D_0[BYTE_LE(q, 0x0)] ^ LUT_D_1[BYTE_LE(q, 0x1)] ^ LUT_D_2[BYTE_LE(q, 0x2)] ^ LUT_D_3[BYTE_LE(q, 0x3)];
-        q[1] = LUT_D_0[BYTE_LE(q, 0x4)] ^ LUT_D_1[BYTE_LE(q, 0x5)] ^ LUT_D_2[BYTE_LE(q, 0x6)] ^ LUT_D_3[BYTE_LE(q, 0x7)];
-        q[2] = LUT_D_0[BYTE_LE(q, 0x8)] ^ LUT_D_1[BYTE_LE(q, 0x9)] ^ LUT_D_2[BYTE_LE(q, 0xa)] ^ LUT_D_3[BYTE_LE(q, 0xb)];
-        q[3] = LUT_D_0[BYTE_LE(q, 0xc)] ^ LUT_D_1[BYTE_LE(q, 0xd)] ^ LUT_D_2[BYTE_LE(q, 0xe)] ^ LUT_D_3[BYTE_LE(q, 0xf)];
+        q[0] = LUT_D[0][BYTE_LE(q, 0x0)] ^ LUT_D[1][BYTE_LE(q, 0x1)] ^ LUT_D[2][BYTE_LE(q, 0x2)] ^ LUT_D[3][BYTE_LE(q, 0x3)];
+        q[1] = LUT_D[0][BYTE_LE(q, 0x4)] ^ LUT_D[1][BYTE_LE(q, 0x5)] ^ LUT_D[2][BYTE_LE(q, 0x6)] ^ LUT_D[3][BYTE_LE(q, 0x7)];
+        q[2] = LUT_D[0][BYTE_LE(q, 0x8)] ^ LUT_D[1][BYTE_LE(q, 0x9)] ^ LUT_D[2][BYTE_LE(q, 0xa)] ^ LUT_D[3][BYTE_LE(q, 0xb)];
+        q[3] = LUT_D[0][BYTE_LE(q, 0xc)] ^ LUT_D[1][BYTE_LE(q, 0xd)] ^ LUT_D[2][BYTE_LE(q, 0xe)] ^ LUT_D[3][BYTE_LE(q, 0xf)];
     }
     static void shift_rows_enc(uint32_t *q) {
         uint8_t swap_temp_value;

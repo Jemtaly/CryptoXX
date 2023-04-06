@@ -30,30 +30,26 @@ class SM4 {
         0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
         0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
     };
-    static constexpr auto generate_LUT_K = [](int N) {
-        std::array<uint32_t, 256> LUT_K_N = {};
+    static constexpr auto LUT_K = []() {
+        std::array<std::array<uint32_t, 256>, 4> LUT_K = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 13 ^ S_BOX[i] << 23;
-            LUT_K_N[i] = ROTL(b, 8 * N);
+            for (int j = 0; j < 4; j++) {
+                LUT_K[j][i] = ROTL(b, 8 * j);
+            }
         }
-        return LUT_K_N;
-    };
-    static constexpr auto generate_LUT_S = [](int N) {
-        std::array<uint32_t, 256> LUT_S_N = {};
+        return LUT_K;
+    }();
+    static constexpr auto LUT_S = []() {
+        std::array<std::array<uint32_t, 256>, 4> LUT_S = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 2 ^ S_BOX[i] << 10 ^ S_BOX[i] << 18 ^ S_BOX[i] << 24;
-            LUT_S_N[i] = ROTL(b, 8 * N);
+            for (int j = 0; j < 4; j++) {
+                LUT_S[j][i] = ROTL(b, 8 * j);
+            }
         }
-        return LUT_S_N;
-    };
-    static constexpr auto LUT_K_0 = generate_LUT_K(0);
-    static constexpr auto LUT_K_1 = generate_LUT_K(1);
-    static constexpr auto LUT_K_2 = generate_LUT_K(2);
-    static constexpr auto LUT_K_3 = generate_LUT_K(3);
-    static constexpr auto LUT_S_0 = generate_LUT_S(0);
-    static constexpr auto LUT_S_1 = generate_LUT_S(1);
-    static constexpr auto LUT_S_2 = generate_LUT_S(2);
-    static constexpr auto LUT_S_3 = generate_LUT_S(3);
+        return LUT_S;
+    }();
     uint32_t k[36] = {
         0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
     };
@@ -66,7 +62,7 @@ public:
         k[3] ^= GET_BE<uint32_t>(mk + 0xc);
         for (int i = 0; i < 32; i++) {
             uint32_t a = k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i];
-            k[i + 4] = k[i] ^ LUT_K_0[a & 0xff] ^ LUT_K_1[a >> 8 & 0xff] ^ LUT_K_2[a >> 16 & 0xff] ^ LUT_K_3[a >> 24];
+            k[i + 4] = k[i] ^ LUT_K[0][a & 0xff] ^ LUT_K[1][a >> 8 & 0xff] ^ LUT_K[2][a >> 16 & 0xff] ^ LUT_K[3][a >> 24];
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
@@ -77,7 +73,7 @@ public:
         t[3] = GET_BE<uint32_t>(src + 0xc);
         for (int i = 0; i < 32; i++) {
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
-            t[i + 4] = t[i] ^ LUT_S_0[a & 0xff] ^ LUT_S_1[a >> 8 & 0xff] ^ LUT_S_2[a >> 16 & 0xff] ^ LUT_S_3[a >> 24];
+            t[i + 4] = t[i] ^ LUT_S[0][a & 0xff] ^ LUT_S[1][a >> 8 & 0xff] ^ LUT_S[2][a >> 16 & 0xff] ^ LUT_S[3][a >> 24];
         }
         PUT_BE(dst + 0x0, t[35]);
         PUT_BE(dst + 0x4, t[34]);
@@ -92,7 +88,7 @@ public:
         t[3] = GET_BE<uint32_t>(src + 0xc);
         for (int i = 0; i < 32; i++) {
             uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i];
-            t[i + 4] = t[i] ^ LUT_S_0[a & 0xff] ^ LUT_S_1[a >> 8 & 0xff] ^ LUT_S_2[a >> 16 & 0xff] ^ LUT_S_3[a >> 24];
+            t[i + 4] = t[i] ^ LUT_S[0][a & 0xff] ^ LUT_S[1][a >> 8 & 0xff] ^ LUT_S[2][a >> 16 & 0xff] ^ LUT_S[3][a >> 24];
         }
         PUT_BE(dst + 0x0, t[35]);
         PUT_BE(dst + 0x4, t[34]);

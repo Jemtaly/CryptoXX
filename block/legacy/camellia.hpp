@@ -12,7 +12,7 @@ protected:
         0xC6EF372FE94F82BE, 0x54FF53A5F1D36F1C,
         0x10E527FADE682D1D, 0xB05688C2B3E6C1FD,
     };
-    static constexpr std::array<uint8_t, 256> SBOX_1 = {
+    static constexpr std::array<uint8_t, 256> A_BOX = {
         0x70, 0x82, 0x2c, 0xec, 0xb3, 0x27, 0xc0, 0xe5, 0xe4, 0x85, 0x57, 0x35, 0xea, 0x0c, 0xae, 0x41,
         0x23, 0xef, 0x6b, 0x93, 0x45, 0x19, 0xa5, 0x21, 0xed, 0x0e, 0x4f, 0x4e, 0x1d, 0x65, 0x92, 0xbd,
         0x86, 0xb8, 0xaf, 0x8f, 0x7c, 0xeb, 0x1f, 0xce, 0x3e, 0x30, 0xdc, 0x5f, 0x5e, 0xc5, 0x0b, 0x1a,
@@ -30,38 +30,38 @@ protected:
         0x72, 0x07, 0xb9, 0x55, 0xf8, 0xee, 0xac, 0x0a, 0x36, 0x49, 0x2a, 0x68, 0x3c, 0x38, 0xf1, 0xa4,
         0x40, 0x28, 0xd3, 0x7b, 0xbb, 0xc9, 0x43, 0xc1, 0x15, 0xe3, 0xad, 0xf4, 0x77, 0xc7, 0x80, 0x9e,
     };
-    static constexpr std::array<uint8_t, 256> SBOX_2 = []() {
+    static constexpr std::array<uint8_t, 256> B_BOX = []() {
         std::array<uint8_t, 256> s;
         for (int i = 0; i < 256; i++) {
-            s[i] = SBOX_1[i] << 1 | SBOX_1[i] >> 7;
+            s[i] = A_BOX[i] << 1 | A_BOX[i] >> 7;
         }
         return s;
     }();
-    static constexpr std::array<uint8_t, 256> SBOX_3 = []() {
+    static constexpr std::array<uint8_t, 256> C_BOX = []() {
         std::array<uint8_t, 256> s;
         for (int i = 0; i < 256; i++) {
-            s[i] = SBOX_1[i] << 7 | SBOX_1[i] >> 1;
+            s[i] = A_BOX[i] << 7 | A_BOX[i] >> 1;
         }
         return s;
     }();
-    static constexpr std::array<uint8_t, 256> SBOX_4 = []() {
+    static constexpr std::array<uint8_t, 256> D_BOX = []() {
         std::array<uint8_t, 256> s;
         for (int i = 0; i < 256; i++) {
-            s[i] = SBOX_1[(i << 1 | i >> 7) & 255];
+            s[i] = A_BOX[(i << 1 | i >> 7) & 255];
         }
         return s;
     }();
     static uint64_t f(uint64_t in, uint64_t kx) {
         uint64_t x = in ^ kx;
         uint8_t t[8], y[8];
-        t[0] = SBOX_1[x >> 56       ];
-        t[1] = SBOX_2[x >> 48 & 0xff];
-        t[2] = SBOX_3[x >> 40 & 0xff];
-        t[3] = SBOX_4[x >> 32 & 0xff];
-        t[4] = SBOX_2[x >> 24 & 0xff];
-        t[5] = SBOX_3[x >> 16 & 0xff];
-        t[6] = SBOX_4[x >>  8 & 0xff];
-        t[7] = SBOX_1[x       & 0xff];
+        t[0] = A_BOX[x >> 56       ];
+        t[1] = B_BOX[x >> 48 & 0xff];
+        t[2] = C_BOX[x >> 40 & 0xff];
+        t[3] = D_BOX[x >> 32 & 0xff];
+        t[4] = B_BOX[x >> 24 & 0xff];
+        t[5] = C_BOX[x >> 16 & 0xff];
+        t[6] = D_BOX[x >>  8 & 0xff];
+        t[7] = A_BOX[x       & 0xff];
         y[0] = t[0] ^ t[2] ^ t[3] ^ t[5] ^ t[6] ^ t[7];
         y[1] = t[0] ^ t[1] ^ t[3] ^ t[4] ^ t[6] ^ t[7];
         y[2] = t[0] ^ t[1] ^ t[2] ^ t[4] ^ t[5] ^ t[7];
