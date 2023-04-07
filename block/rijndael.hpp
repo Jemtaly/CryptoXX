@@ -44,8 +44,8 @@ protected:
     };
     static constexpr auto coef_mult = [](uint32_t X) {
         std::array<std::array<uint32_t, 256>, 4> LUT = {};
-        for (int j = 0; j < 256; j++) {
-            for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 256; j++) {
                 uint8_t a = X >> 8 * i, p = 0;
                 for (int k = 0; k < 8; k++) {
                     p = p ^ (j >> k & 0x01 ? a    : 0x00);

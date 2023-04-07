@@ -48,8 +48,8 @@ protected:
     };
     static constexpr auto coef_mult = [](RijndaelClmn X) {
         std::array<std::array<RijndaelClmn, 256>, 4> LUT = {};
-        for (int j = 0; j < 256; j++) {
-            for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 256; j++) {
                 uint8_t a = X.b[i], p = 0;
                 for (int k = 0; k < 8; k++) {
                     p = p ^ (j >> k & 0x01 ? a    : 0x00);
