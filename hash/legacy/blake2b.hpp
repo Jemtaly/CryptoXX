@@ -24,7 +24,7 @@ protected:
         {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
     };
 };
-template <size_t DS, typename Derived>
+template <size_t DN, typename Derived>
 class BLAKE2bTmpl: public BLAKE2bBase {
     uint64_t hi = 0;
     uint64_t lo = 0;
@@ -64,10 +64,10 @@ class BLAKE2bTmpl: public BLAKE2bBase {
     }
 public:
     static constexpr size_t BLOCK_SIZE = 128;
-    static constexpr size_t DIGEST_SIZE = DS;
+    static constexpr size_t DIGEST_SIZE = DN * 8;
     static constexpr bool NO_PADDING = true;
     BLAKE2bTmpl(uint8_t const *key, size_t len) {
-        h[0] ^= 0x01010000 ^ len << 8 ^ DS;
+        h[0] ^= 0x01010000 ^ len << 8 ^ DN * 8;
         if (len > 0) {
             uint8_t tmp[128] = {};
             memcpy(tmp, key, len);
@@ -88,17 +88,17 @@ public:
         lo += len;
         lo >= len || ++hi;
         compress(tmp, 1);
-        WRITE_LE(dig, h, DS / 8);
+        WRITE_LE(dig, h, DN);
     }
 };
-class BLAKE2b512: public BLAKE2bTmpl<64, BLAKE2b512> {
+class BLAKE2b512: public BLAKE2bTmpl<8, BLAKE2b512> {
 public:
     static constexpr uint64_t IV[8] = {
         0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
         0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
     };
 };
-class BLAKE2b384: public BLAKE2bTmpl<48, BLAKE2b384> {
+class BLAKE2b384: public BLAKE2bTmpl<6, BLAKE2b384> {
 public:
     static constexpr uint64_t IV[8] = {
         0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,

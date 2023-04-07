@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "block/aes.hpp"
+#include "block/rijndael.hpp"
 #include "block/sm4.hpp"
 #include "block/twofish.hpp"
 #include "block/serpent.hpp"

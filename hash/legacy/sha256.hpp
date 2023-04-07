@@ -23,7 +23,7 @@ protected:
         0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
     };
 };
-template <int DS, typename Derived>
+template <int DN, typename Derived>
 class SHA256Tmpl: public SHA256Base {
     uint32_t hi = 0;
     uint32_t lo = 0;
@@ -72,7 +72,7 @@ class SHA256Tmpl: public SHA256Base {
     }
 public:
     static constexpr size_t BLOCK_SIZE = 64;
-    static constexpr size_t DIGEST_SIZE = DS;
+    static constexpr size_t DIGEST_SIZE = DN * 4;
     static constexpr bool NO_PADDING = false;
     SHA256Tmpl() {}
     void push(uint8_t const *blk) {
@@ -93,17 +93,17 @@ public:
         PUT_BE(tmp + 56, hi);
         PUT_BE(tmp + 60, lo);
         compress(tmp);
-        WRITE_BE(dst, h, DS / 4);
+        WRITE_BE(dst, h, DN);
     }
 };
-class SHA256: public SHA256Tmpl<32, SHA256> {
+class SHA256: public SHA256Tmpl<8, SHA256> {
 public:
     static constexpr uint32_t IV[8] = {
         0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
         0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
     };
 };
-class SHA224: public SHA256Tmpl<28, SHA224> {
+class SHA224: public SHA256Tmpl<7, SHA224> {
 public:
     static constexpr uint32_t IV[8] = {
         0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
