@@ -67,7 +67,7 @@ protected:
     }();
     static constexpr auto MDS = []() {
         std::array<std::array<uint32_t, 256>, 4> MDS = {};
-        uint32_t f01, f5b, fef;
+        uint8_t f01, f5b, fef;
         for (int i = 0; i < 256; ++i) {
             f01 = Q[1][i];
             f5b = f01 ^ (f01 & 0x02 ? 0xb4 : 0x00) ^ f01 >> 2 ^ (f01 & 0x01 ? 0x5a : 0x00)           ;
@@ -90,12 +90,12 @@ class TwofishTmpl: public TwofishBase {
         uint32_t x = (uint32_t)b * 0x01010101;
         switch (L) {
         case 4:
-            x = Q[1][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24 | key[6];
+            x = (Q[1][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[6];
         case 3:
-            x = Q[1][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[0][x >> 24] << 24 | key[4];
+            x = (Q[1][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[0][x >> 24] << 24) ^ key[4];
         case 2:
-            x = Q[0][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24 | key[2];
-            x = Q[0][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[1][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24 | key[0];
+            x = (Q[0][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[2];
+            x = (Q[0][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[1][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[0];
         }
         return x;
     }

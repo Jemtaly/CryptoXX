@@ -6,11 +6,13 @@
     s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d],  8); \
     s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b],  7); \
 }
-class ChaCha20 {
+template <int RND>
+requires (RND == 8 || RND == 12 || RND == 20)
+class ChaCha {
     uint32_t input[16];
 public:
     static constexpr size_t SECTION_SIZE = 64;
-    ChaCha20(uint32_t const *key, uint32_t const *counter):
+    ChaCha(uint32_t const *key, uint32_t const *counter):
         input{
             0x61707865, 0x3320646e, 0x79622d32, 0x6b206574, // "expand 32-byte k"
             key    [0], key    [1], key    [2], key    [3],
@@ -24,7 +26,7 @@ public:
             input[0x8], input[0x9], input[0xa], input[0xb],
             input[0xc], input[0xd], input[0xe], input[0xf],
         };
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < RND / 2; i++) {
             QROUND(state,  0,  4,  8, 12);
             QROUND(state,  1,  5,  9, 13);
             QROUND(state,  2,  6, 10, 14);
@@ -37,7 +39,7 @@ public:
         for (int i = 0; i < 16; i++) {
             PUT_LE(buf, state[i] + input[i]);
         }
-        for (int i = 12; i < 16 && ++input[i] == 0; i++) {} // increment counter
+        ++input[12] == 0 && ++input[13] == 0;
     }
 };
 #undef QROUND
