@@ -1,6 +1,5 @@
 #pragma once
 #include "block.hpp"
-#include <array>
 #define XK(r, i, j, k, l) { \
     x[i] ^= rk[4 * r +  8]; \
     x[j] ^= rk[4 * r +  9]; \
@@ -333,7 +332,7 @@ public:
         uint32_t t[16];
         READ_LE(rk, kin, L);
         if constexpr (L < 8) {
-            rk[L] = 1;
+            rk[L] = 1; // padding with 1 bit and 0 bits to make 256 bits
         }
         for (int i = 0; i < 132; ++i) {
             rk[i + 8] = ROTL(rk[i] ^ rk[i + 3] ^ rk[i + 5] ^ rk[i + 7] ^ 0x9E3779B9 ^ i, 11); 

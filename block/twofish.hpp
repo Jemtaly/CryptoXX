@@ -1,6 +1,6 @@
 #pragma once
-#include "block.hpp"
 #include <array>
+#include "block.hpp"
 #define G0_FUN(x) (mks[0][x & 0xff] ^ mks[1][x >> 8 & 0xff] ^ mks[2][x >> 16 & 0xff] ^ mks[3][x >> 24])
 #define G1_FUN(x) (mks[1][x & 0xff] ^ mks[2][x >> 8 & 0xff] ^ mks[3][x >> 16 & 0xff] ^ mks[0][x >> 24])
 #define ENCROUND(n, a, b, c, d, x, y) {      \
