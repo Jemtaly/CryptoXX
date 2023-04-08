@@ -1,10 +1,6 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-union RijndaelClmn {
-    uint32_t w;
-    uint8_t b[4];
-};
 class RijndaelBase {
 protected:
     static constexpr uint8_t S_BOX[256] = {
@@ -46,119 +42,88 @@ protected:
     static constexpr uint8_t RC[16] = {
         0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     };
-    static constexpr auto coef_mult = [](RijndaelClmn X) {
-        std::array<std::array<RijndaelClmn, 256>, 4> LUT = {};
+    static constexpr auto coef_mult = [](uint32_t X) {
+        std::array<std::array<uint32_t, 256>, 4> LUT = {};
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 256; j++) {
-                uint8_t a = X.b[i], p = 0;
+                uint8_t a = X >> 8 * i, p = 0;
                 for (int k = 0; k < 8; k++) {
                     p = p ^ (j >> k & 0x01 ? a    : 0x00);
                     a = a << 1 ^ (a & 0x80 ? 0x1b : 0x00);
                 }
                 for (int k = 0; k < 4; k++) {
-                    LUT[k][j].b[(i + k) % 4] = p;
+                    LUT[k][j] |= p << (i + k) % 4 * 8;
                 }
             }
         }
         return LUT;
     };
-    static constexpr auto LUT_E = coef_mult({.b = {0x02, 0x01, 0x01, 0x03}});
-    static constexpr auto LUT_D = coef_mult({.b = {0x0e, 0x09, 0x0d, 0x0b}});
-    static void mix_clmns_enc(RijndaelClmn *q) {
-        q[0].w = LUT_E[0][q[0].b[0]].w ^ LUT_E[1][q[0].b[1]].w ^ LUT_E[2][q[0].b[2]].w ^ LUT_E[3][q[0].b[3]].w;
-        q[1].w = LUT_E[0][q[1].b[0]].w ^ LUT_E[1][q[1].b[1]].w ^ LUT_E[2][q[1].b[2]].w ^ LUT_E[3][q[1].b[3]].w;
-        q[2].w = LUT_E[0][q[2].b[0]].w ^ LUT_E[1][q[2].b[1]].w ^ LUT_E[2][q[2].b[2]].w ^ LUT_E[3][q[2].b[3]].w;
-        q[3].w = LUT_E[0][q[3].b[0]].w ^ LUT_E[1][q[3].b[1]].w ^ LUT_E[2][q[3].b[2]].w ^ LUT_E[3][q[3].b[3]].w;
+    static constexpr auto LUT_E = coef_mult(0x03010102);
+    static constexpr auto LUT_D = coef_mult(0x0b0d090e);
+    static void mix_clmns_enc(uint32_t *q) {
+        q[0] = LUT_E[0][q[0] & 0xff] ^ LUT_E[1][q[0] >> 8 & 0xff] ^ LUT_E[2][q[0] >> 16 & 0xff] ^ LUT_E[3][q[0] >> 24];
+        q[1] = LUT_E[0][q[1] & 0xff] ^ LUT_E[1][q[1] >> 8 & 0xff] ^ LUT_E[2][q[1] >> 16 & 0xff] ^ LUT_E[3][q[1] >> 24];
+        q[2] = LUT_E[0][q[2] & 0xff] ^ LUT_E[1][q[2] >> 8 & 0xff] ^ LUT_E[2][q[2] >> 16 & 0xff] ^ LUT_E[3][q[2] >> 24];
+        q[3] = LUT_E[0][q[3] & 0xff] ^ LUT_E[1][q[3] >> 8 & 0xff] ^ LUT_E[2][q[3] >> 16 & 0xff] ^ LUT_E[3][q[3] >> 24];
     }
-    static void mix_clmns_dec(RijndaelClmn *q) {
-        q[0].w = LUT_D[0][q[0].b[0]].w ^ LUT_D[1][q[0].b[1]].w ^ LUT_D[2][q[0].b[2]].w ^ LUT_D[3][q[0].b[3]].w;
-        q[1].w = LUT_D[0][q[1].b[0]].w ^ LUT_D[1][q[1].b[1]].w ^ LUT_D[2][q[1].b[2]].w ^ LUT_D[3][q[1].b[3]].w;
-        q[2].w = LUT_D[0][q[2].b[0]].w ^ LUT_D[1][q[2].b[1]].w ^ LUT_D[2][q[2].b[2]].w ^ LUT_D[3][q[2].b[3]].w;
-        q[3].w = LUT_D[0][q[3].b[0]].w ^ LUT_D[1][q[3].b[1]].w ^ LUT_D[2][q[3].b[2]].w ^ LUT_D[3][q[3].b[3]].w;
+    static void mix_clmns_dec(uint32_t *q) {
+        q[0] = LUT_D[0][q[0] & 0xff] ^ LUT_D[1][q[0] >> 8 & 0xff] ^ LUT_D[2][q[0] >> 16 & 0xff] ^ LUT_D[3][q[0] >> 24];
+        q[1] = LUT_D[0][q[1] & 0xff] ^ LUT_D[1][q[1] >> 8 & 0xff] ^ LUT_D[2][q[1] >> 16 & 0xff] ^ LUT_D[3][q[1] >> 24];
+        q[2] = LUT_D[0][q[2] & 0xff] ^ LUT_D[1][q[2] >> 8 & 0xff] ^ LUT_D[2][q[2] >> 16 & 0xff] ^ LUT_D[3][q[2] >> 24];
+        q[3] = LUT_D[0][q[3] & 0xff] ^ LUT_D[1][q[3] >> 8 & 0xff] ^ LUT_D[2][q[3] >> 16 & 0xff] ^ LUT_D[3][q[3] >> 24];
     }
-    static void sub_shift_enc(RijndaelClmn *q) {
-        RijndaelClmn t[4];
-        t[0].w = q[0].w;
-        t[1].w = q[1].w;
-        t[2].w = q[2].w;
-        t[3].w = q[3].w;
-        q[0].b[0] = S_BOX[t[0].b[0]];
-        q[0].b[1] = S_BOX[t[1].b[1]];
-        q[0].b[2] = S_BOX[t[2].b[2]];
-        q[0].b[3] = S_BOX[t[3].b[3]];
-        q[1].b[0] = S_BOX[t[1].b[0]];
-        q[1].b[1] = S_BOX[t[2].b[1]];
-        q[1].b[2] = S_BOX[t[3].b[2]];
-        q[1].b[3] = S_BOX[t[0].b[3]];
-        q[2].b[0] = S_BOX[t[2].b[0]];
-        q[2].b[1] = S_BOX[t[3].b[1]];
-        q[2].b[2] = S_BOX[t[0].b[2]];
-        q[2].b[3] = S_BOX[t[1].b[3]];
-        q[3].b[0] = S_BOX[t[3].b[0]];
-        q[3].b[1] = S_BOX[t[0].b[1]];
-        q[3].b[2] = S_BOX[t[1].b[2]];
-        q[3].b[3] = S_BOX[t[2].b[3]];
+    static void sub_shift_enc(uint32_t *q) {
+        uint32_t t[4];
+        t[0] = q[0];
+        t[1] = q[1];
+        t[2] = q[2];
+        t[3] = q[3];
+        q[0] = S_BOX[t[0] & 0xff] | S_BOX[t[1] >> 8 & 0xff] << 8 | S_BOX[t[2] >> 16 & 0xff] << 16 | S_BOX[t[3] >> 24] << 24;
+        q[1] = S_BOX[t[1] & 0xff] | S_BOX[t[2] >> 8 & 0xff] << 8 | S_BOX[t[3] >> 16 & 0xff] << 16 | S_BOX[t[0] >> 24] << 24;
+        q[2] = S_BOX[t[2] & 0xff] | S_BOX[t[3] >> 8 & 0xff] << 8 | S_BOX[t[0] >> 16 & 0xff] << 16 | S_BOX[t[1] >> 24] << 24;
+        q[3] = S_BOX[t[3] & 0xff] | S_BOX[t[0] >> 8 & 0xff] << 8 | S_BOX[t[1] >> 16 & 0xff] << 16 | S_BOX[t[2] >> 24] << 24;
     }
-    static void sub_shift_dec(RijndaelClmn *q) {
-        RijndaelClmn t[4];
-        t[0].w = q[0].w;
-        t[1].w = q[1].w;
-        t[2].w = q[2].w;
-        t[3].w = q[3].w;
-        q[0].b[0] = I_BOX[t[0].b[0]];
-        q[0].b[1] = I_BOX[t[3].b[1]];
-        q[0].b[2] = I_BOX[t[2].b[2]];
-        q[0].b[3] = I_BOX[t[1].b[3]];
-        q[0].b[1] = I_BOX[t[1].b[0]];
-        q[1].b[1] = I_BOX[t[0].b[1]];
-        q[1].b[2] = I_BOX[t[3].b[2]];
-        q[1].b[3] = I_BOX[t[2].b[3]];
-        q[0].b[2] = I_BOX[t[2].b[0]];
-        q[2].b[1] = I_BOX[t[1].b[1]];
-        q[2].b[2] = I_BOX[t[0].b[2]];
-        q[2].b[3] = I_BOX[t[3].b[3]];
-        q[0].b[3] = I_BOX[t[3].b[0]];
-        q[3].b[1] = I_BOX[t[2].b[1]];
-        q[3].b[2] = I_BOX[t[1].b[2]];
-        q[3].b[3] = I_BOX[t[0].b[3]];
+    static void sub_shift_dec(uint32_t *q) {
+        uint32_t t[4];
+        t[0] = q[0];
+        t[1] = q[1];
+        t[2] = q[2];
+        t[3] = q[3];
+        q[0] = I_BOX[t[0] & 0xff] | I_BOX[t[3] >> 8 & 0xff] << 8 | I_BOX[t[2] >> 16 & 0xff] << 16 | I_BOX[t[1] >> 24] << 24;
+        q[1] = I_BOX[t[1] & 0xff] | I_BOX[t[0] >> 8 & 0xff] << 8 | I_BOX[t[3] >> 16 & 0xff] << 16 | I_BOX[t[2] >> 24] << 24;
+        q[2] = I_BOX[t[2] & 0xff] | I_BOX[t[1] >> 8 & 0xff] << 8 | I_BOX[t[0] >> 16 & 0xff] << 16 | I_BOX[t[3] >> 24] << 24;
+        q[3] = I_BOX[t[3] & 0xff] | I_BOX[t[2] >> 8 & 0xff] << 8 | I_BOX[t[1] >> 16 & 0xff] << 16 | I_BOX[t[0] >> 24] << 24;
     }
-    static void add_round_key(RijndaelClmn *q, RijndaelClmn const *k) {
-        q[0].w ^= k[0].w;
-        q[1].w ^= k[1].w;
-        q[2].w ^= k[2].w;
-        q[3].w ^= k[3].w;
+    static void add_round_key(uint32_t *q, uint32_t const *k) {
+        q[0] ^= k[0];
+        q[1] ^= k[1];
+        q[2] ^= k[2];
+        q[3] ^= k[3];
     }
 };
 template <int N, int R = N + 6>
 requires (N >= 4 && N <= 8)
 class RijndaelTmpl: public RijndaelBase {
 protected:
-    RijndaelClmn rk[R + 1][4];
+    uint32_t rk[R + 1][4];
     RijndaelTmpl() = default; // not instantiable
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     RijndaelTmpl(const uint8_t *mk) {
-        memcpy((RijndaelClmn *)rk, mk, N * 4);
+        READ_LE((uint32_t *)rk, mk, N);
         for (int i = N; i < (R + 1) * 4; ++i) {
-            RijndaelClmn t = ((RijndaelClmn *)rk)[i - 1];
+            uint32_t t = ((uint32_t *)rk)[i - 1];
             if (i % N == 0) {
-                auto x = S_BOX[t.b[1]];
-                t.b[1] = S_BOX[t.b[2]];
-                t.b[2] = S_BOX[t.b[3]];
-                t.b[3] = S_BOX[t.b[0]];
-                t.b[0] = x ^ RC[i / N];
+                t = S_BOX[t >> 16 & 0xff] << 8 | S_BOX[t >> 24] << 16 | S_BOX[t & 0xff] << 24 | S_BOX[t >> 8 & 0xff] ^ RC[i / N];
             } else if (N > 6 && i % N == 4) {
-                t.b[0] = S_BOX[t.b[0]];
-                t.b[1] = S_BOX[t.b[1]];
-                t.b[2] = S_BOX[t.b[2]];
-                t.b[3] = S_BOX[t.b[3]];
+                t = S_BOX[t & 0xff] | S_BOX[t >> 8 & 0xff] << 8 | S_BOX[t >> 16 & 0xff] << 16 | S_BOX[t >> 24] << 24;
             }
-            ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - N].w ^ t.w;
+            ((uint32_t *)rk)[i] = ((uint32_t *)rk)[i - N] ^ t;
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[4];
-        memcpy(q, src, 16);
+        uint32_t q[4];
+        READ_LE(q, src, 4);
         int round = 0;
         add_round_key(q, rk[round]);
         while (++round < R) {
@@ -168,11 +133,11 @@ public:
         }
         sub_shift_enc(q);
         add_round_key(q, rk[round]);
-        memcpy(dst, q, 16);
+        WRITE_LE(dst, q, 4);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[4];
-        memcpy(q, src, 16);
+        uint32_t q[4];
+        READ_LE(q, src, 4);
         int round = R;
         add_round_key(q, rk[round]);
         while (--round > 0) {
@@ -182,7 +147,7 @@ public:
         }
         sub_shift_dec(q);
         add_round_key(q, rk[round]);
-        memcpy(dst, q, 16);
+        WRITE_LE(dst, q, 4);
     }
 };
 using AES128 = RijndaelTmpl<4>;
