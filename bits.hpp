@@ -138,3 +138,49 @@ template <std::unsigned_integral T>
 constexpr inline uint8_t const &BYTE_BE(T const *a, int i) {
     return ((uint8_t (*)[sizeof(T)])a)[i / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
 }
+template <std::unsigned_integral T>
+constexpr inline void READB_LE(T *a, uint8_t const *arr, int n) {
+    memcpy(a, arr, n);
+}
+template <std::unsigned_integral T>
+constexpr inline void READB_BE(T *a, uint8_t const *arr, int n) {
+    READ_BE(a, arr, n / sizeof(T));
+    for (int i = 0; i < n % sizeof(T); i++) {
+        BYTE_BE(a, n - 1 - i) = arr[n - 1 - i];
+    }
+}
+template <std::unsigned_integral T>
+constexpr inline void WRITEB_LE(uint8_t *arr, T const *a, int n) {
+    memcpy(arr, a, n);
+}
+template <std::unsigned_integral T>
+constexpr inline void WRITEB_BE(uint8_t *arr, T const *a, int n) {
+    WRITE_BE(arr, a, n / sizeof(T));
+    for (int i = 0; i < n % sizeof(T); i++) {
+        arr[n - 1 - i] = BYTE_BE(a, n - 1 - i);
+    }
+}
+template <std::unsigned_integral T>
+constexpr inline void XORB_LE(T *a, uint8_t const *arr, int n) {
+    for (int i = 0; i < n; i++) {
+        BYTE_LE(a, i) ^= arr[i];
+    }
+}
+template <std::unsigned_integral T>
+constexpr inline void XORB_BE(T *a, uint8_t const *arr, int n) {
+    for (int i = 0; i < n; i++) {
+        BYTE_BE(a, i) ^= arr[i];
+    }
+}
+template <std::unsigned_integral T>
+constexpr inline void XORB_LE(uint8_t *arr, T const *a, int n) {
+    for (int i = 0; i < n; i++) {
+        arr[i] ^= BYTE_LE(a, i);
+    }
+}
+template <std::unsigned_integral T>
+constexpr inline void XORB_BE(uint8_t *arr, T const *a, int n) {
+    for (int i = 0; i < n; i++) {
+        arr[i] ^= BYTE_BE(a, i);
+    }
+}

@@ -56,21 +56,15 @@ public:
     static constexpr size_t DIGEST_SIZE = DIG;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        for (int i = 0; i < BLK; i++) {
-            BYTE_LE((uint64_t *)A, i) ^= blk[i];
-        }
+        XORB_LE((uint64_t *)A, blk, BLK);
         permute();
     }
     void hash(uint8_t const *src, int len, uint8_t *out) {
-        for (int i = 0; i < len; i++) {
-            BYTE_LE((uint64_t *)A, i) ^= src[i];
-        }
+        XORB_LE((uint64_t *)A, src, len);
         BYTE_LE((uint64_t *)A, len) ^= PAD_BYTE;
         BYTE_LE((uint64_t *)A, BLK - 1) ^= 0x80;
         permute();
-        for (int i = 0; i < DIG; i++) {
-            out[i] = BYTE_LE((uint64_t *)A, i);
-        }
+        WRITEB_LE(out, (uint64_t *)A, DIG);
     }
 };
 template <size_t BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)

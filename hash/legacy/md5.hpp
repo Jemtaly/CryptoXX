@@ -51,13 +51,12 @@ class MD5 {
     uint32_t h[4] = {
         0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
     };
-    void compress(uint8_t const *blk) {
+    void compress(uint32_t const *w) {
         uint32_t a = h[0];
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
-        uint32_t s, w[16];
-        READ_LE(w, blk, 16);
+        uint32_t s;
         HHN(0, a, b, c, d, s, w, K, R,  0, 16);
         HHN(1, a, b, c, d, s, w, K, R, 16, 32);
         HHN(2, a, b, c, d, s, w, K, R, 32, 48);
@@ -72,24 +71,27 @@ public:
     static constexpr size_t DIGEST_SIZE = 16;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
+        uint32_t w[16];
+        READB_LE(w, blk, 64);
         lo += 512;
         lo >= 512 || hi++;
-        compress(blk);
+        compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         lo += len * 8;
         lo >= len * 8 || hi++;
-        uint8_t tmp[64] = {};
-        memcpy(tmp, src, len);
-        tmp[len] = 0x80;
+        uint32_t w[16];
+        memset(w, 0, 64);
+        READB_LE(w, src, len);
+        BYTE_LE(w, len) = 0x80;
         if (len >= 56) {
-            compress(tmp);
-            memset(tmp, 0, 56);
+            compress(w);
+            memset(w, 0, 56);
         }
-        PUT_LE(tmp + 56, lo);
-        PUT_LE(tmp + 60, hi);
-        compress(tmp);
-        WRITE_LE(dst, h, 4);
+        w[14] = lo;
+        w[15] = hi;
+        compress(w);
+        WRITEB_LE(dst, h, 16);
     }
 };
 #undef FF0

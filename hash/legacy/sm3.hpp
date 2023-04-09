@@ -30,7 +30,7 @@ class SM3 {
         0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
         0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
     };
-    void compress(uint8_t const *blk) {
+    void compress(uint32_t *w) {
         uint32_t A = h[0];
         uint32_t B = h[1];
         uint32_t C = h[2];
@@ -39,8 +39,7 @@ class SM3 {
         uint32_t F = h[5];
         uint32_t G = h[6];
         uint32_t H = h[7];
-        uint32_t w[68], s, t, u, v;
-        READ_BE(w, blk, 16);
+        uint32_t s, t, u, v;
         for (int j = 16; j < 68; j++) {
             t = w[j - 16] ^ w[j - 9] ^ ROTL(w[j -  3], 15);
             w[j] = PPW(t) ^ w[j - 6] ^ ROTL(w[j - 13],  7);
@@ -61,24 +60,27 @@ public:
     static constexpr size_t DIGEST_SIZE = 32;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
+        uint32_t w[68];
+        READB_BE(w, blk, 64);
         lo += 512;
         lo >= 512 || hi++;
-        compress(blk);
+        compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         lo += len * 8;
         lo >= len * 8 || hi++;
-        uint8_t tmp[64] = {};
-        memcpy(tmp, src, len);
-        tmp[len] = 0x80;
+        uint32_t w[68];
+        memset(w, 0, 64);
+        READB_BE(w, src, len);
+        BYTE_BE(w, len) = 0x80;
         if (len >= 56) {
-            compress(tmp);
-            memset(tmp, 0, 56);
+            compress(w);
+            memset(w, 0, 56);
         }
-        PUT_BE(tmp + 56, hi);
-        PUT_BE(tmp + 60, lo);
-        compress(tmp);
-        WRITE_BE(dst, h, 8);
+        w[14] = hi;
+        w[15] = lo;
+        compress(w);
+        WRITEB_BE(dst, h, 32);
     }
 };
 #undef PPE

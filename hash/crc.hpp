@@ -24,7 +24,7 @@ public:
         sta = sta >> 8 ^ box[sta & 0xff ^ *blk];
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
-        PUT_BE<digest_t>(dst, sta ^ CXV);
+        PUT_BE(dst, sta ^ CXV);
     }
 };
 using CRC32 = CRC<uint32_t, 0xedb88320, 0xffffffff, 0xffffffff>;

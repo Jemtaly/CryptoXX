@@ -53,7 +53,7 @@ class SHA512Tmpl: public SHA512Base {
         Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
     };
-    void compress(uint8_t const *blk) {
+    void compress(uint64_t *w) {
         uint64_t A = h[0];
         uint64_t B = h[1];
         uint64_t C = h[2];
@@ -62,8 +62,7 @@ class SHA512Tmpl: public SHA512Base {
         uint64_t F = h[5];
         uint64_t G = h[6];
         uint64_t H = h[7];
-        uint64_t w[80], s, t, u, v;
-        READ_BE(w, blk, 16);
+        uint64_t s, t, u, v;
         for (int i = 16; i < 80; i++) {
             s = ROTR(w[i - 15],  1) ^ ROTR(w[i - 15],  8) ^ (w[i - 15] >> 7);
             t = ROTR(w[i -  2], 19) ^ ROTR(w[i -  2], 61) ^ (w[i -  2] >> 6);
@@ -90,38 +89,41 @@ class SHA512Tmpl: public SHA512Base {
     }
 public:
     static constexpr size_t BLOCK_SIZE = 128;
-    static constexpr size_t DIGEST_SIZE = DN * 8;
+    static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool NO_PADDING = false;
     SHA512Tmpl() {}
     void push(uint8_t const *blk) {
+        uint64_t w[80];
+        READB_BE(w, blk, 128);
         lo += 1024;
         lo >= 1024 || hi++;
-        compress(blk);
+        compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         lo += len * 8;
         lo >= len * 8 || hi++;
-        uint8_t tmp[128] = {};
-        memcpy(tmp, src, len);
-        tmp[len] = 0x80;
+        uint64_t w[80];
+        memset(w, 0, 128);
+        READB_BE(w, src, len);
+        BYTE_BE(w, len) = 0x80;
         if (len >= 112) {
-            compress(tmp);
-            memset(tmp, 0, 112);
+            compress(w);
+            memset(w, 0, 112);
         }
-        PUT_BE(tmp + 112, hi);
-        PUT_BE(tmp + 120, lo);
-        compress(tmp);
-        WRITE_BE(dst, h, DN);
+        w[14] = hi;
+        w[15] = lo;
+        compress(w);
+        WRITEB_BE(dst, h, DN);
     }
 };
-class SHA512: public SHA512Tmpl<8, SHA512> {
+class SHA512: public SHA512Tmpl<64, SHA512> {
 public:
     static constexpr uint64_t IV[8] = {
         0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
         0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
     };
 };
-class SHA384: public SHA512Tmpl<6, SHA384> {
+class SHA384: public SHA512Tmpl<48, SHA384> {
 public:
     static constexpr uint64_t IV[8] = {
         0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,

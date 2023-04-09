@@ -49,7 +49,7 @@ class SHA256Tmpl: public SHA256Base {
         Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
     };
-    void compress(uint8_t const *blk) {
+    void compress(uint32_t *w) {
         uint32_t A = h[0];
         uint32_t B = h[1];
         uint32_t C = h[2];
@@ -58,8 +58,7 @@ class SHA256Tmpl: public SHA256Base {
         uint32_t F = h[5];
         uint32_t G = h[6];
         uint32_t H = h[7];
-        uint32_t w[64], s, t, u, v;
-        READ_BE(w, blk, 16);
+        uint32_t s, t, u, v;
         for (int i = 16; i < 64; i++) {
             s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
             t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
@@ -84,38 +83,41 @@ class SHA256Tmpl: public SHA256Base {
     }
 public:
     static constexpr size_t BLOCK_SIZE = 64;
-    static constexpr size_t DIGEST_SIZE = DN * 4;
+    static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool NO_PADDING = false;
     SHA256Tmpl() {}
     void push(uint8_t const *blk) {
+        uint32_t w[64];
+        READB_BE(w, blk, 64);
         lo += 512;
         lo >= 512 || hi++;
-        compress(blk);
+        compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         lo += len * 8;
         lo >= len * 8 || hi++;
-        uint8_t tmp[64] = {};
-        memcpy(tmp, src, len);
-        tmp[len] = 0x80;
+        uint32_t w[64];
+        memset(w, 0, 64);
+        READB_BE(w, src, len);
+        BYTE_BE(w, len) = 0x80;
         if (len >= 56) {
-            compress(tmp);
-            memset(tmp, 0, 56);
+            compress(w);
+            memset(w, 0, 56);
         }
-        PUT_BE(tmp + 56, hi);
-        PUT_BE(tmp + 60, lo);
-        compress(tmp);
-        WRITE_BE(dst, h, DN);
+        w[14] = hi;
+        w[15] = lo;
+        compress(w);
+        WRITEB_BE(dst, h, DN);
     }
 };
-class SHA256: public SHA256Tmpl<8, SHA256> {
+class SHA256: public SHA256Tmpl<32, SHA256> {
 public:
     static constexpr uint32_t IV[8] = {
         0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
         0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
     };
 };
-class SHA224: public SHA256Tmpl<7, SHA224> {
+class SHA224: public SHA256Tmpl<28, SHA224> {
 public:
     static constexpr uint32_t IV[8] = {
         0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,

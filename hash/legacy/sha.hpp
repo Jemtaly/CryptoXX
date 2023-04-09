@@ -23,14 +23,13 @@ class SHA {
     uint32_t h[5] = {
         0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
     };
-    void compress(uint8_t const *blk) {
+    void compress(uint32_t *w) {
         uint32_t a = h[0];
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
         uint32_t e = h[4];
-        uint32_t w[80], t;
-        READ_BE(w, blk, 16);
+        uint32_t t;
         for (int i = 16; i < 80; i++) {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
             w[i] = ROTL(t, 1);
@@ -50,24 +49,27 @@ public:
     static constexpr size_t DIGEST_SIZE = 20;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
+        uint32_t w[80];
+        READB_BE(w, blk, 64);
         lo += 512;
         lo >= 512 || hi++;
-        compress(blk);
+        compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         lo += len * 8;
         lo >= len * 8 || hi++;
-        uint8_t tmp[64] = {};
-        memcpy(tmp, src, len);
-        tmp[len] = 0x80;
+        uint32_t w[80];
+        memset(w, 0, 64);
+        READB_BE(w, src, len);
+        BYTE_BE(w, len) = 0x80;
         if (len >= 56) {
-            compress(tmp);
-            memset(tmp, 0, 56);
+            compress(w);
+            memset(w, 0, 56);
         }
-        PUT_BE(tmp + 56, hi);
-        PUT_BE(tmp + 60, lo);
-        compress(tmp);
-        WRITE_BE(dst, h, 5);
+        w[14] = hi;
+        w[15] = lo;
+        compress(w);
+        WRITEB_BE(dst, h, 20);
     }
 };
 #undef FF0

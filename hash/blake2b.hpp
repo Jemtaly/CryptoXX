@@ -40,75 +40,75 @@ class BLAKE2bTmpl: public BLAKE2bBase {
         Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
     };
-    void compress(uint8_t const *blk, bool fin) {
-        uint64_t sta[16] = {
+    void compress(uint64_t const *m, bool fin) {
+        uint64_t v[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
             Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
             Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
         };
-        uint64_t m[16];
-        READ_LE(m, blk, 16);
-        sta[12] ^= lo;
-        sta[13] ^= hi;
-        sta[14] = fin ? ~sta[14] : sta[14];
-        DROUND(sta, m, SIGMA, 0);
-        DROUND(sta, m, SIGMA, 1);
-        DROUND(sta, m, SIGMA, 2);
-        DROUND(sta, m, SIGMA, 3);
-        DROUND(sta, m, SIGMA, 4);
-        DROUND(sta, m, SIGMA, 5);
-        DROUND(sta, m, SIGMA, 6);
-        DROUND(sta, m, SIGMA, 7);
-        DROUND(sta, m, SIGMA, 8);
-        DROUND(sta, m, SIGMA, 9);
-        DROUND(sta, m, SIGMA, 0);
-        DROUND(sta, m, SIGMA, 1);
-        h[0] ^= sta[0] ^ sta[ 8];
-        h[1] ^= sta[1] ^ sta[ 9];
-        h[2] ^= sta[2] ^ sta[10];
-        h[3] ^= sta[3] ^ sta[11];
-        h[4] ^= sta[4] ^ sta[12];
-        h[5] ^= sta[5] ^ sta[13];
-        h[6] ^= sta[6] ^ sta[14];
-        h[7] ^= sta[7] ^ sta[15];
+        v[12] ^= lo;
+        v[13] ^= hi;
+        v[14] = fin ? ~v[14] : v[14];
+        DROUND(v, m, SIGMA, 0);
+        DROUND(v, m, SIGMA, 1);
+        DROUND(v, m, SIGMA, 2);
+        DROUND(v, m, SIGMA, 3);
+        DROUND(v, m, SIGMA, 4);
+        DROUND(v, m, SIGMA, 5);
+        DROUND(v, m, SIGMA, 6);
+        DROUND(v, m, SIGMA, 7);
+        DROUND(v, m, SIGMA, 8);
+        DROUND(v, m, SIGMA, 9);
+        DROUND(v, m, SIGMA, 0);
+        DROUND(v, m, SIGMA, 1);
+        h[ 0] ^= v[ 0] ^ v[ 8];
+        h[ 1] ^= v[ 1] ^ v[ 9];
+        h[ 2] ^= v[ 2] ^ v[10];
+        h[ 3] ^= v[ 3] ^ v[11];
+        h[ 4] ^= v[ 4] ^ v[12];
+        h[ 5] ^= v[ 5] ^ v[13];
+        h[ 6] ^= v[ 6] ^ v[14];
+        h[ 7] ^= v[ 7] ^ v[15];
     }
 public:
     static constexpr size_t BLOCK_SIZE = 128;
-    static constexpr size_t DIGEST_SIZE = DN * 8;
+    static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool NO_PADDING = true;
     BLAKE2bTmpl(uint8_t const *key, size_t len) {
-        h[0] ^= 0x01010000 ^ len << 8 ^ DN * 8;
+        h[0] ^= 0x01010000 ^ len << 8 ^ DN;
         if (len > 0) {
-            uint8_t tmp[128] = {};
-            memcpy(tmp, key, len);
+            uint64_t m[16] = {};
+            READB_LE(m, key, len);
             lo += 128;
             lo >= 128 || ++hi;
-            compress(tmp, 0);
+            compress(m, 0);
         }
     }
     BLAKE2bTmpl(): BLAKE2bTmpl(nullptr, 0) {}
     void push(uint8_t const *blk) {
+        uint64_t m[16] = {};
+        READB_LE(m, blk, 128);
         lo += 128;
         lo >= 128 || ++hi;
-        compress(blk, 0);
+        compress(m, 0);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dig) {
-        uint8_t tmp[128] = {};
-        memcpy(tmp, src, len);
+        uint64_t m[16] = {};
+        READB_LE(m, src, len);
         lo += len;
         lo >= len || ++hi;
-        compress(tmp, 1);
-        WRITE_LE(dig, h, DN);
+        compress(m, 1);
+        WRITEB_LE(dig, h, DN);
     }
 };
-class BLAKE2b512: public BLAKE2bTmpl<8, BLAKE2b512> {
+class BLAKE2b512: public BLAKE2bTmpl<64, BLAKE2b512> {
 public:
     static constexpr uint64_t IV[8] = {
         0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
         0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
     };
 };
-class BLAKE2b384: public BLAKE2bTmpl<6, BLAKE2b384> {
+class BLAKE2b384: public BLAKE2bTmpl<48, BLAKE2b384> {
 public:
     static constexpr uint64_t IV[8] = {
         0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,

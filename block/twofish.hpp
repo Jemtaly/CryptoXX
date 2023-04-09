@@ -110,7 +110,7 @@ public:
         for (int i = 0; i < L; i++) {
             uint32_t h = key[2 * i + 1];
             uint32_t l = key[2 * i    ];
-            for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
                 uint8_t t, u, v;
                 t =          h >> 24;
                 h = h << 8 | l >> 24;

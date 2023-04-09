@@ -32,63 +32,63 @@ class BLAKE2bTmpl: public BLAKE2bBase {
         Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
         Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
     };
-    void compress(uint8_t const *blk, bool fin) {
-        uint64_t sta[16] = {
+    void compress(uint64_t const *m, bool fin) {
+        uint64_t v[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
             Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
             Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
         };
-        uint64_t m[16];
-        READ_LE(m, blk, 16);
-        sta[12] ^= lo;
-        sta[13] ^= hi;
-        sta[14] = fin ? ~sta[14] : sta[14];
+        v[12] ^= lo;
+        v[13] ^= hi;
+        v[14] = fin ? ~v[14] : v[14];
         for (int i = 0; i < 12; ++i) {
-            QROUND(sta, m, SIGMA, i,  0,  4,  8, 12,  0,  1);
-            QROUND(sta, m, SIGMA, i,  1,  5,  9, 13,  2,  3);
-            QROUND(sta, m, SIGMA, i,  2,  6, 10, 14,  4,  5);
-            QROUND(sta, m, SIGMA, i,  3,  7, 11, 15,  6,  7);
-            QROUND(sta, m, SIGMA, i,  0,  5, 10, 15,  8,  9);
-            QROUND(sta, m, SIGMA, i,  1,  6, 11, 12, 10, 11);
-            QROUND(sta, m, SIGMA, i,  2,  7,  8, 13, 12, 13);
-            QROUND(sta, m, SIGMA, i,  3,  4,  9, 14, 14, 15);
+            QROUND(v, m, SIGMA, i,  0,  4,  8, 12,  0,  1);
+            QROUND(v, m, SIGMA, i,  1,  5,  9, 13,  2,  3);
+            QROUND(v, m, SIGMA, i,  2,  6, 10, 14,  4,  5);
+            QROUND(v, m, SIGMA, i,  3,  7, 11, 15,  6,  7);
+            QROUND(v, m, SIGMA, i,  0,  5, 10, 15,  8,  9);
+            QROUND(v, m, SIGMA, i,  1,  6, 11, 12, 10, 11);
+            QROUND(v, m, SIGMA, i,  2,  7,  8, 13, 12, 13);
+            QROUND(v, m, SIGMA, i,  3,  4,  9, 14, 14, 15);
         }
-        h[0] ^= sta[0] ^ sta[ 8];
-        h[1] ^= sta[1] ^ sta[ 9];
-        h[2] ^= sta[2] ^ sta[10];
-        h[3] ^= sta[3] ^ sta[11];
-        h[4] ^= sta[4] ^ sta[12];
-        h[5] ^= sta[5] ^ sta[13];
-        h[6] ^= sta[6] ^ sta[14];
-        h[7] ^= sta[7] ^ sta[15];
+        h[0] ^= v[0] ^ v[ 8];
+        h[1] ^= v[1] ^ v[ 9];
+        h[2] ^= v[2] ^ v[10];
+        h[3] ^= v[3] ^ v[11];
+        h[4] ^= v[4] ^ v[12];
+        h[5] ^= v[5] ^ v[13];
+        h[6] ^= v[6] ^ v[14];
+        h[7] ^= v[7] ^ v[15];
     }
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN * 8;
     static constexpr bool NO_PADDING = true;
     BLAKE2bTmpl(uint8_t const *key, size_t len) {
-        h[0] ^= 0x01010000 ^ len << 8 ^ DN * 8;
+        h[0] ^= 0x01010000 ^ len << 8 ^ DN;
         if (len > 0) {
-            uint8_t tmp[128] = {};
-            memcpy(tmp, key, len);
+            uint64_t m[16] = {};
+            READB_LE(m, key, len);
             lo += 128;
             lo >= 128 || ++hi;
-            compress(tmp, 0);
+            compress(m, 0);
         }
     }
     BLAKE2bTmpl(): BLAKE2bTmpl(nullptr, 0) {}
     void push(uint8_t const *blk) {
+        uint64_t m[16] = {};
+        READB_LE(m, blk, 128);
         lo += 128;
         lo >= 128 || ++hi;
-        compress(blk, 0);
+        compress(m, 0);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dig) {
-        uint8_t tmp[128] = {};
-        memcpy(tmp, src, len);
+        uint64_t m[16] = {};
+        READB_LE(m, src, len);
         lo += len;
         lo >= len || ++hi;
-        compress(tmp, 1);
-        WRITE_LE(dig, h, DN);
+        compress(m, 1);
+        WRITEB_LE(dig, h, DN);
     }
 };
 class BLAKE2b512: public BLAKE2bTmpl<8, BLAKE2b512> {
