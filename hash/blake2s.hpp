@@ -16,10 +16,10 @@
     QROUND(v, m, S, i,  2,  7,  8, 13, 12, 13); \
     QROUND(v, m, S, i,  3,  4,  9, 14, 14, 15); \
 }
-typedef uint8_t bits_t;
+typedef uint8_t index_t;
 class BLAKE2sBase {
 protected:
-    static constexpr bits_t SIGMA[10][16] = {
+    static constexpr index_t SIGMA[10][16] = {
         { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15},
         {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
         {11,  8, 12,  0,  5,  2, 15, 13, 10, 14,  3,  6,  7,  1,  9,  4},

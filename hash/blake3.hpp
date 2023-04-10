@@ -21,16 +21,17 @@
     QROUND(v, m, S, i,  2,  7,  8, 13, 12, 13); \
     QROUND(v, m, S, i,  3,  4,  9, 14, 14, 15); \
 }
+typedef uint8_t index_t;
 struct BLAKE3Compressor {
     static constexpr uint32_t IV[8] = {
         0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
         0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
     };
-    static constexpr uint8_t PM[16] = {
+    static constexpr index_t PM[16] = {
         2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8,
     };
     static constexpr auto SIGMA = []() {
-        std::array<std::array<uint8_t, 16>, 7> SIGMA = {};
+        std::array<std::array<index_t, 16>, 7> SIGMA = {};
         for (int i = 0; i < 16; i++) {
             SIGMA[0][i] = i;
         }

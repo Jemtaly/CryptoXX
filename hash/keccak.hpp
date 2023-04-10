@@ -11,7 +11,7 @@
 #define C_A(   x) C[x] = A[0][x] ^ A[1][x] ^ A[2][x] ^ A[3][x] ^ A[4][x]
 #define D_C(   x) D[x] = C[(x + 4) % 5] ^ ROTL(C[(x + 1) % 5], 1)
 #define A_D(y, x) A[y][x] ^= D[x]
-#define B_A(y, x) B[(2 * x + 3 * y) % 5][y] = ROTL(A[y][x], r[y][x])
+#define B_A(y, x) B[(2 * x + 3 * y) % 5][y] = ROTL(A[y][x], R[y][x])
 #define A_B(y, x) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
 typedef uint8_t bits_t;
 class KeccakBase {
@@ -26,7 +26,7 @@ protected:
         0x000000000000800A, 0x800000008000000A, 0x8000000080008081,
         0x8000000000008080, 0x0000000080000001, 0x8000000080008008,
     };
-    static constexpr bits_t r[5][5] = {
+    static constexpr bits_t R[5][5] = {
         { 0,  1, 62, 28, 27},
         {36, 44,  6, 55, 20},
         { 3, 10, 43, 25, 39},

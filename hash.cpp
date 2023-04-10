@@ -10,6 +10,7 @@
 #include "hash/blake2s.hpp"
 #include "hash/blake2b.hpp"
 #include "hash/blake3.hpp"
+#include "hash/whirlpool.hpp"
 #include "hash/hmac.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
@@ -27,13 +28,14 @@
 #define REC_BLs 1024
 #define REC_BLb 2048
 #define REC_BL3 4096
-#define REC_MD5 8192
-#define REC_SHA 16384
-#define REC_SM3 32768
-#define REC_ALG (REC_224 | REC_256 | REC_384 | REC_512 | RE3_224 | RE3_256 | RE3_384 | RE3_512 | REC_C32 | REC_C64 | REC_BLs | REC_BLb | REC_MD5 | REC_SHA | REC_SM3 | REC_BL3)
-#define REC_IFP 65536
-#define REC_MAC 131072
-#define REC_ERR 262144
+#define REC_WHP 8192
+#define REC_MD5 16384
+#define REC_SHA 32768
+#define REC_SM3 65536
+#define REC_ALG (REC_224 | REC_256 | REC_384 | REC_512 | RE3_224 | RE3_256 | RE3_384 | RE3_512 | REC_C32 | REC_C64 | REC_BLs | REC_BLb | REC_MD5 | REC_SHA | REC_SM3 | REC_BL3 | REC_WHP)
+#define REC_IFP 131072
+#define REC_MAC 262144
+#define REC_ERR 524288
 template <typename Hash, typename... Args>
 void hash(FILE* file, Args &&...args) {
     HashWrapper<Hash> hash(std::forward<Args>(args)...);
@@ -181,6 +183,12 @@ int main(int argc, char *argv[]) {
                 } else {
                     rec |= REC_ERR;
                 }
+            } else if (argv[i][1] == 'W' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_WHP;
+                } else {
+                    rec |= REC_ERR;
+                }
             } else {
                 rec |= REC_ERR;
             }
@@ -190,13 +198,13 @@ int main(int argc, char *argv[]) {
             rec |= REC_ERR;
         }
     }
-    if ((rec & REC_ALG) == 0 || (rec & REC_MAC) != 0 && (rec & (REC_C32 | REC_C64)) != 0) {
+    if ((rec & REC_ALG) == 0 || (rec & REC_MAC) != 0 && (rec & (REC_C32 | REC_C64 | REC_WHP)) != 0) {
         rec |= REC_ERR;
     }
     if ((rec & REC_ERR) != 0) {
         fprintf(stderr, "Description: HMAC/Hash Calculator\n");
-        fprintf(stderr, "Usage: %s [FILE] (-0 | -1)\n", argv[0]);
-        fprintf(stderr, "       %s [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s) [-H LEN KEY]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [FILE] (-0 | -1 | -W)\n", argv[0]);
+        fprintf(stderr, "       %s [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s | -B) [-H LEN KEY]\n", argv[0]);
         fprintf(stderr, "Options:\n");
         fprintf(stderr, "  FILE        input file (default: stdin)\n");
         fprintf(stderr, "  -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)\n");
@@ -212,10 +220,13 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "  -s          BLAKE2s\n");
         fprintf(stderr, "  -b          BLAKE2b\n");
         fprintf(stderr, "  -3          BLAKE3\n");
+        fprintf(stderr, "  -W          Whirlpool\n");
     } else if ((rec & REC_C32) != 0) {
         hash<CRC32>(fp);
     } else if ((rec & REC_C64) != 0) {
         hash<CRC64>(fp);
+    } else if ((rec & REC_WHP) != 0) {
+        hash<Whirlpool>(fp);
     } else if ((rec & REC_MD5) != 0) {
         process<MD5>(rec, fp, key, len);
     } else if ((rec & REC_SHA) != 0) {
