@@ -31,12 +31,6 @@
     HH4(N, a, b, c, d, e, f, g, h, w, i + 12);            \
 }
 class SM3 {
-    uint32_t lo = 0;
-    uint32_t hi = 0;
-    uint32_t h[8] = {
-        0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
-        0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
-    };
     void compress(uint32_t *w) {
         uint32_t A = h[0];
         uint32_t B = h[1];
@@ -64,6 +58,12 @@ class SM3 {
         h[6] ^= G;
         h[7] ^= H;
     }
+    uint32_t lo = 0;
+    uint32_t hi = 0;
+    uint32_t h[8] = {
+        0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
+        0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 32;

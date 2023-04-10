@@ -25,12 +25,6 @@ protected:
 };
 template <int DN, typename Derived>
 class SHA256Tmpl: public SHA256Base {
-    uint32_t hi = 0;
-    uint32_t lo = 0;
-    uint32_t h[8] = {
-        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
-        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
-    };
     void compress(uint32_t *w) {
         uint32_t A = h[0];
         uint32_t B = h[1];
@@ -69,6 +63,12 @@ class SHA256Tmpl: public SHA256Base {
         h[6] += G;
         h[7] += H;
     }
+    uint32_t hi = 0;
+    uint32_t lo = 0;
+    uint32_t h[8] = {
+        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DN * 4;

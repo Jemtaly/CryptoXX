@@ -46,11 +46,6 @@ class MD5 {
         0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
         0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
     };
-    uint32_t lo = 0;
-    uint32_t hi = 0;
-    uint32_t h[4] = {
-        0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
-    };
     void compress(uint32_t const *w) {
         uint32_t a = h[0];
         uint32_t b = h[1];
@@ -66,6 +61,11 @@ class MD5 {
         h[2] += c;
         h[3] += d;
     }
+    uint32_t lo = 0;
+    uint32_t hi = 0;
+    uint32_t h[4] = {
+        0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476,
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 16;

@@ -34,12 +34,6 @@ protected:
 };
 template <size_t DN, typename Derived>
 class BLAKE2bTmpl: public BLAKE2bBase {
-    uint64_t hi = 0;
-    uint64_t lo = 0;
-    uint64_t h[8] = {
-        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
-        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
-    };
     void compress(uint64_t const *m, bool fin) {
         uint64_t v[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
@@ -70,6 +64,12 @@ class BLAKE2bTmpl: public BLAKE2bBase {
         h[ 6] ^= v[ 6] ^ v[14];
         h[ 7] ^= v[ 7] ^ v[15];
     }
+    uint64_t hi = 0;
+    uint64_t lo = 0;
+    uint64_t h[8] = {
+        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN;

@@ -9,6 +9,7 @@
 #include "hash/keccak.hpp"
 #include "hash/blake2s.hpp"
 #include "hash/blake2b.hpp"
+#include "hash/blake3.hpp"
 #include "hash/hmac.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
@@ -23,15 +24,16 @@
 #define RE3_512 128
 #define REC_C32 256
 #define REC_C64 512
-#define REC_B2S 1024
-#define REC_B2B 2048
-#define REC_MD5 4096
-#define REC_SHA 8192
-#define REC_SM3 16384
-#define REC_ALG (REC_224 | REC_256 | REC_384 | REC_512 | RE3_224 | RE3_256 | RE3_384 | RE3_512 | REC_C32 | REC_C64 | REC_B2S | REC_B2B | REC_MD5 | REC_SHA | REC_SM3)
-#define REC_IFP 32768
-#define REC_MAC 65536
-#define REC_ERR 131072
+#define REC_BLs 1024
+#define REC_BLb 2048
+#define REC_BL3 4096
+#define REC_MD5 8192
+#define REC_SHA 16384
+#define REC_SM3 32768
+#define REC_ALG (REC_224 | REC_256 | REC_384 | REC_512 | RE3_224 | RE3_256 | RE3_384 | RE3_512 | REC_C32 | REC_C64 | REC_BLs | REC_BLb | REC_MD5 | REC_SHA | REC_SM3 | REC_BL3)
+#define REC_IFP 65536
+#define REC_MAC 131072
+#define REC_ERR 262144
 template <typename Hash, typename... Args>
 void hash(FILE* file, Args &&...args) {
     HashWrapper<Hash> hash(std::forward<Args>(args)...);
@@ -163,13 +165,19 @@ int main(int argc, char *argv[]) {
                 }
             } else if (argv[i][1] == 'b' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0) {
-                    rec |= REC_B2B;
+                    rec |= REC_BLb;
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 's' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0) {
-                    rec |= REC_B2S;
+                    rec |= REC_BLs;
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == 'B' && argv[i][2] == '\0') {
+                if ((rec & REC_ALG) == 0) {
+                    rec |= REC_BL3;
                 } else {
                     rec |= REC_ERR;
                 }
@@ -203,6 +211,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "  -8,  -9     SHA3-384, SHA3-512\n");
         fprintf(stderr, "  -s          BLAKE2s\n");
         fprintf(stderr, "  -b          BLAKE2b\n");
+        fprintf(stderr, "  -3          BLAKE3\n");
     } else if ((rec & REC_C32) != 0) {
         hash<CRC32>(fp);
     } else if ((rec & REC_C64) != 0) {
@@ -229,10 +238,12 @@ int main(int argc, char *argv[]) {
         process<SHA3<384>>(rec, fp, key, len);
     } else if ((rec & RE3_512) != 0) {
         process<SHA3<512>>(rec, fp, key, len);
-    } else if ((rec & REC_B2S) != 0) {
+    } else if ((rec & REC_BLs) != 0) {
         process<BLAKE2s256>(rec, fp, key, len);
-    } else if ((rec & REC_B2B) != 0) {
+    } else if ((rec & REC_BLb) != 0) {
         process<BLAKE2b512>(rec, fp, key, len);
+    } else if ((rec & REC_BL3) != 0) {
+        process<BLAKE3>(rec, fp, key, len);
     }
     if (key) {
         delete[] key;

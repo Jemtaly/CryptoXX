@@ -29,12 +29,6 @@ protected:
 };
 template <int DN, typename Derived>
 class SHA512Tmpl: public SHA512Base {
-    uint64_t lo = 0;
-    uint64_t hi = 0;
-    uint64_t h[8] = {
-        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
-        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
-    };
     void compress(uint64_t *w) {
         uint64_t A = h[0];
         uint64_t B = h[1];
@@ -72,6 +66,12 @@ class SHA512Tmpl: public SHA512Base {
         h[6] += G;
         h[7] += H;
     }
+    uint64_t lo = 0;
+    uint64_t hi = 0;
+    uint64_t h[8] = {
+        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
+        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN * 8;

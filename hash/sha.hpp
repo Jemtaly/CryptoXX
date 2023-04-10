@@ -26,11 +26,6 @@
     GG5(N, a, b, c, d, e, w, i + 15);                    \
 }
 class SHA {
-    uint32_t lo = 0;
-    uint32_t hi = 0;
-    uint32_t h[5] = {
-        0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
-    };
     void compress(uint32_t *w) {
         uint32_t a = h[0];
         uint32_t b = h[1];
@@ -52,6 +47,11 @@ class SHA {
         h[3] += d;
         h[4] += e;
     }
+    uint32_t lo = 0;
+    uint32_t hi = 0;
+    uint32_t h[5] = {
+        0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
+    };
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 20;
