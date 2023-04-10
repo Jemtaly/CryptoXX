@@ -28,6 +28,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - SHA-2 (SHA-256, SHA-224, SHA-512, SHA-384)
   - SHA-3, Keccak, SHAKE-128, SHAKE-256
   - BLAKE2 (BLAKE2s-256, BLAKE2s-224, BLAKE2b-512, BLAKE2b-384)
+  - BLAKE3 (Experimental)
   - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
