@@ -29,6 +29,7 @@ A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, whi
   - SHA-3, Keccak, SHAKE-128, SHAKE-256
   - BLAKE2 (BLAKE2s-256, BLAKE2s-224, BLAKE2b-512, BLAKE2b-384)
   - BLAKE3 (Experimental)
+  - Whirlpool
   - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
@@ -94,8 +95,8 @@ clang++ hash.cpp -std=c++20 -O2 -o hash.exe
 
 ```
 Description: HMAC/Hash Calculator
-Usage: hash.exe [FILE] (-0 | -1)
-       hash.exe [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s) [-H LEN KEY]
+Usage: hash.exe [FILE] (-0 | -1 | -W)
+       hash.exe [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s | -B) [-H LEN KEY]
 Options:
   FILE        input file (default: stdin)
   -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)
@@ -110,6 +111,8 @@ Options:
   -8,  -9     SHA3-384, SHA3-512
   -s          BLAKE2s
   -b          BLAKE2b
+  -B          BLAKE3
+  -W          Whirlpool
 ```
 
 ```sh
