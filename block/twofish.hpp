@@ -1,32 +1,6 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-#define G0_FUN(x) (mks[0][x & 0xff] ^ mks[1][x >> 8 & 0xff] ^ mks[2][x >> 16 & 0xff] ^ mks[3][x >> 24])
-#define G1_FUN(x) (mks[1][x & 0xff] ^ mks[2][x >> 8 & 0xff] ^ mks[3][x >> 16 & 0xff] ^ mks[0][x >> 24])
-#define ENCROUND(n, a, b, c, d, x, y) {      \
-    x = G0_FUN(a);                           \
-    y = G1_FUN(b);                           \
-    x += y;                                  \
-    y += x;                                  \
-    c = ROTR(c ^ (x + rnk[2 * (n) + 8]), 1); \
-    d = ROTL(d, 1) ^ (y + rnk[2 * (n) + 9]); \
-}
-#define DECROUND(n, a, b, c, d, x, y) {      \
-    x = G0_FUN(a);                           \
-    y = G1_FUN(b);                           \
-    x += y;                                  \
-    y += x;                                  \
-    c = ROTL(c, 1) ^ (x + rnk[2 * (n) + 8]); \
-    d = ROTR(d ^ (y + rnk[2 * (n) + 9]), 1); \
-}
-#define ENCCYCLE(N, a, b, c, d, x, y) {      \
-    ENCROUND(2 * (N)    , a, b, c, d, x, y); \
-    ENCROUND(2 * (N) + 1, c, d, a, b, x, y); \
-}
-#define DECCYCLE(N, a, b, c, d, x, y) {      \
-    DECROUND(2 * (N) + 1, c, d, a, b, x, y); \
-    DECROUND(2 * (N)    , a, b, c, d, x, y); \
-}
 class TwofishBase {
 protected:
     static constexpr uint8_t ROR4[16] = {
@@ -147,14 +121,20 @@ public:
         b ^= rnk[1];
         c ^= rnk[2];
         d ^= rnk[3];
-        ENCCYCLE(0, a, b, c, d, x, y);
-        ENCCYCLE(1, a, b, c, d, x, y);
-        ENCCYCLE(2, a, b, c, d, x, y);
-        ENCCYCLE(3, a, b, c, d, x, y);
-        ENCCYCLE(4, a, b, c, d, x, y);
-        ENCCYCLE(5, a, b, c, d, x, y);
-        ENCCYCLE(6, a, b, c, d, x, y);
-        ENCCYCLE(7, a, b, c, d, x, y);
+        for (int i = 0; i < 32; i += 4) {
+            x = mks[0][a & 0xff] ^ mks[1][a >> 8 & 0xff] ^ mks[2][a >> 16 & 0xff] ^ mks[3][a >> 24];
+            y = mks[1][b & 0xff] ^ mks[2][b >> 8 & 0xff] ^ mks[3][b >> 16 & 0xff] ^ mks[0][b >> 24];
+            x += y;
+            y += x;
+            c = ROTR(c ^ (x + rnk[i +  8]), 1);
+            d = ROTL(d, 1) ^ (y + rnk[i +  9]);
+            x = mks[0][c & 0xff] ^ mks[1][c >> 8 & 0xff] ^ mks[2][c >> 16 & 0xff] ^ mks[3][c >> 24];
+            y = mks[1][d & 0xff] ^ mks[2][d >> 8 & 0xff] ^ mks[3][d >> 16 & 0xff] ^ mks[0][d >> 24];
+            x += y;
+            y += x;
+            a = ROTR(a ^ (x + rnk[i + 10]), 1);
+            b = ROTL(b, 1) ^ (y + rnk[i + 11]);
+        }
         c ^= rnk[4];
         d ^= rnk[5];
         a ^= rnk[6];
@@ -165,39 +145,39 @@ public:
         PUT_LE(dst + 12, b);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t a, b, c, d, x, y;
-        c = GET_LE<uint32_t>(src     );
-        d = GET_LE<uint32_t>(src +  4);
-        a = GET_LE<uint32_t>(src +  8);
-        b = GET_LE<uint32_t>(src + 12);
-        c ^= rnk[4];
-        d ^= rnk[5];
-        a ^= rnk[6];
-        b ^= rnk[7];
-        DECCYCLE(7, a, b, c, d, x, y);
-        DECCYCLE(6, a, b, c, d, x, y);
-        DECCYCLE(5, a, b, c, d, x, y);
-        DECCYCLE(4, a, b, c, d, x, y);
-        DECCYCLE(3, a, b, c, d, x, y);
-        DECCYCLE(2, a, b, c, d, x, y);
-        DECCYCLE(1, a, b, c, d, x, y);
-        DECCYCLE(0, a, b, c, d, x, y);
-        a ^= rnk[0];
-        b ^= rnk[1];
-        c ^= rnk[2];
-        d ^= rnk[3];
-        PUT_LE(dst     , a);
-        PUT_LE(dst +  4, b);
-        PUT_LE(dst +  8, c);
-        PUT_LE(dst + 12, d);
+        uint32_t c, d, a, b, x, y;
+        a = GET_LE<uint32_t>(src     );
+        b = GET_LE<uint32_t>(src +  4);
+        c = GET_LE<uint32_t>(src +  8);
+        d = GET_LE<uint32_t>(src + 12);
+        a ^= rnk[4];
+        b ^= rnk[5];
+        c ^= rnk[6];
+        d ^= rnk[7];
+        for (int i = 0; i < 32; i += 4) {
+            x = mks[0][a & 0xff] ^ mks[1][a >> 8 & 0xff] ^ mks[2][a >> 16 & 0xff] ^ mks[3][a >> 24];
+            y = mks[1][b & 0xff] ^ mks[2][b >> 8 & 0xff] ^ mks[3][b >> 16 & 0xff] ^ mks[0][b >> 24];
+            x += y;
+            y += x;
+            c = ROTL(c, 1) ^ (x + rnk[38 - i]);
+            d = ROTR(d ^ (y + rnk[39 - i]), 1);
+            x = mks[0][c & 0xff] ^ mks[1][c >> 8 & 0xff] ^ mks[2][c >> 16 & 0xff] ^ mks[3][c >> 24];
+            y = mks[1][d & 0xff] ^ mks[2][d >> 8 & 0xff] ^ mks[3][d >> 16 & 0xff] ^ mks[0][d >> 24];
+            x += y;
+            y += x;
+            a = ROTL(a, 1) ^ (x + rnk[36 - i]);
+            b = ROTR(b ^ (y + rnk[37 - i]), 1);
+        }
+        c ^= rnk[0];
+        d ^= rnk[1];
+        a ^= rnk[2];
+        b ^= rnk[3];
+        PUT_LE(dst     , c);
+        PUT_LE(dst +  4, d);
+        PUT_LE(dst +  8, a);
+        PUT_LE(dst + 12, b);
     }
 };
 using Twofish128 = TwofishTmpl<2>;
 using Twofish192 = TwofishTmpl<3>;
 using Twofish256 = TwofishTmpl<4>;
-#undef G0_FUN
-#undef G1_FUN
-#undef ENCROUND
-#undef DECROUND
-#undef ENCCYCLE
-#undef DECCYCLE

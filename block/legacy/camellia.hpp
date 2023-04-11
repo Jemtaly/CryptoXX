@@ -31,25 +31,25 @@ protected:
         0x40, 0x28, 0xd3, 0x7b, 0xbb, 0xc9, 0x43, 0xc1, 0x15, 0xe3, 0xad, 0xf4, 0x77, 0xc7, 0x80, 0x9e,
     };
     static constexpr std::array<uint8_t, 256> B_BOX = []() {
-        std::array<uint8_t, 256> s;
+        std::array<uint8_t, 256> B_BOX = {};
         for (int i = 0; i < 256; i++) {
-            s[i] = A_BOX[i] << 1 | A_BOX[i] >> 7;
+            B_BOX[i] = A_BOX[i] << 1 | A_BOX[i] >> 7;
         }
-        return s;
+        return B_BOX;
     }();
     static constexpr std::array<uint8_t, 256> C_BOX = []() {
-        std::array<uint8_t, 256> s;
+        std::array<uint8_t, 256> C_BOX = {};
         for (int i = 0; i < 256; i++) {
-            s[i] = A_BOX[i] << 7 | A_BOX[i] >> 1;
+            C_BOX[i] = A_BOX[i] << 7 | A_BOX[i] >> 1;
         }
-        return s;
+        return C_BOX;
     }();
     static constexpr std::array<uint8_t, 256> D_BOX = []() {
-        std::array<uint8_t, 256> s;
+        std::array<uint8_t, 256> D_BOX = {};
         for (int i = 0; i < 256; i++) {
-            s[i] = A_BOX[(i << 1 | i >> 7) & 255];
+            D_BOX[i] = A_BOX[(i << 1 | i >> 7) & 255];
         }
-        return s;
+        return D_BOX;
     }();
     static uint64_t f(uint64_t in, uint64_t kx) {
         uint64_t x = in ^ kx;

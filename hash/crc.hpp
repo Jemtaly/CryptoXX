@@ -4,16 +4,16 @@
 #define DIG sizeof(digest_t)
 template <std::unsigned_integral digest_t, digest_t EXP, digest_t CIV, digest_t CXV>
 class CRC {
-    static constexpr auto box = []() {
-        std::array<digest_t, 256> box;
+    static constexpr auto LUT = []() {
+        std::array<digest_t, 256> LUT = {};
         for (int i = 0; i < 256; i++) {
             digest_t tmp = i;
             for (int j = 0; j < 8; j++) {
                 tmp = tmp >> 1 ^ (tmp & 0x1 ? EXP : 0x0);
             }
-            box[i] = tmp;
+            LUT[i] = tmp;
         }
-        return box;
+        return LUT;
     }();
     digest_t sta = CIV;
 public:
@@ -21,7 +21,7 @@ public:
     static constexpr size_t DIGEST_SIZE = DIG;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
-        sta = sta >> 8 ^ box[sta & 0xff ^ *blk];
+        sta = sta >> 8 ^ LUT[sta & 0xff ^ *blk];
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         PUT_BE(dst, sta ^ CXV);

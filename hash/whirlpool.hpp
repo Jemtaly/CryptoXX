@@ -1,13 +1,12 @@
 #pragma once
 #include <array>
 #include "hash.hpp"
-#define SB_SC_MR_ARK(i) {                                               \
-    q[i].w = k[i].w ^                                                   \
-        LUT[0][t[(i + 0) % 8].b[0]].w ^ LUT[1][t[(i + 7) % 8].b[1]].w ^ \
-        LUT[2][t[(i + 6) % 8].b[2]].w ^ LUT[3][t[(i + 5) % 8].b[3]].w ^ \
-        LUT[4][t[(i + 4) % 8].b[4]].w ^ LUT[5][t[(i + 3) % 8].b[5]].w ^ \
-        LUT[6][t[(i + 2) % 8].b[6]].w ^ LUT[7][t[(i + 1) % 8].b[7]].w;  \
-}
+#define SB_SC_MR_NRK(t, j) (                                        \
+    LUT[0][t[(j + 0) % 8].b[0]].w ^ LUT[1][t[(j + 7) % 8].b[1]].w ^ \
+    LUT[2][t[(j + 6) % 8].b[2]].w ^ LUT[3][t[(j + 5) % 8].b[3]].w ^ \
+    LUT[4][t[(j + 4) % 8].b[4]].w ^ LUT[5][t[(j + 3) % 8].b[5]].w ^ \
+    LUT[6][t[(j + 2) % 8].b[6]].w ^ LUT[7][t[(j + 1) % 8].b[7]].w   \
+)
 union WhirlpoolRow {
     uint64_t w;
     uint8_t b[8];
@@ -31,6 +30,18 @@ class Whirlpool {
         0x2A, 0xBB, 0xc1, 0x53, 0xdc, 0x0B, 0x9d, 0x6c, 0x31, 0x74, 0xF6, 0x46, 0xAc, 0x89, 0x14, 0xE1,
         0x16, 0x3A, 0x69, 0x09, 0x70, 0xB6, 0xd0, 0xEd, 0xcc, 0x42, 0x98, 0xA4, 0x28, 0x5c, 0xF8, 0x86,
     };
+    static constexpr WhirlpoolRow RC[10] = {
+        {.b = {0x18, 0x23, 0xc6, 0xE8, 0x87, 0xB8, 0x01, 0x4F}},
+        {.b = {0x36, 0xA6, 0xd2, 0xF5, 0x79, 0x6F, 0x91, 0x52}},
+        {.b = {0x60, 0xBc, 0x9B, 0x8E, 0xA3, 0x0c, 0x7B, 0x35}},
+        {.b = {0x1d, 0xE0, 0xd7, 0xc2, 0x2E, 0x4B, 0xFE, 0x57}},
+        {.b = {0x15, 0x77, 0x37, 0xE5, 0x9F, 0xF0, 0x4A, 0xdA}},
+        {.b = {0x58, 0xc9, 0x29, 0x0A, 0xB1, 0xA0, 0x6B, 0x85}},
+        {.b = {0xBd, 0x5d, 0x10, 0xF4, 0xcB, 0x3E, 0x05, 0x67}},
+        {.b = {0xE4, 0x27, 0x41, 0x8B, 0xA7, 0x7d, 0x95, 0xd8}},
+        {.b = {0xFB, 0xEE, 0x7c, 0x66, 0xdd, 0x17, 0x47, 0x9E}},
+        {.b = {0xcA, 0x2d, 0xBF, 0x07, 0xAd, 0x5A, 0x83, 0x33}},
+    };
     static constexpr auto coef_mult = [](uint8_t a, uint8_t b) {
         uint8_t p = 0;
         for (int i = 0; i < 8; i++) {
@@ -39,11 +50,11 @@ class Whirlpool {
         }
         return p;
     };
-    static constexpr auto generate_LUT = [](WhirlpoolRow X) {
+    static constexpr auto generate_LUT = [](WhirlpoolRow poly, uint8_t const *S_BOX) {
         std::array<std::array<WhirlpoolRow, 256>, 8> LUT = {};
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 256; j++) {
-                uint8_t p = coef_mult(X.b[i], S_BOX[j]);
+                uint8_t p = coef_mult(poly.b[i], S_BOX[j]);
                 for (int k = 0; k < 8; k++) {
                     LUT[k][j].b[(i + k) % 8] = p;
                 }
@@ -51,40 +62,9 @@ class Whirlpool {
         }
         return LUT;
     };
-    static constexpr auto LUT = generate_LUT({.b = {1, 1, 4, 1, 8, 5, 2, 9}});
-    static constexpr WhirlpoolRow RC[10][8] = {
-        {{.b = {0x18, 0x23, 0xc6, 0xE8, 0x87, 0xB8, 0x01, 0x4F}}},
-        {{.b = {0x36, 0xA6, 0xd2, 0xF5, 0x79, 0x6F, 0x91, 0x52}}},
-        {{.b = {0x60, 0xBc, 0x9B, 0x8E, 0xA3, 0x0c, 0x7B, 0x35}}},
-        {{.b = {0x1d, 0xE0, 0xd7, 0xc2, 0x2E, 0x4B, 0xFE, 0x57}}},
-        {{.b = {0x15, 0x77, 0x37, 0xE5, 0x9F, 0xF0, 0x4A, 0xdA}}},
-        {{.b = {0x58, 0xc9, 0x29, 0x0A, 0xB1, 0xA0, 0x6B, 0x85}}},
-        {{.b = {0xBd, 0x5d, 0x10, 0xF4, 0xcB, 0x3E, 0x05, 0x67}}},
-        {{.b = {0xE4, 0x27, 0x41, 0x8B, 0xA7, 0x7d, 0x95, 0xd8}}},
-        {{.b = {0xFB, 0xEE, 0x7c, 0x66, 0xdd, 0x17, 0x47, 0x9E}}},
-        {{.b = {0xcA, 0x2d, 0xBF, 0x07, 0xAd, 0x5A, 0x83, 0x33}}},
-    };
-    static void sb_sc_mr_ark(WhirlpoolRow *q, WhirlpoolRow const *k) {
-        WhirlpoolRow t[8];
-        t[0].w = q[0].w;
-        t[1].w = q[1].w;
-        t[2].w = q[2].w;
-        t[3].w = q[3].w;
-        t[4].w = q[4].w;
-        t[5].w = q[5].w;
-        t[6].w = q[6].w;
-        t[7].w = q[7].w;
-        SB_SC_MR_ARK(0);
-        SB_SC_MR_ARK(1);
-        SB_SC_MR_ARK(2);
-        SB_SC_MR_ARK(3);
-        SB_SC_MR_ARK(4);
-        SB_SC_MR_ARK(5);
-        SB_SC_MR_ARK(6);
-        SB_SC_MR_ARK(7);
-    }
+    static constexpr auto LUT = generate_LUT({.b = {1, 1, 4, 1, 8, 5, 2, 9}}, S_BOX);
     void compress(WhirlpoolRow const *b) {
-        WhirlpoolRow s[8], k[8];
+        WhirlpoolRow s[8], k[8], t[8];
         s[0].w = b[0].w ^ (k[0].w = h[0].w);
         s[1].w = b[1].w ^ (k[1].w = h[1].w);
         s[2].w = b[2].w ^ (k[2].w = h[2].w);
@@ -94,8 +74,38 @@ class Whirlpool {
         s[6].w = b[6].w ^ (k[6].w = h[6].w);
         s[7].w = b[7].w ^ (k[7].w = h[7].w);
         for (int i = 0; i < 10; i++) {
-            sb_sc_mr_ark(k, RC[i]);
-            sb_sc_mr_ark(s, k);
+            t[0].w = k[0].w;
+            t[1].w = k[1].w;
+            t[2].w = k[2].w;
+            t[3].w = k[3].w;
+            t[4].w = k[4].w;
+            t[5].w = k[5].w;
+            t[6].w = k[6].w;
+            t[7].w = k[7].w;
+            k[0].w = SB_SC_MR_NRK(t, 0) ^ RC[i].w;
+            k[1].w = SB_SC_MR_NRK(t, 1);
+            k[2].w = SB_SC_MR_NRK(t, 2);
+            k[3].w = SB_SC_MR_NRK(t, 3);
+            k[4].w = SB_SC_MR_NRK(t, 4);
+            k[5].w = SB_SC_MR_NRK(t, 5);
+            k[6].w = SB_SC_MR_NRK(t, 6);
+            k[7].w = SB_SC_MR_NRK(t, 7);
+            t[0].w = s[0].w;
+            t[1].w = s[1].w;
+            t[2].w = s[2].w;
+            t[3].w = s[3].w;
+            t[4].w = s[4].w;
+            t[5].w = s[5].w;
+            t[6].w = s[6].w;
+            t[7].w = s[7].w;
+            s[0].w = SB_SC_MR_NRK(t, 0) ^ k[0].w;
+            s[1].w = SB_SC_MR_NRK(t, 1) ^ k[1].w;
+            s[2].w = SB_SC_MR_NRK(t, 2) ^ k[2].w;
+            s[3].w = SB_SC_MR_NRK(t, 3) ^ k[3].w;
+            s[4].w = SB_SC_MR_NRK(t, 4) ^ k[4].w;
+            s[5].w = SB_SC_MR_NRK(t, 5) ^ k[5].w;
+            s[6].w = SB_SC_MR_NRK(t, 6) ^ k[6].w;
+            s[7].w = SB_SC_MR_NRK(t, 7) ^ k[7].w;
         }
         h[0].w ^= s[0].w ^ b[0].w;
         h[1].w ^= s[1].w ^ b[1].w;
@@ -142,4 +152,4 @@ public:
         memcpy(hash, h, 64);
     }
 };
-#undef SB_SC_MR_ARK
+#undef SB_SC_MR_NRK

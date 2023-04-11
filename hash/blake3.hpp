@@ -27,7 +27,7 @@ struct BLAKE3Compressor {
         0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
         0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
     };
-    static constexpr index_t PM[16] = {
+    static constexpr index_t PERM[16] = {
         2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8,
     };
     static constexpr auto SIGMA = []() {
@@ -37,7 +37,7 @@ struct BLAKE3Compressor {
         }
         for (int i = 1; i < 7; i++) {
             for (int j = 0; j < 16; j++) {
-                SIGMA[i][j] = SIGMA[i - 1][PM[j]];
+                SIGMA[i][j] = SIGMA[i - 1][PERM[j]];
             }
         }
         return SIGMA;

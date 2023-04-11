@@ -152,50 +152,50 @@ public:
         }
     }
     void encrypt(const uint8_t *src, uint8_t *dst) const {
-        uint64_t d1, d2;
-        d1 = GET_BE<uint64_t>(src    );
-        d2 = GET_BE<uint64_t>(src + 8);
+        uint64_t da, db;
+        db = GET_BE<uint64_t>(src    );
+        da = GET_BE<uint64_t>(src + 8);
         int i = 0;
-        d1 ^= kx[i++];
-        d2 ^= kx[i++];
+        db ^= kx[i++];
+        da ^= kx[i++];
         for (;;) {
-            d2 ^= f(d1, kx[i++]);
-            d1 ^= f(d2, kx[i++]);
-            d2 ^= f(d1, kx[i++]);
-            d1 ^= f(d2, kx[i++]);
-            d2 ^= f(d1, kx[i++]);
-            d1 ^= f(d2, kx[i++]);
+            da ^= f(db, kx[i++]);
+            db ^= f(da, kx[i++]);
+            da ^= f(db, kx[i++]);
+            db ^= f(da, kx[i++]);
+            da ^= f(db, kx[i++]);
+            db ^= f(da, kx[i++]);
             if (i + 2 == K) { break; }
-            d1 = fl(d1, kx[i++]);
-            d2 = lf(d2, kx[i++]);
+            db = fl(db, kx[i++]);
+            da = lf(da, kx[i++]);
         }
-        d2 ^= kx[i++];
-        d1 ^= kx[i++];
-        PUT_BE(dst    , d2);
-        PUT_BE(dst + 8, d1);
+        da ^= kx[i++];
+        db ^= kx[i++];
+        PUT_BE(dst    , da);
+        PUT_BE(dst + 8, db);
     }
     void decrypt(const uint8_t *src, uint8_t *dst) const {
-        uint64_t d1, d2;
-        d2 = GET_BE<uint64_t>(src    );
-        d1 = GET_BE<uint64_t>(src + 8);
+        uint64_t da, db;
+        db = GET_BE<uint64_t>(src    );
+        da = GET_BE<uint64_t>(src + 8);
         int i = K;
-        d1 ^= kx[--i];
-        d2 ^= kx[--i];
+        da ^= kx[--i];
+        db ^= kx[--i];
         for (;;) {
-            d1 ^= f(d2, kx[--i]);
-            d2 ^= f(d1, kx[--i]);
-            d1 ^= f(d2, kx[--i]);
-            d2 ^= f(d1, kx[--i]);
-            d1 ^= f(d2, kx[--i]);
-            d2 ^= f(d1, kx[--i]);
+            da ^= f(db, kx[--i]);
+            db ^= f(da, kx[--i]);
+            da ^= f(db, kx[--i]);
+            db ^= f(da, kx[--i]);
+            da ^= f(db, kx[--i]);
+            db ^= f(da, kx[--i]);
             if (i - 2 == 0) { break; }
-            d2 = fl(d2, kx[--i]);
-            d1 = lf(d1, kx[--i]);
+            db = fl(db, kx[--i]);
+            da = lf(da, kx[--i]);
         }
-        d2 ^= kx[--i];
-        d1 ^= kx[--i];
-        PUT_BE(dst    , d1);
-        PUT_BE(dst + 8, d2);
+        db ^= kx[--i];
+        da ^= kx[--i];
+        PUT_BE(dst    , da);
+        PUT_BE(dst + 8, db);
     }
 };
 using Camellia128 = CamelliaTmpl<2>;

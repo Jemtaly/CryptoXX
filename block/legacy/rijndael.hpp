@@ -54,31 +54,31 @@ protected:
         }
         return p;
     };
-    static constexpr auto generate_LUT = [](RijndaelClmn X) {
-        std::array<std::array<RijndaelClmn, 256>, 4> LUT = {};
+    static constexpr auto generate_MCT = [](RijndaelClmn poly) {
+        std::array<std::array<RijndaelClmn, 256>, 4> MCT = {};
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 256; j++) {
-                uint8_t p = coef_mult(X.b[i], j);
+                uint8_t p = coef_mult(poly.b[i], j);
                 for (int k = 0; k < 4; k++) {
-                    LUT[k][j].b[(i + k) % 4] = p;
+                    MCT[k][j].b[(i + k) % 4] = p;
                 }
             }
         }
-        return LUT;
+        return MCT;
     };
-    static constexpr auto LUT_E = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}});
-    static constexpr auto LUT_D = generate_LUT({.b = {0x0e, 0x09, 0x0d, 0x0b}});
+    static constexpr auto MCT_E = generate_MCT({.b = {0x02, 0x01, 0x01, 0x03}});
+    static constexpr auto MCT_D = generate_MCT({.b = {0x0e, 0x09, 0x0d, 0x0b}});
     static void mix_clmns_enc(RijndaelClmn *q) {
-        q[0].w = LUT_E[0][q[0].b[0]].w ^ LUT_E[1][q[0].b[1]].w ^ LUT_E[2][q[0].b[2]].w ^ LUT_E[3][q[0].b[3]].w;
-        q[1].w = LUT_E[0][q[1].b[0]].w ^ LUT_E[1][q[1].b[1]].w ^ LUT_E[2][q[1].b[2]].w ^ LUT_E[3][q[1].b[3]].w;
-        q[2].w = LUT_E[0][q[2].b[0]].w ^ LUT_E[1][q[2].b[1]].w ^ LUT_E[2][q[2].b[2]].w ^ LUT_E[3][q[2].b[3]].w;
-        q[3].w = LUT_E[0][q[3].b[0]].w ^ LUT_E[1][q[3].b[1]].w ^ LUT_E[2][q[3].b[2]].w ^ LUT_E[3][q[3].b[3]].w;
+        q[0].w = MCT_E[0][q[0].b[0]].w ^ MCT_E[1][q[0].b[1]].w ^ MCT_E[2][q[0].b[2]].w ^ MCT_E[3][q[0].b[3]].w;
+        q[1].w = MCT_E[0][q[1].b[0]].w ^ MCT_E[1][q[1].b[1]].w ^ MCT_E[2][q[1].b[2]].w ^ MCT_E[3][q[1].b[3]].w;
+        q[2].w = MCT_E[0][q[2].b[0]].w ^ MCT_E[1][q[2].b[1]].w ^ MCT_E[2][q[2].b[2]].w ^ MCT_E[3][q[2].b[3]].w;
+        q[3].w = MCT_E[0][q[3].b[0]].w ^ MCT_E[1][q[3].b[1]].w ^ MCT_E[2][q[3].b[2]].w ^ MCT_E[3][q[3].b[3]].w;
     }
     static void mix_clmns_dec(RijndaelClmn *q) {
-        q[0].w = LUT_D[0][q[0].b[0]].w ^ LUT_D[1][q[0].b[1]].w ^ LUT_D[2][q[0].b[2]].w ^ LUT_D[3][q[0].b[3]].w;
-        q[1].w = LUT_D[0][q[1].b[0]].w ^ LUT_D[1][q[1].b[1]].w ^ LUT_D[2][q[1].b[2]].w ^ LUT_D[3][q[1].b[3]].w;
-        q[2].w = LUT_D[0][q[2].b[0]].w ^ LUT_D[1][q[2].b[1]].w ^ LUT_D[2][q[2].b[2]].w ^ LUT_D[3][q[2].b[3]].w;
-        q[3].w = LUT_D[0][q[3].b[0]].w ^ LUT_D[1][q[3].b[1]].w ^ LUT_D[2][q[3].b[2]].w ^ LUT_D[3][q[3].b[3]].w;
+        q[0].w = MCT_D[0][q[0].b[0]].w ^ MCT_D[1][q[0].b[1]].w ^ MCT_D[2][q[0].b[2]].w ^ MCT_D[3][q[0].b[3]].w;
+        q[1].w = MCT_D[0][q[1].b[0]].w ^ MCT_D[1][q[1].b[1]].w ^ MCT_D[2][q[1].b[2]].w ^ MCT_D[3][q[1].b[3]].w;
+        q[2].w = MCT_D[0][q[2].b[0]].w ^ MCT_D[1][q[2].b[1]].w ^ MCT_D[2][q[2].b[2]].w ^ MCT_D[3][q[2].b[3]].w;
+        q[3].w = MCT_D[0][q[3].b[0]].w ^ MCT_D[1][q[3].b[1]].w ^ MCT_D[2][q[3].b[2]].w ^ MCT_D[3][q[3].b[3]].w;
     }
     static void sub_shift_enc(RijndaelClmn *q) {
         RijndaelClmn t[4];
@@ -86,22 +86,10 @@ protected:
         t[1].w = q[1].w;
         t[2].w = q[2].w;
         t[3].w = q[3].w;
-        q[0].b[0] = S_BOX[t[0].b[0]];
-        q[1].b[0] = S_BOX[t[1].b[0]];
-        q[2].b[0] = S_BOX[t[2].b[0]];
-        q[3].b[0] = S_BOX[t[3].b[0]];
-        q[0].b[1] = S_BOX[t[1].b[1]];
-        q[1].b[1] = S_BOX[t[2].b[1]];
-        q[2].b[1] = S_BOX[t[3].b[1]];
-        q[3].b[1] = S_BOX[t[0].b[1]];
-        q[0].b[2] = S_BOX[t[2].b[2]];
-        q[1].b[2] = S_BOX[t[3].b[2]];
-        q[2].b[2] = S_BOX[t[0].b[2]];
-        q[3].b[2] = S_BOX[t[1].b[2]];
-        q[0].b[3] = S_BOX[t[3].b[3]];
-        q[1].b[3] = S_BOX[t[0].b[3]];
-        q[2].b[3] = S_BOX[t[1].b[3]];
-        q[3].b[3] = S_BOX[t[2].b[3]];
+        q[0].b[0] = S_BOX[t[0].b[0]]; q[0].b[1] = S_BOX[t[1].b[1]]; q[0].b[2] = S_BOX[t[2].b[2]]; q[0].b[3] = S_BOX[t[3].b[3]];
+        q[1].b[0] = S_BOX[t[1].b[0]]; q[1].b[1] = S_BOX[t[2].b[1]]; q[1].b[2] = S_BOX[t[3].b[2]]; q[1].b[3] = S_BOX[t[0].b[3]];
+        q[2].b[0] = S_BOX[t[2].b[0]]; q[2].b[1] = S_BOX[t[3].b[1]]; q[2].b[2] = S_BOX[t[0].b[2]]; q[2].b[3] = S_BOX[t[1].b[3]];
+        q[3].b[0] = S_BOX[t[3].b[0]]; q[3].b[1] = S_BOX[t[0].b[1]]; q[3].b[2] = S_BOX[t[1].b[2]]; q[3].b[3] = S_BOX[t[2].b[3]];
     }
     static void sub_shift_dec(RijndaelClmn *q) {
         RijndaelClmn t[4];
@@ -109,22 +97,10 @@ protected:
         t[1].w = q[1].w;
         t[2].w = q[2].w;
         t[3].w = q[3].w;
-        q[0].b[0] = I_BOX[t[0].b[0]];
-        q[1].b[0] = I_BOX[t[1].b[0]];
-        q[2].b[0] = I_BOX[t[2].b[0]];
-        q[3].b[0] = I_BOX[t[3].b[0]];
-        q[0].b[1] = I_BOX[t[3].b[1]];
-        q[1].b[1] = I_BOX[t[0].b[1]];
-        q[2].b[1] = I_BOX[t[1].b[1]];
-        q[3].b[1] = I_BOX[t[2].b[1]];
-        q[0].b[2] = I_BOX[t[2].b[2]];
-        q[1].b[2] = I_BOX[t[3].b[2]];
-        q[2].b[2] = I_BOX[t[0].b[2]];
-        q[3].b[2] = I_BOX[t[1].b[2]];
-        q[0].b[3] = I_BOX[t[1].b[3]];
-        q[1].b[3] = I_BOX[t[2].b[3]];
-        q[2].b[3] = I_BOX[t[3].b[3]];
-        q[3].b[3] = I_BOX[t[0].b[3]];
+        q[0].b[0] = I_BOX[t[0].b[0]]; q[0].b[1] = I_BOX[t[3].b[1]]; q[0].b[2] = I_BOX[t[2].b[2]]; q[0].b[3] = I_BOX[t[1].b[3]];
+        q[1].b[0] = I_BOX[t[1].b[0]]; q[1].b[1] = I_BOX[t[0].b[1]]; q[1].b[2] = I_BOX[t[3].b[2]]; q[1].b[3] = I_BOX[t[2].b[3]];
+        q[2].b[0] = I_BOX[t[2].b[0]]; q[2].b[1] = I_BOX[t[1].b[1]]; q[2].b[2] = I_BOX[t[0].b[2]]; q[2].b[3] = I_BOX[t[3].b[3]];
+        q[3].b[0] = I_BOX[t[3].b[0]]; q[3].b[1] = I_BOX[t[2].b[1]]; q[3].b[2] = I_BOX[t[1].b[2]]; q[3].b[3] = I_BOX[t[0].b[3]];
     }
     static void add_round_key(RijndaelClmn *q, RijndaelClmn const *k) {
         q[0].w ^= k[0].w;
