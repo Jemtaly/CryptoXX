@@ -6,7 +6,7 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 
 一个现代、高速、易用的面向对象 C++ 密码库，旨在利用 C++ 的面向对象特性简化使用步骤，同时使密码算法模块化、让不同密码算法具有统一的接口，从而提升实现时的便捷性（易扩展性）和使用的灵活性。
 
-算法经过高度优化（同时保证了可读性），多种算法运行效率超过 OpenSSl 等经典密码库。
+算法经过高度优化（同时保证了可读性），多种算法运行效率超过 OpenSSL 等经典密码库。
 
 ## Currently supported algorithms / 目前支持的算法
 
