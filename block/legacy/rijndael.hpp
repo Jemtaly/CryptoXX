@@ -46,7 +46,8 @@ protected:
     static constexpr uint8_t RC[16] = {
         0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     };
-    static constexpr auto RGF_multiply = [](uint8_t a, uint8_t b) { // Rijndael's Galois Field multiplication
+    // Rijndael's Galois Field multiplication
+    static constexpr auto RGF_multiply = [](uint8_t a, uint8_t b) {
         uint8_t p = 0;
         for (int i = 0; i < 8; i++) {
             p = p ^ (b >> i & 0x01 ? a    : 0x00);
@@ -55,7 +56,7 @@ protected:
         return p;
     };
     static constexpr auto generate_MCT = [](RijndaelClmn poly) {
-        // LUT[k][j] = poly * j <<< k * 8
+        // MCT[k][j] = poly * j <<< k * 8
         std::array<std::array<RijndaelClmn, 256>, 4> MCT = {};
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 256; j++) {

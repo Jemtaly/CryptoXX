@@ -64,7 +64,8 @@ protected:
     static constexpr uint8_t RC[16] = {
         0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     };
-    static constexpr auto RGF_multiply = [](uint8_t a, uint8_t b) { // Rijndael's Galois Field multiplication
+    // Rijndael's Galois Field multiplication
+    static constexpr auto RGF_multiply = [](uint8_t a, uint8_t b) {
         uint8_t p = 0;
         for (int i = 0; i < 8; i++) {
             p = p ^ (b >> i & 0x01 ? a    : 0x00);
@@ -118,69 +119,75 @@ public:
             }
             ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - N].w ^ t.w;
         }
-        for (int i = 1; i < R; ++i) {
-            ik[i][0].w = MCT_D[0][rk[i][0].b[0]].w ^ MCT_D[1][rk[i][0].b[1]].w ^ MCT_D[2][rk[i][0].b[2]].w ^ MCT_D[3][rk[i][0].b[3]].w;
-            ik[i][1].w = MCT_D[0][rk[i][1].b[0]].w ^ MCT_D[1][rk[i][1].b[1]].w ^ MCT_D[2][rk[i][1].b[2]].w ^ MCT_D[3][rk[i][1].b[3]].w;
-            ik[i][2].w = MCT_D[0][rk[i][2].b[0]].w ^ MCT_D[1][rk[i][2].b[1]].w ^ MCT_D[2][rk[i][2].b[2]].w ^ MCT_D[3][rk[i][2].b[3]].w;
-            ik[i][3].w = MCT_D[0][rk[i][3].b[0]].w ^ MCT_D[1][rk[i][3].b[1]].w ^ MCT_D[2][rk[i][3].b[2]].w ^ MCT_D[3][rk[i][3].b[3]].w;
+        ik[R][0].w = rk[0][0].w;
+        ik[R][1].w = rk[0][1].w;
+        ik[R][2].w = rk[0][2].w;
+        ik[R][3].w = rk[0][3].w;
+        for (int r = 1; r < R; ++r) {
+            ik[R - r][0].w = MCT_D[0][rk[r][0].b[0]].w ^ MCT_D[1][rk[r][0].b[1]].w ^ MCT_D[2][rk[r][0].b[2]].w ^ MCT_D[3][rk[r][0].b[3]].w;
+            ik[R - r][1].w = MCT_D[0][rk[r][1].b[0]].w ^ MCT_D[1][rk[r][1].b[1]].w ^ MCT_D[2][rk[r][1].b[2]].w ^ MCT_D[3][rk[r][1].b[3]].w;
+            ik[R - r][2].w = MCT_D[0][rk[r][2].b[0]].w ^ MCT_D[1][rk[r][2].b[1]].w ^ MCT_D[2][rk[r][2].b[2]].w ^ MCT_D[3][rk[r][2].b[3]].w;
+            ik[R - r][3].w = MCT_D[0][rk[r][3].b[0]].w ^ MCT_D[1][rk[r][3].b[1]].w ^ MCT_D[2][rk[r][3].b[2]].w ^ MCT_D[3][rk[r][3].b[3]].w;
         }
+        ik[0][0].w = rk[R][0].w;
+        ik[0][1].w = rk[R][1].w;
+        ik[0][2].w = rk[R][2].w;
+        ik[0][3].w = rk[R][3].w;
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelClmn q[4];
         RijndaelClmn t[4];
         memcpy(q, src, 16);
-        int round = 0;
-        q[0].w ^= rk[round][0].w;
-        q[1].w ^= rk[round][1].w;
-        q[2].w ^= rk[round][2].w;
-        q[3].w ^= rk[round][3].w;
-        while (++round < R) {
+        q[0].w ^= rk[0][0].w;
+        q[1].w ^= rk[0][1].w;
+        q[2].w ^= rk[0][2].w;
+        q[3].w ^= rk[0][3].w;
+        for (int r = 1; r < R; ++r) {
             t[0].w = q[0].w;
             t[1].w = q[1].w;
             t[2].w = q[2].w;
             t[3].w = q[3].w;
-            q[0].w = LUT_E[0][t[0].b[0]].w ^ LUT_E[1][t[1].b[1]].w ^ LUT_E[2][t[2].b[2]].w ^ LUT_E[3][t[3].b[3]].w ^ rk[round][0].w;
-            q[1].w = LUT_E[0][t[1].b[0]].w ^ LUT_E[1][t[2].b[1]].w ^ LUT_E[2][t[3].b[2]].w ^ LUT_E[3][t[0].b[3]].w ^ rk[round][1].w;
-            q[2].w = LUT_E[0][t[2].b[0]].w ^ LUT_E[1][t[3].b[1]].w ^ LUT_E[2][t[0].b[2]].w ^ LUT_E[3][t[1].b[3]].w ^ rk[round][2].w;
-            q[3].w = LUT_E[0][t[3].b[0]].w ^ LUT_E[1][t[0].b[1]].w ^ LUT_E[2][t[1].b[2]].w ^ LUT_E[3][t[2].b[3]].w ^ rk[round][3].w;
+            q[0].w = LUT_E[0][t[0].b[0]].w ^ LUT_E[1][t[1].b[1]].w ^ LUT_E[2][t[2].b[2]].w ^ LUT_E[3][t[3].b[3]].w ^ rk[r][0].w;
+            q[1].w = LUT_E[0][t[1].b[0]].w ^ LUT_E[1][t[2].b[1]].w ^ LUT_E[2][t[3].b[2]].w ^ LUT_E[3][t[0].b[3]].w ^ rk[r][1].w;
+            q[2].w = LUT_E[0][t[2].b[0]].w ^ LUT_E[1][t[3].b[1]].w ^ LUT_E[2][t[0].b[2]].w ^ LUT_E[3][t[1].b[3]].w ^ rk[r][2].w;
+            q[3].w = LUT_E[0][t[3].b[0]].w ^ LUT_E[1][t[0].b[1]].w ^ LUT_E[2][t[1].b[2]].w ^ LUT_E[3][t[2].b[3]].w ^ rk[r][3].w;
         }
         t[0].w = q[0].w;
         t[1].w = q[1].w;
         t[2].w = q[2].w;
         t[3].w = q[3].w;
-        q[0].w = S_EXT[0][t[0].b[0]].w ^ S_EXT[1][t[1].b[1]].w ^ S_EXT[2][t[2].b[2]].w ^ S_EXT[3][t[3].b[3]].w ^ rk[round][0].w;
-        q[1].w = S_EXT[0][t[1].b[0]].w ^ S_EXT[1][t[2].b[1]].w ^ S_EXT[2][t[3].b[2]].w ^ S_EXT[3][t[0].b[3]].w ^ rk[round][1].w;
-        q[2].w = S_EXT[0][t[2].b[0]].w ^ S_EXT[1][t[3].b[1]].w ^ S_EXT[2][t[0].b[2]].w ^ S_EXT[3][t[1].b[3]].w ^ rk[round][2].w;
-        q[3].w = S_EXT[0][t[3].b[0]].w ^ S_EXT[1][t[0].b[1]].w ^ S_EXT[2][t[1].b[2]].w ^ S_EXT[3][t[2].b[3]].w ^ rk[round][3].w;
+        q[0].w = S_EXT[0][t[0].b[0]].w ^ S_EXT[1][t[1].b[1]].w ^ S_EXT[2][t[2].b[2]].w ^ S_EXT[3][t[3].b[3]].w ^ rk[R][0].w;
+        q[1].w = S_EXT[0][t[1].b[0]].w ^ S_EXT[1][t[2].b[1]].w ^ S_EXT[2][t[3].b[2]].w ^ S_EXT[3][t[0].b[3]].w ^ rk[R][1].w;
+        q[2].w = S_EXT[0][t[2].b[0]].w ^ S_EXT[1][t[3].b[1]].w ^ S_EXT[2][t[0].b[2]].w ^ S_EXT[3][t[1].b[3]].w ^ rk[R][2].w;
+        q[3].w = S_EXT[0][t[3].b[0]].w ^ S_EXT[1][t[0].b[1]].w ^ S_EXT[2][t[1].b[2]].w ^ S_EXT[3][t[2].b[3]].w ^ rk[R][3].w;
         memcpy(dst, q, 16);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelClmn q[4];
         RijndaelClmn t[4];
         memcpy(q, src, 16);
-        int round = R;
-        q[0].w ^= rk[round][0].w;
-        q[1].w ^= rk[round][1].w;
-        q[2].w ^= rk[round][2].w;
-        q[3].w ^= rk[round][3].w;
-        while (--round > 0) {
+        q[0].w ^= ik[0][0].w;
+        q[1].w ^= ik[0][1].w;
+        q[2].w ^= ik[0][2].w;
+        q[3].w ^= ik[0][3].w;
+        for (int r = 1; r < R; ++r) {
             t[0].w = q[0].w;
             t[1].w = q[1].w;
             t[2].w = q[2].w;
             t[3].w = q[3].w;
-            q[0].w = LUT_D[0][t[0].b[0]].w ^ LUT_D[1][t[3].b[1]].w ^ LUT_D[2][t[2].b[2]].w ^ LUT_D[3][t[1].b[3]].w ^ ik[round][0].w;
-            q[1].w = LUT_D[0][t[1].b[0]].w ^ LUT_D[1][t[0].b[1]].w ^ LUT_D[2][t[3].b[2]].w ^ LUT_D[3][t[2].b[3]].w ^ ik[round][1].w;
-            q[2].w = LUT_D[0][t[2].b[0]].w ^ LUT_D[1][t[1].b[1]].w ^ LUT_D[2][t[0].b[2]].w ^ LUT_D[3][t[3].b[3]].w ^ ik[round][2].w;
-            q[3].w = LUT_D[0][t[3].b[0]].w ^ LUT_D[1][t[2].b[1]].w ^ LUT_D[2][t[1].b[2]].w ^ LUT_D[3][t[0].b[3]].w ^ ik[round][3].w;
+            q[0].w = LUT_D[0][t[0].b[0]].w ^ LUT_D[1][t[3].b[1]].w ^ LUT_D[2][t[2].b[2]].w ^ LUT_D[3][t[1].b[3]].w ^ ik[r][0].w;
+            q[1].w = LUT_D[0][t[1].b[0]].w ^ LUT_D[1][t[0].b[1]].w ^ LUT_D[2][t[3].b[2]].w ^ LUT_D[3][t[2].b[3]].w ^ ik[r][1].w;
+            q[2].w = LUT_D[0][t[2].b[0]].w ^ LUT_D[1][t[1].b[1]].w ^ LUT_D[2][t[0].b[2]].w ^ LUT_D[3][t[3].b[3]].w ^ ik[r][2].w;
+            q[3].w = LUT_D[0][t[3].b[0]].w ^ LUT_D[1][t[2].b[1]].w ^ LUT_D[2][t[1].b[2]].w ^ LUT_D[3][t[0].b[3]].w ^ ik[r][3].w;
         }
         t[0].w = q[0].w;
         t[1].w = q[1].w;
         t[2].w = q[2].w;
         t[3].w = q[3].w;
-        q[0].w = I_EXT[0][t[0].b[0]].w ^ I_EXT[1][t[3].b[1]].w ^ I_EXT[2][t[2].b[2]].w ^ I_EXT[3][t[1].b[3]].w ^ rk[round][0].w;
-        q[1].w = I_EXT[0][t[1].b[0]].w ^ I_EXT[1][t[0].b[1]].w ^ I_EXT[2][t[3].b[2]].w ^ I_EXT[3][t[2].b[3]].w ^ rk[round][1].w;
-        q[2].w = I_EXT[0][t[2].b[0]].w ^ I_EXT[1][t[1].b[1]].w ^ I_EXT[2][t[0].b[2]].w ^ I_EXT[3][t[3].b[3]].w ^ rk[round][2].w;
-        q[3].w = I_EXT[0][t[3].b[0]].w ^ I_EXT[1][t[2].b[1]].w ^ I_EXT[2][t[1].b[2]].w ^ I_EXT[3][t[0].b[3]].w ^ rk[round][3].w;
+        q[0].w = I_EXT[0][t[0].b[0]].w ^ I_EXT[1][t[3].b[1]].w ^ I_EXT[2][t[2].b[2]].w ^ I_EXT[3][t[1].b[3]].w ^ ik[R][0].w;
+        q[1].w = I_EXT[0][t[1].b[0]].w ^ I_EXT[1][t[0].b[1]].w ^ I_EXT[2][t[3].b[2]].w ^ I_EXT[3][t[2].b[3]].w ^ ik[R][1].w;
+        q[2].w = I_EXT[0][t[2].b[0]].w ^ I_EXT[1][t[1].b[1]].w ^ I_EXT[2][t[0].b[2]].w ^ I_EXT[3][t[3].b[3]].w ^ ik[R][2].w;
+        q[3].w = I_EXT[0][t[3].b[0]].w ^ I_EXT[1][t[2].b[1]].w ^ I_EXT[2][t[1].b[2]].w ^ I_EXT[3][t[0].b[3]].w ^ ik[R][3].w;
         memcpy(dst, q, 16);
     }
 };

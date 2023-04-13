@@ -42,7 +42,8 @@ class Whirlpool {
         {.b = {0xFB, 0xEE, 0x7c, 0x66, 0xdd, 0x17, 0x47, 0x9E}},
         {.b = {0xcA, 0x2d, 0xBF, 0x07, 0xAd, 0x5A, 0x83, 0x33}},
     };
-    static constexpr auto WGF_multiply = [](uint8_t a, uint8_t b) { // Whirlpool's Galois Field multiplication
+    // Whirlpool's Galois Field multiplication
+    static constexpr auto WGF_multiply = [](uint8_t a, uint8_t b) {
         uint8_t p = 0;
         for (int i = 0; i < 8; i++) {
             p = p ^ (b >> i & 0x01 ? a    : 0x00);
