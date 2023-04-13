@@ -13,27 +13,28 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 - Block cipher algorithms (ECB, CBC, CFB, OFB and CTR mode) / 块密码算法 (多种工作模式)
   - DES
   - 3DES
-  - Rijndael, AES-128, AES-192, AES-256
-  - SM4
-  - Camellia
+  - IDEA
   - Blowfish
   - Twofish
   - Serpent
+  - Rijndael, AES-128, AES-192, AES-256
+  - Camellia
+  - SM4
 - Stream cipher algorithms / 流密码算法
   - RC4
-  - ZUC (祖冲之算法)
   - ChaCha
   - Salsa
+  - ZUC (祖冲之算法)
 - Hashing Algorithms (and the corresponding HMAC algorithms) / 哈希算法（及对应的 HMAC 算法）
   - CRC
   - MD5
-  - SM3
   - SHA-1
   - SHA-2 (SHA-256, SHA-224, SHA-512, SHA-384)
   - SHA-3, Keccak, SHAKE-128, SHAKE-256
   - BLAKE2 (BLAKE2s-256, BLAKE2s-224, BLAKE2b-512, BLAKE2b-384)
   - BLAKE3 (Experimental)
   - Whirlpool
+  - SM3
   - To be continued...
 
 ## Compiling and running the sample program / 编译并运行示例程序
