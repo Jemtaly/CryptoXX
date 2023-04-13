@@ -59,7 +59,7 @@ public:
         XORB_LE((uint64_t *)A, blk, BLK);
         permute();
     }
-    void hash(uint8_t const *src, int len, uint8_t *out) {
+    void hash(uint8_t const *src, size_t len, uint8_t *out) {
         XORB_LE((uint64_t *)A, src, len);
         BYTE_LE((uint64_t *)A, len) ^= PAD_BYTE;
         BYTE_LE((uint64_t *)A, BLK - 1) ^= 0x80;

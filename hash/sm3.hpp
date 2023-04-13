@@ -76,11 +76,11 @@ public:
         compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
-        lo += len * 8;
-        lo >= len * 8 || hi++;
         uint32_t w[68];
         memset(w, 0, 64);
         READB_BE(w, src, len);
+        lo += len * 8;
+        lo >= len * 8 || hi++;
         BYTE_BE(w, len) = 0x80;
         if (len >= 56) {
             compress(w);

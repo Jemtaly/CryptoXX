@@ -4,7 +4,7 @@ class RC4 {
     uint8_t x, y, m[256];
 public:
     static constexpr size_t SECTION_SIZE = 1;
-    RC4(uint8_t len, uint8_t const *key):
+    RC4(uint8_t const *key, size_t len):
         x(0), y(0) {
         for (int i = 0; i < 256; i++) {
             m[i] = i;

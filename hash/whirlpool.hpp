@@ -42,7 +42,7 @@ class Whirlpool {
         {.b = {0xFB, 0xEE, 0x7c, 0x66, 0xdd, 0x17, 0x47, 0x9E}},
         {.b = {0xcA, 0x2d, 0xBF, 0x07, 0xAd, 0x5A, 0x83, 0x33}},
     };
-    static constexpr auto coef_mult = [](uint8_t a, uint8_t b) {
+    static constexpr auto WGF_multiply = [](uint8_t a, uint8_t b) { // Whirlpool's Galois Field multiplication
         uint8_t p = 0;
         for (int i = 0; i < 8; i++) {
             p = p ^ (b >> i & 0x01 ? a    : 0x00);
@@ -51,10 +51,11 @@ class Whirlpool {
         return p;
     };
     static constexpr auto generate_LUT = [](WhirlpoolRow poly, uint8_t const *S_BOX) {
+        // LUT[k][j] = poly * S_BOX[j] <<< k * 8
         std::array<std::array<WhirlpoolRow, 256>, 8> LUT = {};
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 256; j++) {
-                uint8_t p = coef_mult(poly.b[i], S_BOX[j]);
+                uint8_t p = WGF_multiply(poly.b[i], S_BOX[j]);
                 for (int k = 0; k < 8; k++) {
                     LUT[k][j].b[(i + k) % 8] = p;
                 }
@@ -132,13 +133,13 @@ public:
         compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *hash) {
+        WhirlpoolRow w[8];
+        memset(w, 0, 64);
+        memcpy(w, src, len);
         (ctr[3] += len * 8) < len * 8
             && ++ctr[2] == 0
             && ++ctr[1] == 0
             && ++ctr[0] == 0;
-        WhirlpoolRow w[8];
-        memset(w, 0, 64);
-        memcpy(w, src, len);
         ((uint8_t *)w)[len] = 0x80;
         if (len >= 32) {
             compress(w);

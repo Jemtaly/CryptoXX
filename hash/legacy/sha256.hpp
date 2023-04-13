@@ -73,7 +73,6 @@ public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DN * 4;
     static constexpr bool NO_PADDING = false;
-    SHA256Tmpl() {}
     void push(uint8_t const *blk) {
         uint32_t w[64];
         READB_BE(w, blk, 64);
@@ -82,11 +81,11 @@ public:
         compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
-        lo += len * 8;
-        lo >= len * 8 || hi++;
         uint32_t w[64];
         memset(w, 0, 64);
         READB_BE(w, src, len);
+        lo += len * 8;
+        lo >= len * 8 || hi++;
         BYTE_BE(w, len) = 0x80;
         if (len >= 56) {
             compress(w);

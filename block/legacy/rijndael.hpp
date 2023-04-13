@@ -46,19 +46,20 @@ protected:
     static constexpr uint8_t RC[16] = {
         0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
     };
-    static constexpr auto coef_mult = [](uint8_t a, uint8_t b) {
+    static constexpr auto RGF_multiply = [](uint8_t a, uint8_t b) { // Rijndael's Galois Field multiplication
         uint8_t p = 0;
         for (int i = 0; i < 8; i++) {
             p = p ^ (b >> i & 0x01 ? a    : 0x00);
-            a = a << 1 ^ (a & 0x80 ? 0x1b : 0x00);
+            a = a << 1 ^ (a & 0x80 ? 0x1B : 0x00);
         }
         return p;
     };
     static constexpr auto generate_MCT = [](RijndaelClmn poly) {
+        // LUT[k][j] = poly * j <<< k * 8
         std::array<std::array<RijndaelClmn, 256>, 4> MCT = {};
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 256; j++) {
-                uint8_t p = coef_mult(poly.b[i], j);
+                uint8_t p = RGF_multiply(poly.b[i], j);
                 for (int k = 0; k < 4; k++) {
                     MCT[k][j].b[(i + k) % 4] = p;
                 }
