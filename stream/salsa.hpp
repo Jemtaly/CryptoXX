@@ -1,10 +1,10 @@
 #pragma once
 #include "stream.hpp"
 #define QROUND(s, a, b, c, d) {    \
-    x[b] ^= ROTL(x[a] + x[d],  7); \
-    x[c] ^= ROTL(x[b] + x[a],  9); \
-    x[d] ^= ROTL(x[c] + x[b], 13); \
-    x[a] ^= ROTL(x[d] + x[c], 18); \
+    s[b] ^= ROTL(s[a] + s[d],  7); \
+    s[c] ^= ROTL(s[b] + s[a],  9); \
+    s[d] ^= ROTL(s[c] + s[b], 13); \
+    s[a] ^= ROTL(s[d] + s[c], 18); \
 }
 template <int RND>
 requires (RND == 8 || RND == 12 || RND == 20)
