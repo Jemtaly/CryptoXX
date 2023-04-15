@@ -1,6 +1,5 @@
 #pragma once
-#include "../bits.hpp"
-#include <utility> // std::forward
+#include "../utils.hpp"
 #define SEC StreamCipher::SECTION_SIZE
 template <class StreamCipher>
 class StreamCipherCrypter {

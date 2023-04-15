@@ -7,7 +7,7 @@
     s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b],  7); \
 }
 template <int RND>
-requires (RND == 8 || RND == 12 || RND == 20)
+    requires (RND == 8 || RND == 12 || RND == 20)
 class ChaCha {
     uint32_t input[16];
 public:

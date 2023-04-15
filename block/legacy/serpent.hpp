@@ -322,7 +322,7 @@
 }
 class SerpentBase {};
 template <int L>
-requires (L == 4 || L == 6 || L == 8)
+    requires (L == 4 || L == 6 || L == 8)
 class SerpentTmpl: public SerpentBase {
     uint32_t rk[140] = {};
 public:

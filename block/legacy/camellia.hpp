@@ -88,7 +88,7 @@ protected:
     }
 };
 template <int L, int K = L == 2 ? 26 : 34>
-requires (L == 2 || L == 3 || L == 4)
+    requires (L == 2 || L == 3 || L == 4)
 class CamelliaTmpl: public CamelliaBase {
     uint64_t kx[K];
 public:

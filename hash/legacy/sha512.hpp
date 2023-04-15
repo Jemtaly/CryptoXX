@@ -38,6 +38,7 @@ class SHA512Tmpl: public SHA512Base {
         uint64_t F = h[5];
         uint64_t G = h[6];
         uint64_t H = h[7];
+        uint64_t s, t, u, v;
         for (int i = 16; i < 80; i++) {
             s = ROTR(w[i - 15],  1) ^ ROTR(w[i - 15],  8) ^ (w[i - 15] >> 7);
             t = ROTR(w[i -  2], 19) ^ ROTR(w[i -  2], 61) ^ (w[i -  2] >> 6);
@@ -74,7 +75,7 @@ class SHA512Tmpl: public SHA512Base {
     };
 public:
     static constexpr size_t BLOCK_SIZE = 128;
-    static constexpr size_t DIGEST_SIZE = DN * 8;
+    static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
         uint64_t w[80];
@@ -100,14 +101,14 @@ public:
         WRITEB_BE(dst, h, DN);
     }
 };
-class SHA512: public SHA512Tmpl<8, SHA512> {
+class SHA512: public SHA512Tmpl<64, SHA512> {
 public:
     static constexpr uint64_t IV[8] = {
         0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
         0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
     };
 };
-class SHA384: public SHA512Tmpl<6, SHA384> {
+class SHA384: public SHA512Tmpl<48, SHA384> {
 public:
     static constexpr uint64_t IV[8] = {
         0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,

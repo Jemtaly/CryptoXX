@@ -58,7 +58,7 @@ protected:
     }();
 };
 template <int L>
-requires (L == 2 || L == 3 || L == 4)
+    requires (L == 2 || L == 3 || L == 4)
 class TwofishTmpl: public TwofishBase {
     static uint32_t h_fun(uint8_t b, uint32_t const *key) {
         uint32_t x = (uint32_t)b * 0x01010101;

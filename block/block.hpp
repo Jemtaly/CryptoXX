@@ -1,6 +1,5 @@
 #pragma once
-#include "../bits.hpp"
-#include <utility> // std::forward
+#include "../utils.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 template <class BlockCipher>
 class BlockCipherEncrypter {

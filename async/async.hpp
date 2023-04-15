@@ -1,6 +1,5 @@
 #pragma once
-#include "../bits.hpp"
-#include <utility> // std::forward
+#include "../utils.hpp"
 #define CFB AsyncCipher::FEEDBACK_SIZE
 #define SEC AsyncCipher::SECTION_SIZE
 template <class AsyncCipher>

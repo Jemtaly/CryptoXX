@@ -4,7 +4,7 @@
 #define DIG Hash::DIGEST_SIZE
 #define NPD Hash::NO_PADDING
 template <class Hash>
-requires (DIG < BLK || NPD && DIG == BLK)
+    requires (DIG < BLK || NPD && DIG == BLK)
 class HMAC {
     Hash inner;
     Hash outer;

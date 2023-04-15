@@ -10,16 +10,6 @@
     d = d + u;                                             \
     h = u + v;                                             \
 }
-#define FF8(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) { \
-    FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i    );  \
-    FF1(s, t, u, v, h, a, b, c, d, e, f, g, w, K, i + 1);  \
-    FF1(s, t, u, v, g, h, a, b, c, d, e, f, w, K, i + 2);  \
-    FF1(s, t, u, v, f, g, h, a, b, c, d, e, w, K, i + 3);  \
-    FF1(s, t, u, v, e, f, g, h, a, b, c, d, w, K, i + 4);  \
-    FF1(s, t, u, v, d, e, f, g, h, a, b, c, w, K, i + 5);  \
-    FF1(s, t, u, v, c, d, e, f, g, h, a, b, w, K, i + 6);  \
-    FF1(s, t, u, v, b, c, d, e, f, g, h, a, w, K, i + 7);  \
-}
 class SHA512Base {
 protected:
     static constexpr uint64_t K[80] = {
@@ -62,16 +52,16 @@ class SHA512Tmpl: public SHA512Base {
             t = ROTR(w[i -  2], 19) ^ ROTR(w[i -  2], 61) ^ (w[i -  2] >> 6);
             w[i] = w[i - 16] + s + w[i - 7] + t;
         }
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K,  0);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K,  8);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 16);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 24);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 32);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 40);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 48);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 56);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 64);
-        FF8(s, t, u, v, A, B, C, D, E, F, G, H, w, K, 72);
+        for (int i = 0; i < 80; i += 8) {
+            FF1(s, t, u, v, A, B, C, D, E, F, G, H, w, K, i    );
+            FF1(s, t, u, v, H, A, B, C, D, E, F, G, w, K, i + 1);
+            FF1(s, t, u, v, G, H, A, B, C, D, E, F, w, K, i + 2);
+            FF1(s, t, u, v, F, G, H, A, B, C, D, E, w, K, i + 3);
+            FF1(s, t, u, v, E, F, G, H, A, B, C, D, w, K, i + 4);
+            FF1(s, t, u, v, D, E, F, G, H, A, B, C, w, K, i + 5);
+            FF1(s, t, u, v, C, D, E, F, G, H, A, B, w, K, i + 6);
+            FF1(s, t, u, v, B, C, D, E, F, G, H, A, w, K, i + 7);
+        }
         h[0] += A;
         h[1] += B;
         h[2] += C;
@@ -130,4 +120,5 @@ public:
     };
 };
 #undef FF1
-#undef FF8
+#undef CHO
+#undef MAJ

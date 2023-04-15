@@ -7,7 +7,7 @@
     s[a] ^= ROTL(s[d] + s[c], 18); \
 }
 template <int RND>
-requires (RND == 8 || RND == 12 || RND == 20)
+    requires (RND == 8 || RND == 12 || RND == 20)
 class Salsa {
     uint32_t input[16];
 public:

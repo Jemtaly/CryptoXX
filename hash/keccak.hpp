@@ -35,7 +35,7 @@ protected:
     };
 };
 template <uint8_t PAD_BYTE, size_t BLK, size_t DIG>
-requires (DIG <= BLK && BLK <= 200)
+    requires (DIG <= BLK && BLK <= 200)
 class KeccakTmpl: public KeccakBase {
     void permute() {
         for (int i = 0; i < 24; i++) {

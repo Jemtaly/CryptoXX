@@ -1,6 +1,5 @@
 #pragma once
-#include "../bits.hpp"
-#include <utility> // std::forward
+#include "../utils.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
 #define NPD Hash::NO_PADDING
