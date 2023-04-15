@@ -17,8 +17,8 @@ protected:
         return p;
     };
     static constexpr auto RC = []() {
-        std::array<uint8_t, 11> RC = {0, 1};
-        for (int i = 2; i < 11; i++) {
+        std::array<uint8_t, 22> RC = {0, 1};
+        for (int i = 2; i < 22; i++) {
             RC[i] = multiply(RC[i - 1], 0x02);
         }
         return RC;
@@ -80,12 +80,10 @@ protected:
     static constexpr auto I_EXT = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, I_BOX); // LUT for InvSubBytes step only
 };
 template <int K, int B, int R = std::max(K, B) + 6>
-requires (K == 4 || K == 6 || K == 8) && (B == 4)
+    requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
 class RijndaelTmpl: public RijndaelBase {
-protected:
     RijndaelClmn rk[R + 1][B];
     RijndaelClmn ik[R + 1][B];
-    RijndaelTmpl() = default; // not instantiable
 public:
     static constexpr size_t BLOCK_SIZE = B * 4;
     RijndaelTmpl(const uint8_t *mk) {
@@ -93,82 +91,98 @@ public:
         for (int i = K; i < (R + 1) * B; ++i) {
             RijndaelClmn t = ((RijndaelClmn *)rk)[i - 1];
             if (i % K == 0) {
-                t.w = S_EXT[0][t.b[1]].w ^ S_EXT[1][t.b[2]].w ^ S_EXT[2][t.b[3]].w ^ S_EXT[3][t.b[0]].w ^ RC[i / K];
+                t.w =
+                    S_EXT[0][t.b[1]].w ^
+                    S_EXT[1][t.b[2]].w ^
+                    S_EXT[2][t.b[3]].w ^
+                    S_EXT[3][t.b[0]].w ^ RC[i / K];
             } else if (K > 6 && i % K == 4) {
-                t.w = S_EXT[0][t.b[0]].w ^ S_EXT[1][t.b[1]].w ^ S_EXT[2][t.b[2]].w ^ S_EXT[3][t.b[3]].w;
+                t.w =
+                    S_EXT[0][t.b[0]].w ^
+                    S_EXT[1][t.b[1]].w ^
+                    S_EXT[2][t.b[2]].w ^
+                    S_EXT[3][t.b[3]].w;
             }
             ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - K].w ^ t.w;
         }
-        ik[R][0].w = rk[0][0].w;
-        ik[R][1].w = rk[0][1].w;
-        ik[R][2].w = rk[0][2].w;
-        ik[R][3].w = rk[0][3].w;
+        // Generate decryption round key
+        FOR<0, B>([&](auto i) {
+            ik[R][i].w = rk[0][i].w;
+        });
         for (int r = 1; r < R; ++r) {
-            ik[R - r][0].w = MCT_D[0][rk[r][0].b[0]].w ^ MCT_D[1][rk[r][0].b[1]].w ^ MCT_D[2][rk[r][0].b[2]].w ^ MCT_D[3][rk[r][0].b[3]].w;
-            ik[R - r][1].w = MCT_D[0][rk[r][1].b[0]].w ^ MCT_D[1][rk[r][1].b[1]].w ^ MCT_D[2][rk[r][1].b[2]].w ^ MCT_D[3][rk[r][1].b[3]].w;
-            ik[R - r][2].w = MCT_D[0][rk[r][2].b[0]].w ^ MCT_D[1][rk[r][2].b[1]].w ^ MCT_D[2][rk[r][2].b[2]].w ^ MCT_D[3][rk[r][2].b[3]].w;
-            ik[R - r][3].w = MCT_D[0][rk[r][3].b[0]].w ^ MCT_D[1][rk[r][3].b[1]].w ^ MCT_D[2][rk[r][3].b[2]].w ^ MCT_D[3][rk[r][3].b[3]].w;
+            FOR<0, B>([&](auto i) {
+                ik[R - r][i].w =
+                    MCT_D[0][rk[r][i].b[0]].w ^
+                    MCT_D[1][rk[r][i].b[1]].w ^
+                    MCT_D[2][rk[r][i].b[2]].w ^
+                    MCT_D[3][rk[r][i].b[3]].w;
+            });
         }
-        ik[0][0].w = rk[R][0].w;
-        ik[0][1].w = rk[R][1].w;
-        ik[0][2].w = rk[R][2].w;
-        ik[0][3].w = rk[R][3].w;
+        FOR<0, B>([&](auto i) {
+            ik[0][i].w = rk[R][i].w;
+        });
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[4];
-        RijndaelClmn t[4];
-        memcpy(q, src, 16);
-        q[0].w ^= rk[0][0].w;
-        q[1].w ^= rk[0][1].w;
-        q[2].w ^= rk[0][2].w;
-        q[3].w ^= rk[0][3].w;
+        RijndaelClmn q[B];
+        RijndaelClmn t[B];
+        memcpy(q, src, B * 4);
+        FOR<0, B>([&](auto i) {
+            q[i].w ^= rk[0][i].w;
+        });
         for (int r = 1; r < R; ++r) {
-            t[0].w = q[0].w;
-            t[1].w = q[1].w;
-            t[2].w = q[2].w;
-            t[3].w = q[3].w;
-            q[0].w = LUT_E[0][t[0].b[0]].w ^ LUT_E[1][t[1].b[1]].w ^ LUT_E[2][t[2].b[2]].w ^ LUT_E[3][t[3].b[3]].w ^ rk[r][0].w;
-            q[1].w = LUT_E[0][t[1].b[0]].w ^ LUT_E[1][t[2].b[1]].w ^ LUT_E[2][t[3].b[2]].w ^ LUT_E[3][t[0].b[3]].w ^ rk[r][1].w;
-            q[2].w = LUT_E[0][t[2].b[0]].w ^ LUT_E[1][t[3].b[1]].w ^ LUT_E[2][t[0].b[2]].w ^ LUT_E[3][t[1].b[3]].w ^ rk[r][2].w;
-            q[3].w = LUT_E[0][t[3].b[0]].w ^ LUT_E[1][t[0].b[1]].w ^ LUT_E[2][t[1].b[2]].w ^ LUT_E[3][t[2].b[3]].w ^ rk[r][3].w;
+            FOR<0, B>([&](auto i) {
+                t[i].w = q[i].w;
+            });
+            FOR<0, B>([&](auto i) {
+                q[i].w =
+                    LUT_E[0][t[ i         ].b[0]].w ^
+                    LUT_E[1][t[(i + 1) % B].b[1]].w ^
+                    LUT_E[2][t[(i + 2) % B].b[2]].w ^
+                    LUT_E[3][t[(i + 3) % B].b[3]].w ^ rk[r][i].w;
+            });
         }
-        t[0].w = q[0].w;
-        t[1].w = q[1].w;
-        t[2].w = q[2].w;
-        t[3].w = q[3].w;
-        q[0].w = S_EXT[0][t[0].b[0]].w ^ S_EXT[1][t[1].b[1]].w ^ S_EXT[2][t[2].b[2]].w ^ S_EXT[3][t[3].b[3]].w ^ rk[R][0].w;
-        q[1].w = S_EXT[0][t[1].b[0]].w ^ S_EXT[1][t[2].b[1]].w ^ S_EXT[2][t[3].b[2]].w ^ S_EXT[3][t[0].b[3]].w ^ rk[R][1].w;
-        q[2].w = S_EXT[0][t[2].b[0]].w ^ S_EXT[1][t[3].b[1]].w ^ S_EXT[2][t[0].b[2]].w ^ S_EXT[3][t[1].b[3]].w ^ rk[R][2].w;
-        q[3].w = S_EXT[0][t[3].b[0]].w ^ S_EXT[1][t[0].b[1]].w ^ S_EXT[2][t[1].b[2]].w ^ S_EXT[3][t[2].b[3]].w ^ rk[R][3].w;
-        memcpy(dst, q, 16);
+        FOR<0, B>([&](auto i) {
+            t[i].w = q[i].w;
+        });
+        FOR<0, B>([&](auto i) {
+            q[i].w =
+                S_EXT[0][t[ i         ].b[0]].w ^
+                S_EXT[1][t[(i + 1) % B].b[1]].w ^
+                S_EXT[2][t[(i + 2) % B].b[2]].w ^
+                S_EXT[3][t[(i + 3) % B].b[3]].w ^ rk[R][i].w;
+        });
+        memcpy(dst, q, B * 4);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[4];
-        RijndaelClmn t[4];
-        memcpy(q, src, 16);
-        q[0].w ^= ik[0][0].w;
-        q[1].w ^= ik[0][1].w;
-        q[2].w ^= ik[0][2].w;
-        q[3].w ^= ik[0][3].w;
+        RijndaelClmn q[B];
+        RijndaelClmn t[B];
+        memcpy(q, src, B * 4);
+        FOR<0, B>([&](auto i) {
+            q[i].w ^= ik[0][i].w;
+        });
         for (int r = 1; r < R; ++r) {
-            t[0].w = q[0].w;
-            t[1].w = q[1].w;
-            t[2].w = q[2].w;
-            t[3].w = q[3].w;
-            q[0].w = LUT_D[0][t[0].b[0]].w ^ LUT_D[1][t[3].b[1]].w ^ LUT_D[2][t[2].b[2]].w ^ LUT_D[3][t[1].b[3]].w ^ ik[r][0].w;
-            q[1].w = LUT_D[0][t[1].b[0]].w ^ LUT_D[1][t[0].b[1]].w ^ LUT_D[2][t[3].b[2]].w ^ LUT_D[3][t[2].b[3]].w ^ ik[r][1].w;
-            q[2].w = LUT_D[0][t[2].b[0]].w ^ LUT_D[1][t[1].b[1]].w ^ LUT_D[2][t[0].b[2]].w ^ LUT_D[3][t[3].b[3]].w ^ ik[r][2].w;
-            q[3].w = LUT_D[0][t[3].b[0]].w ^ LUT_D[1][t[2].b[1]].w ^ LUT_D[2][t[1].b[2]].w ^ LUT_D[3][t[0].b[3]].w ^ ik[r][3].w;
+            FOR<0, B>([&](auto i) {
+                t[i].w = q[i].w;
+            });
+            FOR<0, B>([&](auto i) {
+                q[i].w =
+                    LUT_D[0][t[ i             ].b[0]].w ^
+                    LUT_D[1][t[(i + B - 1) % B].b[1]].w ^
+                    LUT_D[2][t[(i + B - 2) % B].b[2]].w ^
+                    LUT_D[3][t[(i + B - 3) % B].b[3]].w ^ ik[r][i].w;
+            });
         }
-        t[0].w = q[0].w;
-        t[1].w = q[1].w;
-        t[2].w = q[2].w;
-        t[3].w = q[3].w;
-        q[0].w = I_EXT[0][t[0].b[0]].w ^ I_EXT[1][t[3].b[1]].w ^ I_EXT[2][t[2].b[2]].w ^ I_EXT[3][t[1].b[3]].w ^ ik[R][0].w;
-        q[1].w = I_EXT[0][t[1].b[0]].w ^ I_EXT[1][t[0].b[1]].w ^ I_EXT[2][t[3].b[2]].w ^ I_EXT[3][t[2].b[3]].w ^ ik[R][1].w;
-        q[2].w = I_EXT[0][t[2].b[0]].w ^ I_EXT[1][t[1].b[1]].w ^ I_EXT[2][t[0].b[2]].w ^ I_EXT[3][t[3].b[3]].w ^ ik[R][2].w;
-        q[3].w = I_EXT[0][t[3].b[0]].w ^ I_EXT[1][t[2].b[1]].w ^ I_EXT[2][t[1].b[2]].w ^ I_EXT[3][t[0].b[3]].w ^ ik[R][3].w;
-        memcpy(dst, q, 16);
+        FOR<0, B>([&](auto i) {
+            t[i].w = q[i].w;
+        });
+        FOR<0, B>([&](auto i) {
+            q[i].w =
+                I_EXT[0][t[ i             ].b[0]].w ^
+                I_EXT[1][t[(i + B - 1) % B].b[1]].w ^
+                I_EXT[2][t[(i + B - 2) % B].b[2]].w ^
+                I_EXT[3][t[(i + B - 3) % B].b[3]].w ^ ik[R][i].w;
+        });
+        memcpy(dst, q, B * 4);
     }
 };
 using AES128 = RijndaelTmpl<4, 4>;
