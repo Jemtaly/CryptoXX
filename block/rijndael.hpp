@@ -105,7 +105,7 @@ public:
             }
             ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - K].w ^ t.w;
         }
-        // Generate decryption round key
+        // Generate decryption round key from encryption round key
         FOR<0, B>([&](auto i) {
             ik[R][i].w = rk[0][i].w;
         });
