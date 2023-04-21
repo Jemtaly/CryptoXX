@@ -17,7 +17,7 @@ Algorithms are highly optimized (while ensuring readability), and several algori
   - Blowfish
   - Twofish
   - Serpent
-  - Rijndael, AES-128, AES-192, AES-256
+  - Rijndael (with variable blocksize and keysize), AES-128, AES-192, AES-256
   - Camellia
   - SM4
   - CAST-128
