@@ -2,7 +2,7 @@
 #include <array>
 #include "hash.hpp"
 #define SB_SC_MR_NRK(t, j) (                                        \
-    LUT[0][t[(j + 0) % 8].b[0]].w ^ LUT[1][t[(j + 7) % 8].b[1]].w ^ \
+    LUT[0][t[ j         ].b[0]].w ^ LUT[1][t[(j + 7) % 8].b[1]].w ^ \
     LUT[2][t[(j + 6) % 8].b[2]].w ^ LUT[3][t[(j + 5) % 8].b[3]].w ^ \
     LUT[4][t[(j + 4) % 8].b[4]].w ^ LUT[5][t[(j + 3) % 8].b[5]].w ^ \
     LUT[6][t[(j + 2) % 8].b[6]].w ^ LUT[7][t[(j + 1) % 8].b[7]].w   \

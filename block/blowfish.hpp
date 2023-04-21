@@ -279,12 +279,12 @@ public:
         uint8_t itr[8] = {};
         for (int i = 0; i < 1042;) {
             encrypt(itr, itr);
-            ((uint32_t *)P)[i++] = GET_BE<uint32_t>(itr + 0);
+            ((uint32_t *)P)[i++] = GET_BE<uint32_t>(itr    );
             ((uint32_t *)P)[i++] = GET_BE<uint32_t>(itr + 4);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t L = GET_BE<uint32_t>(src + 0);
+        uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
         for (int r = 0;;) {
             L ^= P[r++];
@@ -293,11 +293,11 @@ public:
             R ^= ((S[0][L >> 24] + S[1][L >> 16 & 0xff]) ^ S[2][L >> 8 & 0xff]) + S[3][L & 0xff];
             L ^= ((S[0][R >> 24] + S[1][R >> 16 & 0xff]) ^ S[2][R >> 8 & 0xff]) + S[3][R & 0xff];
         }
-        PUT_BE(dst + 0, R);
+        PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t L = GET_BE<uint32_t>(src + 0);
+        uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
         for (int r = 18;;) {
             L ^= P[--r];
@@ -306,7 +306,7 @@ public:
             R ^= ((S[0][L >> 24] + S[1][L >> 16 & 0xff]) ^ S[2][L >> 8 & 0xff]) + S[3][L & 0xff];
             L ^= ((S[0][R >> 24] + S[1][R >> 16 & 0xff]) ^ S[2][R >> 8 & 0xff]) + S[3][R & 0xff];
         }
-        PUT_BE(dst + 0, R);
+        PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
 };

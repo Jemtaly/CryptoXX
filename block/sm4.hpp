@@ -72,7 +72,7 @@ public:
         t[2] = GET_BE<uint32_t>(src +  8);
         t[3] = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i++) {
-            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i +  4];
+            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
             t[i + 4] = t[i] ^ LUT_S[0][a & 0xff] ^ LUT_S[1][a >> 8 & 0xff] ^ LUT_S[2][a >> 16 & 0xff] ^ LUT_S[3][a >> 24];
         }
         PUT_BE(dst     , t[35]);
