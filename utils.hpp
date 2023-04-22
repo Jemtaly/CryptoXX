@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <concepts>
+using bits_t = uint8_t;
 template <std::unsigned_integral T>
-constexpr inline T ROTL(T const x, uint8_t const n) {
+constexpr inline T ROTL(T const x, bits_t const n) {
     return (x << (n & (sizeof(T) * 8 - 1)) | (x) >> (-n & (sizeof(T) * 8 - 1)));
 }
 template <std::unsigned_integral T>
-constexpr inline T ROTR(T const x, uint8_t const n) {
+constexpr inline T ROTR(T const x, bits_t const n) {
     return (x >> (n & (sizeof(T) * 8 - 1)) | (x) << (-n & (sizeof(T) * 8 - 1)));
 }
 template <std::unsigned_integral T>

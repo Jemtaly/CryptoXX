@@ -1,10 +1,18 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-struct CAST256Key {
-    uint32_t m;
-    bits_t r;
-};
+#define FFA(X, Y, I, Km, Kr, i, j) {                                                          \
+    I = ROTL(Km[i][j] + Y, Kr[i][j]);                                                         \
+    X ^= ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF]; \
+}
+#define FFB(X, Y, I, Km, Kr, i, j) {                                                          \
+    I = ROTL(Km[i][j] ^ Y, Kr[i][j]);                                                         \
+    X ^= ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF]; \
+}
+#define FFC(X, Y, I, Km, Kr, i, j) {                                                          \
+    I = ROTL(Km[i][j] - Y, Kr[i][j]);                                                         \
+    X ^= ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF]; \
+}
 class CAST256 {
 private:
     static constexpr uint32_t S[4][256] = {
@@ -137,35 +145,27 @@ private:
         0x8644213e, 0xb7dc59d0, 0x7965291f, 0xccd6fd43, 0x41823979, 0x932bcdf6, 0xb657c34d, 0x4edfd282,
         0x7ae5290c, 0x3cb9536b, 0x851e20fe, 0x9833557e, 0x13ecf0b0, 0xd3ffb372, 0x3f85c5c1, 0x0aef7ed2,
     };
-    static constexpr auto T = []() {
-        CAST256Key C = {.m = 0x5a827999, .r = 19};
-        CAST256Key M = {.m = 0x6ed9eba1, .r = 17};
-        std::array<std::array<CAST256Key, 8>, 24> T;
-        for (int i = 0; i < 24; i++) {
-            for (int j = 0; j < 8; j++) {
-                T[i][j] = C;
-                C.m += M.m;
-                C.r += M.r;
-            }
-        }
-        return T;
-    }();
-    static uint32_t FFA(uint32_t Y, CAST256Key const &K) {
-        uint32_t I = ROTL(K.m + Y, K.r);
-        return ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF];
-    }
-    static uint32_t FFB(uint32_t Y, CAST256Key const &K) {
-        uint32_t I = ROTL(K.m ^ Y, K.r);
-        return ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF];
-    }
-    static uint32_t FFC(uint32_t Y, CAST256Key const &K) {
-        uint32_t I = ROTL(K.m - Y, K.r);
-        return ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF];
-    }
-    CAST256Key K[12][4];
+    uint32_t Km[12][4];
+    bits_t Kr[12][4];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     CAST256(uint8_t const *key) {
+        // initialize constants
+        uint32_t Cm = 0x5a827999;
+        uint32_t Mm = 0x6ed9eba1;
+        bits_t Cr = 19;
+        bits_t Mr = 17;
+        uint32_t Tm[24][8];
+        bits_t Tr[24][8];
+        for (int i = 0; i < 24; i++) {
+            for (int j = 0; j < 8; j++) {
+                Tm[i][j] = Cm;
+                Cm += Mm;
+                Tr[i][j] = Cr;
+                Cr += Mr;
+            }
+        }
+        // key expansion
         uint32_t A = GET_BE<uint32_t>(key     );
         uint32_t B = GET_BE<uint32_t>(key +  4);
         uint32_t C = GET_BE<uint32_t>(key +  8);
@@ -174,31 +174,32 @@ public:
         uint32_t F = GET_BE<uint32_t>(key + 20);
         uint32_t G = GET_BE<uint32_t>(key + 24);
         uint32_t H = GET_BE<uint32_t>(key + 28);
+        uint32_t I;
         for (int i = 0; i <= 11; i++) {
-            G ^= FFA(H, T[2 * i    ][0]);
-            F ^= FFB(G, T[2 * i    ][1]);
-            E ^= FFC(F, T[2 * i    ][2]);
-            D ^= FFA(E, T[2 * i    ][3]);
-            C ^= FFB(D, T[2 * i    ][4]);
-            B ^= FFC(C, T[2 * i    ][5]);
-            A ^= FFA(B, T[2 * i    ][6]);
-            H ^= FFB(A, T[2 * i    ][7]);
-            G ^= FFA(H, T[2 * i + 1][0]);
-            F ^= FFB(G, T[2 * i + 1][1]);
-            E ^= FFC(F, T[2 * i + 1][2]);
-            D ^= FFA(E, T[2 * i + 1][3]);
-            C ^= FFB(D, T[2 * i + 1][4]);
-            B ^= FFC(C, T[2 * i + 1][5]);
-            A ^= FFA(B, T[2 * i + 1][6]);
-            H ^= FFB(A, T[2 * i + 1][7]);
-            K[i][0].r = A;
-            K[i][1].r = C;
-            K[i][2].r = E;
-            K[i][3].r = G;
-            K[i][0].m = H;
-            K[i][1].m = F;
-            K[i][2].m = D;
-            K[i][3].m = B;
+            FFA(G, H, I, Tm, Tr, 2 * i    , 0);
+            FFB(F, G, I, Tm, Tr, 2 * i    , 1);
+            FFC(E, F, I, Tm, Tr, 2 * i    , 2);
+            FFA(D, E, I, Tm, Tr, 2 * i    , 3);
+            FFB(C, D, I, Tm, Tr, 2 * i    , 4);
+            FFC(B, C, I, Tm, Tr, 2 * i    , 5);
+            FFA(A, B, I, Tm, Tr, 2 * i    , 6);
+            FFB(H, A, I, Tm, Tr, 2 * i    , 7);
+            FFA(G, H, I, Tm, Tr, 2 * i + 1, 0);
+            FFB(F, G, I, Tm, Tr, 2 * i + 1, 1);
+            FFC(E, F, I, Tm, Tr, 2 * i + 1, 2);
+            FFA(D, E, I, Tm, Tr, 2 * i + 1, 3);
+            FFB(C, D, I, Tm, Tr, 2 * i + 1, 4);
+            FFC(B, C, I, Tm, Tr, 2 * i + 1, 5);
+            FFA(A, B, I, Tm, Tr, 2 * i + 1, 6);
+            FFB(H, A, I, Tm, Tr, 2 * i + 1, 7);
+            Kr[i][0] = A;
+            Kr[i][1] = C;
+            Kr[i][2] = E;
+            Kr[i][3] = G;
+            Km[i][0] = H;
+            Km[i][1] = F;
+            Km[i][2] = D;
+            Km[i][3] = B;
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
@@ -206,17 +207,18 @@ public:
         uint32_t B = GET_BE<uint32_t>(src +  4);
         uint32_t C = GET_BE<uint32_t>(src +  8);
         uint32_t D = GET_BE<uint32_t>(src + 12);
+        uint32_t I;
         for (int i = 0; i <=  5; i++) {
-            C ^= FFA(D, K[i][0]);
-            B ^= FFB(C, K[i][1]);
-            A ^= FFC(B, K[i][2]);
-            D ^= FFA(A, K[i][3]);
+            FFA(C, D, I, Km, Kr, i, 0);
+            FFB(B, C, I, Km, Kr, i, 1);
+            FFC(A, B, I, Km, Kr, i, 2);
+            FFA(D, A, I, Km, Kr, i, 3);
         }
         for (int i = 6; i <= 11; i++) {
-            D ^= FFA(A, K[i][3]);
-            A ^= FFC(B, K[i][2]);
-            B ^= FFB(C, K[i][1]);
-            C ^= FFA(D, K[i][0]);
+            FFA(D, A, I, Km, Kr, i, 3);
+            FFC(A, B, I, Km, Kr, i, 2);
+            FFB(B, C, I, Km, Kr, i, 1);
+            FFA(C, D, I, Km, Kr, i, 0);
         }
         PUT_BE(dst     , A);
         PUT_BE(dst +  4, B);
@@ -228,17 +230,18 @@ public:
         uint32_t B = GET_BE<uint32_t>(src +  4);
         uint32_t C = GET_BE<uint32_t>(src +  8);
         uint32_t D = GET_BE<uint32_t>(src + 12);
+        uint32_t I;
         for (int i = 11; i >= 6; i--) {
-            C ^= FFA(D, K[i][0]);
-            B ^= FFB(C, K[i][1]);
-            A ^= FFC(B, K[i][2]);
-            D ^= FFA(A, K[i][3]);
+            FFA(C, D, I, Km, Kr, i, 0);
+            FFB(B, C, I, Km, Kr, i, 1);
+            FFC(A, B, I, Km, Kr, i, 2);
+            FFA(D, A, I, Km, Kr, i, 3);
         }
         for (int i =  5; i >= 0; i--) {
-            D ^= FFA(A, K[i][3]);
-            A ^= FFC(B, K[i][2]);
-            B ^= FFB(C, K[i][1]);
-            C ^= FFA(D, K[i][0]);
+            FFA(D, A, I, Km, Kr, i, 3);
+            FFC(A, B, I, Km, Kr, i, 2);
+            FFB(B, C, I, Km, Kr, i, 1);
+            FFA(C, D, I, Km, Kr, i, 0);
         }
         PUT_BE(dst     , A);
         PUT_BE(dst +  4, B);
@@ -246,3 +249,6 @@ public:
         PUT_BE(dst + 12, D);
     }
 };
+#undef FFA
+#undef FFB
+#undef FFC

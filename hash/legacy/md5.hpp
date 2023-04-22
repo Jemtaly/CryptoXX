@@ -16,7 +16,6 @@
         c = b;                                       \
         b += ROTL(s, R[i]);                          \
     }
-typedef uint8_t bits_t;
 class MD5 {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,

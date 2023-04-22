@@ -1,10 +1,18 @@
 #pragma once
 #include <array>
 #include "block.hpp"
-struct CAST128Key {
-    uint32_t m;
-    bits_t r;
-};
+#define FFA(X, Y, I, Km, Kr, i) {                                                             \
+    I = ROTL(Km[i] + Y, Kr[i]);                                                               \
+    X ^= ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF]; \
+}
+#define FFB(X, Y, I, Km, Kr, i) {                                                             \
+    I = ROTL(Km[i] ^ Y, Kr[i]);                                                               \
+    X ^= ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF]; \
+}
+#define FFC(X, Y, I, Km, Kr, i) {                                                             \
+    I = ROTL(Km[i] - Y, Kr[i]);                                                               \
+    X ^= ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF]; \
+}
 class CAST128 {
 private:
     static constexpr uint32_t S[8][256] = {
@@ -265,19 +273,8 @@ private:
         0xe97625a5, 0x0614d1b7, 0x0e25244b, 0x0c768347, 0x589e8d82, 0x0d2059d1, 0xa466bb1e, 0xf8da0a82,
         0x04f19130, 0xba6e4ec0, 0x99265164, 0x1ee7230d, 0x50b2ad80, 0xeaee6801, 0x8db2a283, 0xea8bf59e,
     };
-    static uint32_t FFA(uint32_t Y, CAST128Key const &K) {
-        uint32_t I = ROTL(K.m + Y, K.r);
-        return ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF];
-    }
-    static uint32_t FFB(uint32_t Y, CAST128Key const &K) {
-        uint32_t I = ROTL(K.m ^ Y, K.r);
-        return ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF];
-    }
-    static uint32_t FFC(uint32_t Y, CAST128Key const &K) {
-        uint32_t I = ROTL(K.m - Y, K.r);
-        return ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF];
-    }
-    CAST128Key K[16];
+    uint32_t Km[16];
+    bits_t Kr[16];
 public:
     static constexpr size_t BLOCK_SIZE = 8;
     CAST128(uint8_t const *key) {
@@ -290,109 +287,114 @@ public:
         z[1] = x[2] ^ S[4][BYTE_BE(z, 0x0)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(x, 0xA)];
         z[2] = x[3] ^ S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[4][BYTE_BE(x, 0x9)];
         z[3] = x[1] ^ S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(x, 0xB)];
-        K[ 0].m = S[4][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x7)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[4][BYTE_BE(z, 0x2)];
-        K[ 1].m = S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0xB)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[5][BYTE_BE(z, 0x6)];
-        K[ 2].m = S[4][BYTE_BE(z, 0xC)] ^ S[5][BYTE_BE(z, 0xD)] ^ S[6][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x9)];
-        K[ 3].m = S[4][BYTE_BE(z, 0xE)] ^ S[5][BYTE_BE(z, 0xF)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x0)] ^ S[7][BYTE_BE(z, 0xC)];
+        Km[ 0] = S[4][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x7)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[4][BYTE_BE(z, 0x2)];
+        Km[ 1] = S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0xB)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[5][BYTE_BE(z, 0x6)];
+        Km[ 2] = S[4][BYTE_BE(z, 0xC)] ^ S[5][BYTE_BE(z, 0xD)] ^ S[6][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x9)];
+        Km[ 3] = S[4][BYTE_BE(z, 0xE)] ^ S[5][BYTE_BE(z, 0xF)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x0)] ^ S[7][BYTE_BE(z, 0xC)];
         x[0] = z[2] ^ S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x7)] ^ S[6][BYTE_BE(z, 0x4)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x0)];
         x[1] = z[0] ^ S[4][BYTE_BE(x, 0x0)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(z, 0x2)];
         x[2] = z[1] ^ S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[4][BYTE_BE(z, 0x1)];
         x[3] = z[3] ^ S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(z, 0x3)];
-        K[ 4].m = S[4][BYTE_BE(x, 0x3)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xD)] ^ S[4][BYTE_BE(x, 0x8)];
-        K[ 5].m = S[4][BYTE_BE(x, 0x1)] ^ S[5][BYTE_BE(x, 0x0)] ^ S[6][BYTE_BE(x, 0xE)] ^ S[7][BYTE_BE(x, 0xF)] ^ S[5][BYTE_BE(x, 0xD)];
-        K[ 6].m = S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x8)] ^ S[7][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x3)];
-        K[ 7].m = S[4][BYTE_BE(x, 0x5)] ^ S[5][BYTE_BE(x, 0x4)] ^ S[6][BYTE_BE(x, 0xA)] ^ S[7][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x7)];
+        Km[ 4] = S[4][BYTE_BE(x, 0x3)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xD)] ^ S[4][BYTE_BE(x, 0x8)];
+        Km[ 5] = S[4][BYTE_BE(x, 0x1)] ^ S[5][BYTE_BE(x, 0x0)] ^ S[6][BYTE_BE(x, 0xE)] ^ S[7][BYTE_BE(x, 0xF)] ^ S[5][BYTE_BE(x, 0xD)];
+        Km[ 6] = S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x8)] ^ S[7][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x3)];
+        Km[ 7] = S[4][BYTE_BE(x, 0x5)] ^ S[5][BYTE_BE(x, 0x4)] ^ S[6][BYTE_BE(x, 0xA)] ^ S[7][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x7)];
         z[0] = x[0] ^ S[4][BYTE_BE(x, 0xD)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xE)] ^ S[6][BYTE_BE(x, 0x8)];
         z[1] = x[2] ^ S[4][BYTE_BE(z, 0x0)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(x, 0xA)];
         z[2] = x[3] ^ S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[4][BYTE_BE(x, 0x9)];
         z[3] = x[1] ^ S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(x, 0xB)];
-        K[ 8].m = S[4][BYTE_BE(z, 0x3)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0xC)] ^ S[7][BYTE_BE(z, 0xD)] ^ S[4][BYTE_BE(z, 0x9)];
-        K[ 9].m = S[4][BYTE_BE(z, 0x1)] ^ S[5][BYTE_BE(z, 0x0)] ^ S[6][BYTE_BE(z, 0xE)] ^ S[7][BYTE_BE(z, 0xF)] ^ S[5][BYTE_BE(z, 0xC)];
-        K[10].m = S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x8)] ^ S[7][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x2)];
-        K[11].m = S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x4)] ^ S[6][BYTE_BE(z, 0xA)] ^ S[7][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x6)];
+        Km[ 8] = S[4][BYTE_BE(z, 0x3)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0xC)] ^ S[7][BYTE_BE(z, 0xD)] ^ S[4][BYTE_BE(z, 0x9)];
+        Km[ 9] = S[4][BYTE_BE(z, 0x1)] ^ S[5][BYTE_BE(z, 0x0)] ^ S[6][BYTE_BE(z, 0xE)] ^ S[7][BYTE_BE(z, 0xF)] ^ S[5][BYTE_BE(z, 0xC)];
+        Km[10] = S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x8)] ^ S[7][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x2)];
+        Km[11] = S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x4)] ^ S[6][BYTE_BE(z, 0xA)] ^ S[7][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x6)];
         x[0] = z[2] ^ S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x7)] ^ S[6][BYTE_BE(z, 0x4)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x0)];
         x[1] = z[0] ^ S[4][BYTE_BE(x, 0x0)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(z, 0x2)];
         x[2] = z[1] ^ S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[4][BYTE_BE(z, 0x1)];
         x[3] = z[3] ^ S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(z, 0x3)];
-        K[12].m = S[4][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x7)] ^ S[7][BYTE_BE(x, 0x6)] ^ S[4][BYTE_BE(x, 0x3)];
-        K[13].m = S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0xB)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[5][BYTE_BE(x, 0x7)];
-        K[14].m = S[4][BYTE_BE(x, 0xC)] ^ S[5][BYTE_BE(x, 0xD)] ^ S[6][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x8)];
-        K[15].m = S[4][BYTE_BE(x, 0xE)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x0)] ^ S[7][BYTE_BE(x, 0xD)];
+        Km[12] = S[4][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x7)] ^ S[7][BYTE_BE(x, 0x6)] ^ S[4][BYTE_BE(x, 0x3)];
+        Km[13] = S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0xB)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[5][BYTE_BE(x, 0x7)];
+        Km[14] = S[4][BYTE_BE(x, 0xC)] ^ S[5][BYTE_BE(x, 0xD)] ^ S[6][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x8)];
+        Km[15] = S[4][BYTE_BE(x, 0xE)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x0)] ^ S[7][BYTE_BE(x, 0xD)];
         z[0] = x[0] ^ S[4][BYTE_BE(x, 0xD)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xE)] ^ S[6][BYTE_BE(x, 0x8)];
         z[1] = x[2] ^ S[4][BYTE_BE(z, 0x0)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(x, 0xA)];
         z[2] = x[3] ^ S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[4][BYTE_BE(x, 0x9)];
         z[3] = x[1] ^ S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(x, 0xB)];
-        K[ 0].r = S[4][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x7)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[4][BYTE_BE(z, 0x2)];
-        K[ 1].r = S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0xB)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[5][BYTE_BE(z, 0x6)];
-        K[ 2].r = S[4][BYTE_BE(z, 0xC)] ^ S[5][BYTE_BE(z, 0xD)] ^ S[6][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x9)];
-        K[ 3].r = S[4][BYTE_BE(z, 0xE)] ^ S[5][BYTE_BE(z, 0xF)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x0)] ^ S[7][BYTE_BE(z, 0xC)];
+        Kr[ 0] = S[4][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x7)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[4][BYTE_BE(z, 0x2)];
+        Kr[ 1] = S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0xB)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[5][BYTE_BE(z, 0x6)];
+        Kr[ 2] = S[4][BYTE_BE(z, 0xC)] ^ S[5][BYTE_BE(z, 0xD)] ^ S[6][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x9)];
+        Kr[ 3] = S[4][BYTE_BE(z, 0xE)] ^ S[5][BYTE_BE(z, 0xF)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x0)] ^ S[7][BYTE_BE(z, 0xC)];
         x[0] = z[2] ^ S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x7)] ^ S[6][BYTE_BE(z, 0x4)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x0)];
         x[1] = z[0] ^ S[4][BYTE_BE(x, 0x0)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(z, 0x2)];
         x[2] = z[1] ^ S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[4][BYTE_BE(z, 0x1)];
         x[3] = z[3] ^ S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(z, 0x3)];
-        K[ 4].r = S[4][BYTE_BE(x, 0x3)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xD)] ^ S[4][BYTE_BE(x, 0x8)];
-        K[ 5].r = S[4][BYTE_BE(x, 0x1)] ^ S[5][BYTE_BE(x, 0x0)] ^ S[6][BYTE_BE(x, 0xE)] ^ S[7][BYTE_BE(x, 0xF)] ^ S[5][BYTE_BE(x, 0xD)];
-        K[ 6].r = S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x8)] ^ S[7][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x3)];
-        K[ 7].r = S[4][BYTE_BE(x, 0x5)] ^ S[5][BYTE_BE(x, 0x4)] ^ S[6][BYTE_BE(x, 0xA)] ^ S[7][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x7)];
+        Kr[ 4] = S[4][BYTE_BE(x, 0x3)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xD)] ^ S[4][BYTE_BE(x, 0x8)];
+        Kr[ 5] = S[4][BYTE_BE(x, 0x1)] ^ S[5][BYTE_BE(x, 0x0)] ^ S[6][BYTE_BE(x, 0xE)] ^ S[7][BYTE_BE(x, 0xF)] ^ S[5][BYTE_BE(x, 0xD)];
+        Kr[ 6] = S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x8)] ^ S[7][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x3)];
+        Kr[ 7] = S[4][BYTE_BE(x, 0x5)] ^ S[5][BYTE_BE(x, 0x4)] ^ S[6][BYTE_BE(x, 0xA)] ^ S[7][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x7)];
         z[0] = x[0] ^ S[4][BYTE_BE(x, 0xD)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0xC)] ^ S[7][BYTE_BE(x, 0xE)] ^ S[6][BYTE_BE(x, 0x8)];
         z[1] = x[2] ^ S[4][BYTE_BE(z, 0x0)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0x1)] ^ S[7][BYTE_BE(z, 0x3)] ^ S[7][BYTE_BE(x, 0xA)];
         z[2] = x[3] ^ S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x5)] ^ S[7][BYTE_BE(z, 0x4)] ^ S[4][BYTE_BE(x, 0x9)];
         z[3] = x[1] ^ S[4][BYTE_BE(z, 0xA)] ^ S[5][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x8)] ^ S[5][BYTE_BE(x, 0xB)];
-        K[ 8].r = S[4][BYTE_BE(z, 0x3)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0xC)] ^ S[7][BYTE_BE(z, 0xD)] ^ S[4][BYTE_BE(z, 0x9)];
-        K[ 9].r = S[4][BYTE_BE(z, 0x1)] ^ S[5][BYTE_BE(z, 0x0)] ^ S[6][BYTE_BE(z, 0xE)] ^ S[7][BYTE_BE(z, 0xF)] ^ S[5][BYTE_BE(z, 0xC)];
-        K[10].r = S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x8)] ^ S[7][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x2)];
-        K[11].r = S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x4)] ^ S[6][BYTE_BE(z, 0xA)] ^ S[7][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x6)];
+        Kr[ 8] = S[4][BYTE_BE(z, 0x3)] ^ S[5][BYTE_BE(z, 0x2)] ^ S[6][BYTE_BE(z, 0xC)] ^ S[7][BYTE_BE(z, 0xD)] ^ S[4][BYTE_BE(z, 0x9)];
+        Kr[ 9] = S[4][BYTE_BE(z, 0x1)] ^ S[5][BYTE_BE(z, 0x0)] ^ S[6][BYTE_BE(z, 0xE)] ^ S[7][BYTE_BE(z, 0xF)] ^ S[5][BYTE_BE(z, 0xC)];
+        Kr[10] = S[4][BYTE_BE(z, 0x7)] ^ S[5][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x8)] ^ S[7][BYTE_BE(z, 0x9)] ^ S[6][BYTE_BE(z, 0x2)];
+        Kr[11] = S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x4)] ^ S[6][BYTE_BE(z, 0xA)] ^ S[7][BYTE_BE(z, 0xB)] ^ S[7][BYTE_BE(z, 0x6)];
         x[0] = z[2] ^ S[4][BYTE_BE(z, 0x5)] ^ S[5][BYTE_BE(z, 0x7)] ^ S[6][BYTE_BE(z, 0x4)] ^ S[7][BYTE_BE(z, 0x6)] ^ S[6][BYTE_BE(z, 0x0)];
         x[1] = z[0] ^ S[4][BYTE_BE(x, 0x0)] ^ S[5][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(z, 0x2)];
         x[2] = z[1] ^ S[4][BYTE_BE(x, 0x7)] ^ S[5][BYTE_BE(x, 0x6)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[4][BYTE_BE(z, 0x1)];
         x[3] = z[3] ^ S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0xB)] ^ S[7][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(z, 0x3)];
-        K[12].r = S[4][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x7)] ^ S[7][BYTE_BE(x, 0x6)] ^ S[4][BYTE_BE(x, 0x3)];
-        K[13].r = S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0xB)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[5][BYTE_BE(x, 0x7)];
-        K[14].r = S[4][BYTE_BE(x, 0xC)] ^ S[5][BYTE_BE(x, 0xD)] ^ S[6][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x8)];
-        K[15].r = S[4][BYTE_BE(x, 0xE)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x0)] ^ S[7][BYTE_BE(x, 0xD)];
+        Kr[12] = S[4][BYTE_BE(x, 0x8)] ^ S[5][BYTE_BE(x, 0x9)] ^ S[6][BYTE_BE(x, 0x7)] ^ S[7][BYTE_BE(x, 0x6)] ^ S[4][BYTE_BE(x, 0x3)];
+        Kr[13] = S[4][BYTE_BE(x, 0xA)] ^ S[5][BYTE_BE(x, 0xB)] ^ S[6][BYTE_BE(x, 0x5)] ^ S[7][BYTE_BE(x, 0x4)] ^ S[5][BYTE_BE(x, 0x7)];
+        Kr[14] = S[4][BYTE_BE(x, 0xC)] ^ S[5][BYTE_BE(x, 0xD)] ^ S[6][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x8)];
+        Kr[15] = S[4][BYTE_BE(x, 0xE)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x0)] ^ S[7][BYTE_BE(x, 0xD)];
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
-        L ^= FFA(R, K[ 0]);
-        R ^= FFB(L, K[ 1]);
-        L ^= FFC(R, K[ 2]);
-        R ^= FFA(L, K[ 3]);
-        L ^= FFB(R, K[ 4]);
-        R ^= FFC(L, K[ 5]);
-        L ^= FFA(R, K[ 6]);
-        R ^= FFB(L, K[ 7]);
-        L ^= FFC(R, K[ 8]);
-        R ^= FFA(L, K[ 9]);
-        L ^= FFB(R, K[10]);
-        R ^= FFC(L, K[11]);
-        L ^= FFA(R, K[12]);
-        R ^= FFB(L, K[13]);
-        L ^= FFC(R, K[14]);
-        R ^= FFA(L, K[15]);
+        uint32_t I;
+        FFA(L, R, I, Km, Kr,  0);
+        FFB(R, L, I, Km, Kr,  1);
+        FFC(L, R, I, Km, Kr,  2);
+        FFA(R, L, I, Km, Kr,  3);
+        FFB(L, R, I, Km, Kr,  4);
+        FFC(R, L, I, Km, Kr,  5);
+        FFA(L, R, I, Km, Kr,  6);
+        FFB(R, L, I, Km, Kr,  7);
+        FFC(L, R, I, Km, Kr,  8);
+        FFA(R, L, I, Km, Kr,  9);
+        FFB(L, R, I, Km, Kr, 10);
+        FFC(R, L, I, Km, Kr, 11);
+        FFA(L, R, I, Km, Kr, 12);
+        FFB(R, L, I, Km, Kr, 13);
+        FFC(L, R, I, Km, Kr, 14);
+        FFA(R, L, I, Km, Kr, 15);
         PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
-        L ^= FFA(R, K[15]);
-        R ^= FFC(L, K[14]);
-        L ^= FFB(R, K[13]);
-        R ^= FFA(L, K[12]);
-        L ^= FFC(R, K[11]);
-        R ^= FFB(L, K[10]);
-        L ^= FFA(R, K[ 9]);
-        R ^= FFC(L, K[ 8]);
-        L ^= FFB(R, K[ 7]);
-        R ^= FFA(L, K[ 6]);
-        L ^= FFC(R, K[ 5]);
-        R ^= FFB(L, K[ 4]);
-        L ^= FFA(R, K[ 3]);
-        R ^= FFC(L, K[ 2]);
-        L ^= FFB(R, K[ 1]);
-        R ^= FFA(L, K[ 0]);
+        uint32_t I;
+        FFA(L, R, I, Km, Kr, 15);
+        FFC(R, L, I, Km, Kr, 14);
+        FFB(L, R, I, Km, Kr, 13);
+        FFA(R, L, I, Km, Kr, 12);
+        FFC(L, R, I, Km, Kr, 11);
+        FFB(R, L, I, Km, Kr, 10);
+        FFA(L, R, I, Km, Kr,  9);
+        FFC(R, L, I, Km, Kr,  8);
+        FFB(L, R, I, Km, Kr,  7);
+        FFA(R, L, I, Km, Kr,  6);
+        FFC(L, R, I, Km, Kr,  5);
+        FFB(R, L, I, Km, Kr,  4);
+        FFA(L, R, I, Km, Kr,  3);
+        FFC(R, L, I, Km, Kr,  2);
+        FFB(L, R, I, Km, Kr,  1);
+        FFA(R, L, I, Km, Kr,  0);
         PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
 };
+#undef FFA
+#undef FFB
+#undef FFC

@@ -1,7 +1,6 @@
 #pragma once
 #include "block.hpp"
 #define ROTL28(a, n) ((a) << (n) & 0xFFFFFFF | (a) >> (28 - (n)))
-typedef uint8_t bits_t;
 class DES {
     // choose the smallest type that can hold the number of bits
     template <int bits>

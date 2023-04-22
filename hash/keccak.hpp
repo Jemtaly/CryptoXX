@@ -13,7 +13,6 @@
 #define A_D(y, x) A[y][x] ^= D[x]
 #define B_A(y, x) B[(2 * x + 3 * y) % 5][y] = ROTL(A[y][x], R[y][x])
 #define A_B(y, x) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
-typedef uint8_t bits_t;
 class KeccakBase {
 protected:
     static constexpr uint64_t RC[24] = {

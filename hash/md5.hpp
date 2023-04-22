@@ -24,7 +24,6 @@
     HH4(N, a, b, c, d, s, w, K, R, i +  8);      \
     HH4(N, a, b, c, d, s, w, K, R, i + 12);      \
 }
-typedef uint8_t bits_t;
 class MD5 {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
