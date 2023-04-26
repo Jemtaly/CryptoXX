@@ -91,17 +91,16 @@ public:
         for (int i = K; i < (R + 1) * B; ++i) {
             RijndaelClmn t = ((RijndaelClmn *)rk)[i - 1];
             if (i % K == 0) {
-                t.w =
-                    S_EXT[0][t.b[1]].w ^
-                    S_EXT[1][t.b[2]].w ^
-                    S_EXT[2][t.b[3]].w ^
-                    S_EXT[3][t.b[0]].w ^ RC[i / K];
+                auto x = S_BOX[t.b[1]];
+                t.b[1] = S_BOX[t.b[2]];
+                t.b[2] = S_BOX[t.b[3]];
+                t.b[3] = S_BOX[t.b[0]];
+                t.b[0] = x ^ RC[i / K];
             } else if (K > 6 && i % K == 4) {
-                t.w =
-                    S_EXT[0][t.b[0]].w ^
-                    S_EXT[1][t.b[1]].w ^
-                    S_EXT[2][t.b[2]].w ^
-                    S_EXT[3][t.b[3]].w;
+                t.b[0] = S_BOX[t.b[0]];
+                t.b[1] = S_BOX[t.b[1]];
+                t.b[2] = S_BOX[t.b[2]];
+                t.b[3] = S_BOX[t.b[3]];
             }
             ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - K].w ^ t.w;
         }
