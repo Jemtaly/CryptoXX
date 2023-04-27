@@ -230,7 +230,7 @@ constexpr inline void XORB_BW(uint8_t *arr, T const *a, int n) {
 //         FOR<Start + Step, Stop, Step, Eq>(std::forward<F>(f));
 //     }
 // }
-#define FOR(i, Init, Next, Cond, Proc) {                                         \
+#define FOR(i, Init, Next, Cond, Proc) do {                                      \
     static constexpr auto Arr = []() {                                           \
         auto i = Init;                                                           \
         bool b = Cond;                                                           \
@@ -308,4 +308,4 @@ constexpr inline void XORB_BW(uint8_t *arr, T const *a, int n) {
     if constexpr (static constexpr auto &i = Arr[62].first; Arr[62].second) Proc \
     if constexpr (static constexpr auto &i = Arr[63].first; Arr[63].second) Proc \
     static_assert(not Arr[64].second, "Too many iterations");                    \
-}
+} while (false)
