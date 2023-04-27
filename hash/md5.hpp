@@ -8,9 +8,21 @@
 #define GG1(i) (5 * (i) + 1 & 0xf)
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
-#define HHN(N, a, b, c, d, s, w, K, R, i) {      \
+#define HH1(N, a, b, c, d, s, w, K, R, i) {      \
     s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
     a = b + ROTL(s, R[i]);                       \
+}
+#define HH4(N, a, b, c, d, s, w, K, R, i) {      \
+    HH1(N, a, b, c, d, s, w, K, R, i     );      \
+    HH1(N, d, a, b, c, s, w, K, R, i +  1);      \
+    HH1(N, c, d, a, b, s, w, K, R, i +  2);      \
+    HH1(N, b, c, d, a, s, w, K, R, i +  3);      \
+}
+#define HHX(N, a, b, c, d, s, w, K, R, i) {      \
+    HH4(N, a, b, c, d, s, w, K, R, i     );      \
+    HH4(N, a, b, c, d, s, w, K, R, i +  4);      \
+    HH4(N, a, b, c, d, s, w, K, R, i +  8);      \
+    HH4(N, a, b, c, d, s, w, K, R, i + 12);      \
 }
 class MD5 {
     static constexpr uint32_t K[64] = {
@@ -47,30 +59,10 @@ class MD5 {
         uint32_t c = h[2];
         uint32_t d = h[3];
         uint32_t s;
-        FOR(i,  0, 4, <, 16, {
-            HHN(0, a, b, c, d, s, w, K, R, i    );
-            HHN(0, d, a, b, c, s, w, K, R, i + 1);
-            HHN(0, c, d, a, b, s, w, K, R, i + 2);
-            HHN(0, b, c, d, a, s, w, K, R, i + 3);
-        });
-        FOR(i, 16, 4, <, 32, {
-            HHN(1, a, b, c, d, s, w, K, R, i    );
-            HHN(1, d, a, b, c, s, w, K, R, i + 1);
-            HHN(1, c, d, a, b, s, w, K, R, i + 2);
-            HHN(1, b, c, d, a, s, w, K, R, i + 3);
-        });
-        FOR(i, 32, 4, <, 48, {
-            HHN(2, a, b, c, d, s, w, K, R, i    );
-            HHN(2, d, a, b, c, s, w, K, R, i + 1);
-            HHN(2, c, d, a, b, s, w, K, R, i + 2);
-            HHN(2, b, c, d, a, s, w, K, R, i + 3);
-        });
-        FOR(i, 48, 4, <, 64, {
-            HHN(3, a, b, c, d, s, w, K, R, i    );
-            HHN(3, d, a, b, c, s, w, K, R, i + 1);
-            HHN(3, c, d, a, b, s, w, K, R, i + 2);
-            HHN(3, b, c, d, a, s, w, K, R, i + 3);
-        });
+        HHX(0, a, b, c, d, s, w, K, R,  0);
+        HHX(1, a, b, c, d, s, w, K, R, 16);
+        HHX(2, a, b, c, d, s, w, K, R, 32);
+        HHX(3, a, b, c, d, s, w, K, R, 48);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -117,4 +109,6 @@ public:
 #undef GG1
 #undef GG2
 #undef GG3
-#undef HHN
+#undef HH1
+#undef HH4
+#undef HHX

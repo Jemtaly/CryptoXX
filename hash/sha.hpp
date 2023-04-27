@@ -8,9 +8,22 @@
 #define KK1 0x6ED9EBA1U
 #define KK2 0x8F1BBCDCU
 #define KK3 0xCA62C1D6U
-#define GGN(N, a, b, c, d, e, w, i) {                    \
+#define GG1(N, a, b, c, d, e, w, i) {                    \
     e = ROTL(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
     b = ROTL(b, 30);                                     \
+}
+#define GG5(N, a, b, c, d, e, w, i) {                    \
+    GG1(N, a, b, c, d, e, w, i     );                    \
+    GG1(N, e, a, b, c, d, w, i +  1);                    \
+    GG1(N, d, e, a, b, c, w, i +  2);                    \
+    GG1(N, c, d, e, a, b, w, i +  3);                    \
+    GG1(N, b, c, d, e, a, w, i +  4);                    \
+}
+#define GGX(N, a, b, c, d, e, w, i) {                    \
+    GG5(N, a, b, c, d, e, w, i     );                    \
+    GG5(N, a, b, c, d, e, w, i +  5);                    \
+    GG5(N, a, b, c, d, e, w, i + 10);                    \
+    GG5(N, a, b, c, d, e, w, i + 15);                    \
 }
 class SHA {
     void compress(uint32_t *w) {
@@ -24,34 +37,10 @@ class SHA {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
             w[i] = ROTL(t, 1);
         }
-        FOR(i,  0, 5, <, 20, {
-            GGN(0, a, b, c, d, e, w, i    );
-            GGN(0, e, a, b, c, d, w, i + 1);
-            GGN(0, d, e, a, b, c, w, i + 2);
-            GGN(0, c, d, e, a, b, w, i + 3);
-            GGN(0, b, c, d, e, a, w, i + 4);
-        })
-        FOR(i, 20, 5, <, 40, {
-            GGN(1, a, b, c, d, e, w, i    );
-            GGN(1, e, a, b, c, d, w, i + 1);
-            GGN(1, d, e, a, b, c, w, i + 2);
-            GGN(1, c, d, e, a, b, w, i + 3);
-            GGN(1, b, c, d, e, a, w, i + 4);
-        })
-        FOR(i, 40, 5, <, 60, {
-            GGN(2, a, b, c, d, e, w, i    );
-            GGN(2, e, a, b, c, d, w, i + 1);
-            GGN(2, d, e, a, b, c, w, i + 2);
-            GGN(2, c, d, e, a, b, w, i + 3);
-            GGN(2, b, c, d, e, a, w, i + 4);
-        })
-        FOR(i, 60, 5, <, 80, {
-            GGN(3, a, b, c, d, e, w, i    );
-            GGN(3, e, a, b, c, d, w, i + 1);
-            GGN(3, d, e, a, b, c, w, i + 2);
-            GGN(3, c, d, e, a, b, w, i + 3);
-            GGN(3, b, c, d, e, a, w, i + 4);
-        })
+        GGX(0, a, b, c, d, e, w,  0);
+        GGX(1, a, b, c, d, e, w, 20);
+        GGX(2, a, b, c, d, e, w, 40);
+        GGX(3, a, b, c, d, e, w, 60);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -99,4 +88,6 @@ public:
 #undef KK1
 #undef KK2
 #undef KK3
-#undef GGN
+#undef GG1
+#undef GG5
+#undef GGX
