@@ -9,7 +9,7 @@ class DES {
     template <int wi, int wo>
     static uint<wo> permutation(uint<wi> vi, bits_t const *A) {
         uint<wo> vo = 0;
-        FOR(o, 0, 8, <, wo, {
+        FOR(o, 0, o + 8, o < wo, {
             vo = vo << 8 |
                 (vi >> A[o    ] & 1) << 7 |
                 (vi >> A[o | 1] & 1) << 6 |

@@ -21,7 +21,7 @@ class DES {
     template <int wi, int wo>
     static uint<wo> permutation(uint<wi> vi, std::array<std::array<uint<wo>, 256>, wi / 8> const &LUT) {
         uint<wo> vo = 0;
-        FOR(i, 0, 8, <, wi, {
+        FOR(i, 0, i + 8, i < wi, {
             vo |= LUT[i / 8][vi >> i & 0xff];
         });
         return vo;
