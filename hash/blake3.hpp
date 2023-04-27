@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "hash.hpp"
 #define CHUNK_START 0x01
 #define CHUNK_END   0x02

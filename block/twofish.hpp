@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 class TwofishBase {
 protected:

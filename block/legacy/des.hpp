@@ -6,21 +6,21 @@ class DES {
     template <int bits>
     using uint = typename std::conditional<bits <= 32, uint32_t, uint64_t>::type;
     // permutation function
-    template <int w_in, int w_out>
-    static uint<w_out> permutation(uint<w_in> v_in, bits_t const *A) {
-        uint<w_out> v_out = 0;
-        for (int i = 0; i < w_out; i += 8) {
-            v_out = v_out << 8 |
-                (v_in >> A[i    ] & 1) << 7 |
-                (v_in >> A[i | 1] & 1) << 6 |
-                (v_in >> A[i | 2] & 1) << 5 |
-                (v_in >> A[i | 3] & 1) << 4 |
-                (v_in >> A[i | 4] & 1) << 3 |
-                (v_in >> A[i | 5] & 1) << 2 |
-                (v_in >> A[i | 6] & 1) << 1 |
-                (v_in >> A[i | 7] & 1)     ;
-        }
-        return v_out;
+    template <int wi, int wo>
+    static uint<wo> permutation(uint<wi> vi, bits_t const *A) {
+        uint<wo> vo = 0;
+        FOR(o, 0, 8, <, wo, {
+            vo = vo << 8 |
+                (vi >> A[o    ] & 1) << 7 |
+                (vi >> A[o | 1] & 1) << 6 |
+                (vi >> A[o | 2] & 1) << 5 |
+                (vi >> A[o | 3] & 1) << 4 |
+                (vi >> A[o | 4] & 1) << 3 |
+                (vi >> A[o | 5] & 1) << 2 |
+                (vi >> A[o | 6] & 1) << 1 |
+                (vi >> A[o | 7] & 1)     ;
+        });
+        return vo;
     }
     static constexpr bits_t PC_1[56] = {
         0x07, 0x0f, 0x17, 0x1f, 0x27, 0x2f, 0x37, 0x3f,

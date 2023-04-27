@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 #define ROTL128(dh, dl, sh, sl, n) {                   \
     (dh) = sh << (n) | (n > 0 ? sl >> (64 - (n)) : 0); \

@@ -8,7 +8,7 @@
 #define GG1(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define KK0 0x79CC4519U
 #define KK1 0x7A879D8AU
-#define HH1(N, a, b, c, d, e, f, g, h, w, j) {            \
+#define HHN(N, a, b, c, d, e, f, g, h, w, j) {            \
     s = ROTL(a, 12);                                      \
     t = ROTL(s + e + ROTL(KK##N, j), 7);                  \
     u = FF##N(a, b, c) + d + (t ^ s) + (w[j] ^ w[j + 4]); \
@@ -17,18 +17,6 @@
     f = ROTL(f, 19);                                      \
     d =     u ;                                           \
     h = PPE(v);                                           \
-}
-#define HH4(N, a, b, c, d, e, f, g, h, w, i) {            \
-    HH1(N, a, b, c, d, e, f, g, h, w, i     );            \
-    HH1(N, d, a, b, c, h, e, f, g, w, i +  1);            \
-    HH1(N, c, d, a, b, g, h, e, f, w, i +  2);            \
-    HH1(N, b, c, d, a, f, g, h, e, w, i +  3);            \
-}
-#define HHX(N, a, b, c, d, e, f, g, h, w, i) {            \
-    HH4(N, a, b, c, d, e, f, g, h, w, i     );            \
-    HH4(N, a, b, c, d, e, f, g, h, w, i +  4);            \
-    HH4(N, a, b, c, d, e, f, g, h, w, i +  8);            \
-    HH4(N, a, b, c, d, e, f, g, h, w, i + 12);            \
 }
 class SM3 {
     void compress(uint32_t *w) {
@@ -45,10 +33,18 @@ class SM3 {
             t = w[j - 16] ^ w[j - 9] ^ ROTL(w[j -  3], 15);
             w[j] = PPW(t) ^ w[j - 6] ^ ROTL(w[j - 13],  7);
         }
-        HHX(0, A, B, C, D, E, F, G, H, w,  0);
-        HHX(1, A, B, C, D, E, F, G, H, w, 16);
-        HHX(1, A, B, C, D, E, F, G, H, w, 32);
-        HHX(1, A, B, C, D, E, F, G, H, w, 48);
+        FOR(i,  0, 4, <, 16, {
+            HHN(0, A, B, C, D, E, F, G, H, w, i    );
+            HHN(0, D, A, B, C, H, E, F, G, w, i + 1);
+            HHN(0, C, D, A, B, G, H, E, F, w, i + 2);
+            HHN(0, B, C, D, A, F, G, H, E, w, i + 3);
+        });
+        FOR(i, 16, 4, <, 64, {
+            HHN(1, A, B, C, D, E, F, G, H, w, i    );
+            HHN(1, D, A, B, C, H, E, F, G, w, i + 1);
+            HHN(1, C, D, A, B, G, H, E, F, w, i + 2);
+            HHN(1, B, C, D, A, F, G, H, E, w, i + 3);
+        });
         h[0] ^= A;
         h[1] ^= B;
         h[2] ^= C;
@@ -100,6 +96,4 @@ public:
 #undef GG1
 #undef KK0
 #undef KK1
-#undef HH1
-#undef HH4
-#undef HHX
+#undef HHN

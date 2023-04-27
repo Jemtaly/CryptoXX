@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 #define ROTL28(x, n) ((x) << (n) & 0x0FFFFFFF | (x) >> (31 - (n)))
 class DES {
@@ -10,10 +9,10 @@ class DES {
     template <int wi, int wo>
     static constexpr auto generate_LUT = [](std::array<bits_t, wo> const &A) {
         std::array<std::array<uint<wo>, 256>, wi / 8> LUT = {};
-        for (int y = 0; y < wo; y++) {
-            int t = A[y];
+        for (int o = 0; o < wo; o++) {
+            int i = A[o];
             for (uint<wi> x = 0; x < 256; x++) {
-                LUT[t / 8][x] |= (uint<wo>)(x >> t % 8 & 1) << (wo - 1 - y);
+                LUT[i / 8][x] |= (uint<wo>)(x >> i % 8 & 1) << (wo - 1 - o);
             }
         }
         return LUT;
@@ -22,9 +21,9 @@ class DES {
     template <int wi, int wo>
     static uint<wo> permutation(uint<wi> vi, std::array<std::array<uint<wo>, 256>, wi / 8> const &LUT) {
         uint<wo> vo = 0;
-        for (int i = 0; i < wi / 8; i++) {
-            vo |= LUT[i][vi >> i * 8 & 0xff];
-        }
+        FOR(i, 0, 8, <, wi, {
+            vo |= LUT[i / 8][vi >> i & 0xff];
+        });
         return vo;
     }
     static constexpr auto PC_1 = generate_LUT<64, 56>({

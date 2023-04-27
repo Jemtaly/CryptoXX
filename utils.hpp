@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <utility> // std::forward
 #include <stdint.h>
 #include <string.h>
@@ -221,11 +222,77 @@ constexpr inline void XORB_BW(uint8_t *arr, T const *a, int n) {
 #define XORB_LE   XORB_BW
 #define XORB_BE   XORB_FW
 #endif
-// C++20 Loop unrolling
-template <int Start, int Stop, int Step = 1, bool Eq = false, typename F>
-constexpr inline void FOR(F &&f) {
-    if constexpr (Step > 0 && (Start < Stop || Eq && Start == Stop) || Step < 0 && (Start > Stop || Eq && Start == Stop)) {
-        f(std::integral_constant<int, Start>{});
-        FOR<Start + Step, Stop, Step, Eq>(std::forward<F>(f));
-    }
+// Loop unrolling
+// template <int Start, int Stop, int Step = 1, bool Eq = false, typename F>
+// constexpr inline void FOR(F &&f) {
+//     if constexpr (Step > 0 && (Start < Stop || Eq && Start == Stop) || Step < 0 && (Start > Stop || Eq && Start == Stop)) {
+//         f(std::integral_constant<int, Start>{});
+//         FOR<Start + Step, Stop, Step, Eq>(std::forward<F>(f));
+//     }
+// }
+#define FOR(i, Start, Step, Op, Stop, Proc) {                          \
+    if constexpr (constexpr int i = Start + Step *  0; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  1; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  2; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  3; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  4; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  5; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  6; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  7; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  8; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step *  9; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 10; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 11; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 12; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 13; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 14; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 15; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 16; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 17; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 18; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 19; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 20; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 21; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 22; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 23; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 24; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 25; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 26; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 27; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 28; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 29; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 30; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 31; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 32; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 33; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 34; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 35; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 36; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 37; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 38; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 39; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 40; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 41; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 42; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 43; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 44; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 45; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 46; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 47; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 48; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 49; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 50; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 51; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 52; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 53; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 54; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 55; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 56; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 57; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 58; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 59; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 60; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 61; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 62; i Op Stop) Proc \
+    if constexpr (constexpr int i = Start + Step * 63; i Op Stop) Proc \
 }

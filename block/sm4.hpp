@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 class SM4 {
     static constexpr uint32_t CK[32] = {

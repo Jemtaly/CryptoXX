@@ -6,20 +6,10 @@
     v[a] += v[b] + m[S[y]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 16); \
     v[c] += v[d]          ; v[b] ^= v[c]; v[b] = ROTR(v[b], 63); \
 }
-#define DROUND(v, m, S) {                    \
-    QROUND(v, m, S,  0,  4,  8, 12,  0,  1); \
-    QROUND(v, m, S,  1,  5,  9, 13,  2,  3); \
-    QROUND(v, m, S,  2,  6, 10, 14,  4,  5); \
-    QROUND(v, m, S,  3,  7, 11, 15,  6,  7); \
-    QROUND(v, m, S,  0,  5, 10, 15,  8,  9); \
-    QROUND(v, m, S,  1,  6, 11, 12, 10, 11); \
-    QROUND(v, m, S,  2,  7,  8, 13, 12, 13); \
-    QROUND(v, m, S,  3,  4,  9, 14, 14, 15); \
-}
 typedef uint8_t index_t;
 class BLAKE2bBase {
 protected:
-    static constexpr index_t SIGMA[10][16] = {
+    static constexpr index_t SIGMA[12][16] = {
         { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15},
         {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
         {11,  8, 12,  0,  5,  2, 15, 13, 10, 14,  3,  6,  7,  1,  9,  4},
@@ -30,6 +20,8 @@ protected:
         {13, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10},
         { 6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5},
         {10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13,  0},
+        { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15},
+        {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
     };
 };
 template <size_t DN, typename Derived>
@@ -43,26 +35,24 @@ class BLAKE2bTmpl: public BLAKE2bBase {
         v[12] ^= lo;
         v[13] ^= hi;
         v[14] = fin ? ~v[14] : v[14];
-        DROUND(v, m, SIGMA[0]);
-        DROUND(v, m, SIGMA[1]);
-        DROUND(v, m, SIGMA[2]);
-        DROUND(v, m, SIGMA[3]);
-        DROUND(v, m, SIGMA[4]);
-        DROUND(v, m, SIGMA[5]);
-        DROUND(v, m, SIGMA[6]);
-        DROUND(v, m, SIGMA[7]);
-        DROUND(v, m, SIGMA[8]);
-        DROUND(v, m, SIGMA[9]);
-        DROUND(v, m, SIGMA[0]);
-        DROUND(v, m, SIGMA[1]);
-        h[ 0] ^= v[ 0] ^ v[ 8];
-        h[ 1] ^= v[ 1] ^ v[ 9];
-        h[ 2] ^= v[ 2] ^ v[10];
-        h[ 3] ^= v[ 3] ^ v[11];
-        h[ 4] ^= v[ 4] ^ v[12];
-        h[ 5] ^= v[ 5] ^ v[13];
-        h[ 6] ^= v[ 6] ^ v[14];
-        h[ 7] ^= v[ 7] ^ v[15];
+        FOR(i, 0, 1, <, 12, {
+            QROUND(v, m, SIGMA[i],  0,  4,  8, 12,  0,  1);
+            QROUND(v, m, SIGMA[i],  1,  5,  9, 13,  2,  3);
+            QROUND(v, m, SIGMA[i],  2,  6, 10, 14,  4,  5);
+            QROUND(v, m, SIGMA[i],  3,  7, 11, 15,  6,  7);
+            QROUND(v, m, SIGMA[i],  0,  5, 10, 15,  8,  9);
+            QROUND(v, m, SIGMA[i],  1,  6, 11, 12, 10, 11);
+            QROUND(v, m, SIGMA[i],  2,  7,  8, 13, 12, 13);
+            QROUND(v, m, SIGMA[i],  3,  4,  9, 14, 14, 15);
+        });
+        h[0] ^= v[0] ^ v[ 8];
+        h[1] ^= v[1] ^ v[ 9];
+        h[2] ^= v[2] ^ v[10];
+        h[3] ^= v[3] ^ v[11];
+        h[4] ^= v[4] ^ v[12];
+        h[5] ^= v[5] ^ v[13];
+        h[6] ^= v[6] ^ v[14];
+        h[7] ^= v[7] ^ v[15];
     }
     uint64_t hi = 0;
     uint64_t lo = 0;
@@ -115,5 +105,4 @@ public:
         0x67332667ffc00b31, 0x8eb44a8768581511, 0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
     };
 };
-#undef DROUND
 #undef QROUND

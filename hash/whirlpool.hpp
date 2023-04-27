@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "hash.hpp"
 #define SB_SC_MR_NRK(t, j) (                                        \
     LUT[0][t[ j         ].b[0]].w ^ LUT[1][t[(j + 7) % 8].b[1]].w ^ \

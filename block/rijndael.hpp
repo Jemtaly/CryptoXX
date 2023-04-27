@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 union RijndaelClmn {
     uint32_t w;
@@ -105,11 +104,11 @@ public:
             ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - K].w ^ t.w;
         }
         // Generate decryption round key from encryption round key
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             ik[R][i].w = rk[0][i].w;
         });
         for (int r = 1; r < R; ++r) {
-            FOR<0, B>([&](auto i) {
+            FOR(i, 0, 1, <, B, {
                 ik[R - r][i].w =
                     MCT_D[0][rk[r][i].b[0]].w ^
                     MCT_D[1][rk[r][i].b[1]].w ^
@@ -117,7 +116,7 @@ public:
                     MCT_D[3][rk[r][i].b[3]].w;
             });
         }
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             ik[0][i].w = rk[R][i].w;
         });
     }
@@ -125,14 +124,14 @@ public:
         RijndaelClmn q[B];
         RijndaelClmn t[B];
         memcpy(q, src, B * 4);
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w ^= rk[0][i].w;
         });
         for (int r = 1; r < R; ++r) {
-            FOR<0, B>([&](auto i) {
+            FOR(i, 0, 1, <, B, {
                 t[i].w = q[i].w;
             });
-            FOR<0, B>([&](auto i) {
+            FOR(i, 0, 1, <, B, {
                 q[i].w =
                     LUT_E[0][t[ i         ].b[0]].w ^
                     LUT_E[1][t[(i + 1) % B].b[1]].w ^
@@ -140,10 +139,10 @@ public:
                     LUT_E[3][t[(i + 3) % B].b[3]].w ^ rk[r][i].w;
             });
         }
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             t[i].w = q[i].w;
         });
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w =
                 S_EXT[0][t[ i         ].b[0]].w ^
                 S_EXT[1][t[(i + 1) % B].b[1]].w ^
@@ -156,14 +155,14 @@ public:
         RijndaelClmn q[B];
         RijndaelClmn t[B];
         memcpy(q, src, B * 4);
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w ^= ik[0][i].w;
         });
         for (int r = 1; r < R; ++r) {
-            FOR<0, B>([&](auto i) {
+            FOR(i, 0, 1, <, B, {
                 t[i].w = q[i].w;
             });
-            FOR<0, B>([&](auto i) {
+            FOR(i, 0, 1, <, B, {
                 q[i].w =
                     LUT_D[0][t[ i             ].b[0]].w ^
                     LUT_D[1][t[(i + B - 1) % B].b[1]].w ^
@@ -171,10 +170,10 @@ public:
                     LUT_D[3][t[(i + B - 3) % B].b[3]].w ^ ik[r][i].w;
             });
         }
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             t[i].w = q[i].w;
         });
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w =
                 I_EXT[0][t[ i             ].b[0]].w ^
                 I_EXT[1][t[(i + B - 1) % B].b[1]].w ^

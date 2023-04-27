@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     rec |= REC_ERR;
                 }
-            } else if (argv[i][1] == 'S' && argv[i][2] == '\0') {
+            } else if (argv[i][1] == '1' && argv[i][2] == '\0') {
                 if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
                     rec |= REC_SM4;
                 } else {

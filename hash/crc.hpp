@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "hash.hpp"
 #define DIG sizeof(digest_t)
 template <std::unsigned_integral digest_t, digest_t EXP, digest_t CIV, digest_t CXV>

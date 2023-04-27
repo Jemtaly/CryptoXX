@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 union RijndaelClmn {
     uint32_t w;
@@ -73,7 +72,7 @@ template <int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
 class RijndaelTmpl: public RijndaelBase {
     static void mix_clmns_enc(RijndaelClmn *q) {
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w =
                 MCT_E[0][q[i].b[0]].w ^
                 MCT_E[1][q[i].b[1]].w ^
@@ -82,7 +81,7 @@ class RijndaelTmpl: public RijndaelBase {
         });
     }
     static void mix_clmns_dec(RijndaelClmn *q) {
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w =
                 MCT_D[0][q[i].b[0]].w ^
                 MCT_D[1][q[i].b[1]].w ^
@@ -92,10 +91,10 @@ class RijndaelTmpl: public RijndaelBase {
     }
     static void sub_shift_enc(RijndaelClmn *q) {
         RijndaelClmn t[B];
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             t[i].w = q[i].w;
         });
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].b[0] = S_BOX[t[ i         ].b[0]];
             q[i].b[1] = S_BOX[t[(i + 1) % B].b[1]];
             q[i].b[2] = S_BOX[t[(i + 2) % B].b[2]];
@@ -104,10 +103,10 @@ class RijndaelTmpl: public RijndaelBase {
     }
     static void sub_shift_dec(RijndaelClmn *q) {
         RijndaelClmn t[B];
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             t[i].w = q[i].w;
         });
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[ i         ].b[0] = I_BOX[t[i].b[0]];
             q[(i + 3) % B].b[1] = I_BOX[t[i].b[1]];
             q[(i + 2) % B].b[2] = I_BOX[t[i].b[2]];
@@ -115,7 +114,7 @@ class RijndaelTmpl: public RijndaelBase {
         });
     }
     static void add_round_key(RijndaelClmn *q, RijndaelClmn const *k) {
-        FOR<0, B>([&](auto i) {
+        FOR(i, 0, 1, <, B, {
             q[i].w ^= k[i].w;
         });
     }

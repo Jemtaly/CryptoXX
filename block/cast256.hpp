@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 struct CAST256Key {
     uint32_t m;

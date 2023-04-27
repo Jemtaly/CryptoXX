@@ -1,5 +1,4 @@
 #pragma once
-#include <array>
 #include "block.hpp"
 #define FFA(X, Y, I, Km, Kr, i, j) {                                                          \
     I = ROTL(Km[i][j] + Y, Kr[i][j]);                                                         \
