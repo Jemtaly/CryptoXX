@@ -1,9 +1,9 @@
 #pragma once
 #include "block.hpp"
-#define ROTL128(dh, dl, sh, sl, n) {                   \
+#define ROTL128(dh, dl, sh, sl, n) do {                \
     (dh) = sh << (n) | (n > 0 ? sl >> (64 - (n)) : 0); \
     (dl) = sl << (n) | (n > 0 ? sh >> (64 - (n)) : 0); \
-}
+} while (0)
 class CamelliaBase {
 protected:
     static constexpr uint64_t SIGMA[6] = {

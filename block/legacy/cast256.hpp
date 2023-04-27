@@ -1,17 +1,17 @@
 #pragma once
 #include "block.hpp"
-#define FFA(X, Y, I, Km, Kr, i, j) {                                                          \
+#define FFA(X, Y, I, Km, Kr, i, j) do {                                                       \
     I = ROTL(Km[i][j] + Y, Kr[i][j]);                                                         \
     X ^= ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF]; \
-}
-#define FFB(X, Y, I, Km, Kr, i, j) {                                                          \
+} while (0)
+#define FFB(X, Y, I, Km, Kr, i, j) do {                                                       \
     I = ROTL(Km[i][j] ^ Y, Kr[i][j]);                                                         \
     X ^= ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF]; \
-}
-#define FFC(X, Y, I, Km, Kr, i, j) {                                                          \
+} while (0)
+#define FFC(X, Y, I, Km, Kr, i, j) do {                                                       \
     I = ROTL(Km[i][j] - Y, Kr[i][j]);                                                         \
     X ^= ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF]; \
-}
+} while (0)
 class CAST256 {
 private:
     static constexpr uint32_t S[4][256] = {

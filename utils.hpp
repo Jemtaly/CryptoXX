@@ -230,78 +230,82 @@ constexpr inline void XORB_BW(uint8_t *arr, T const *a, int n) {
 //         FOR<Start + Step, Stop, Step, Eq>(std::forward<F>(f));
 //     }
 // }
-#define FOR(i, Init, Next, Cond, Proc) {                    \
-    constexpr auto Array = []() {                           \
-        auto i = Init;                                      \
-        std::array<decltype(i), 64> Array = {};             \
-        for (int j = 0; j < 64; j++) {                      \
-            Array[j] = i;                                   \
-            i = Next;                                       \
-        }                                                   \
-        return Array;                                       \
-    }();                                                    \
-    if constexpr (constexpr auto i = Array[ 0]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 1]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 2]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 3]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 4]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 5]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 6]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 7]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 8]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[ 9]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[10]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[11]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[12]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[13]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[14]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[15]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[16]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[17]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[18]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[19]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[20]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[21]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[22]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[23]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[24]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[25]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[26]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[27]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[28]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[29]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[30]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[31]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[32]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[33]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[34]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[35]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[36]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[37]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[38]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[39]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[40]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[41]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[42]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[43]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[44]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[45]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[46]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[47]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[48]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[49]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[50]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[51]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[52]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[53]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[54]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[55]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[56]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[57]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[58]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[59]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[60]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[61]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[62]; Cond) Proc; \
-    if constexpr (constexpr auto i = Array[63]; Cond) Proc; \
+#define FOR(i, Init, Next, Cond, Proc) {                                         \
+    static constexpr auto Arr = []() {                                           \
+        auto i = Init;                                                           \
+        bool b = Cond;                                                           \
+        std::array<std::pair<decltype(i), bool>, 65> Arr;                        \
+        for (int j = 0; j < 64; j++) {                                           \
+            Arr[j] = {i, b};                                                     \
+            i = Next;                                                            \
+            b = b && Cond;                                                       \
+        }                                                                        \
+        Arr[64] = {i, b};                                                        \
+        return Arr;                                                              \
+    }();                                                                         \
+    if constexpr (static constexpr auto &i = Arr[ 0].first; Arr[ 0].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 1].first; Arr[ 1].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 2].first; Arr[ 2].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 3].first; Arr[ 3].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 4].first; Arr[ 4].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 5].first; Arr[ 5].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 6].first; Arr[ 6].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 7].first; Arr[ 7].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 8].first; Arr[ 8].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[ 9].first; Arr[ 9].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[10].first; Arr[10].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[11].first; Arr[11].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[12].first; Arr[12].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[13].first; Arr[13].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[14].first; Arr[14].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[15].first; Arr[15].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[16].first; Arr[16].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[17].first; Arr[17].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[18].first; Arr[18].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[19].first; Arr[19].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[20].first; Arr[20].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[21].first; Arr[21].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[22].first; Arr[22].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[23].first; Arr[23].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[24].first; Arr[24].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[25].first; Arr[25].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[26].first; Arr[26].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[27].first; Arr[27].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[28].first; Arr[28].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[29].first; Arr[29].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[30].first; Arr[30].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[31].first; Arr[31].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[32].first; Arr[32].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[33].first; Arr[33].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[34].first; Arr[34].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[35].first; Arr[35].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[36].first; Arr[36].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[37].first; Arr[37].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[38].first; Arr[38].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[39].first; Arr[39].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[40].first; Arr[40].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[41].first; Arr[41].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[42].first; Arr[42].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[43].first; Arr[43].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[44].first; Arr[44].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[45].first; Arr[45].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[46].first; Arr[46].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[47].first; Arr[47].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[48].first; Arr[48].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[49].first; Arr[49].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[50].first; Arr[50].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[51].first; Arr[51].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[52].first; Arr[52].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[53].first; Arr[53].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[54].first; Arr[54].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[55].first; Arr[55].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[56].first; Arr[56].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[57].first; Arr[57].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[58].first; Arr[58].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[59].first; Arr[59].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[60].first; Arr[60].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[61].first; Arr[61].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[62].first; Arr[62].second) Proc \
+    if constexpr (static constexpr auto &i = Arr[63].first; Arr[63].second) Proc \
+    static_assert(not Arr[64].second, "Too many iterations");                    \
 }

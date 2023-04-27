@@ -2,14 +2,14 @@
 #include "hash.hpp"
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
-#define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) { \
-    s = ROTR(a, 2) ^ ROTR(a, 13) ^ ROTR(a, 22);            \
-    t = ROTR(e, 6) ^ ROTR(e, 11) ^ ROTR(e, 25);            \
-    u = t + CHO(e, f, g) + h + K[i] + w[i];                \
-    v = s + MAJ(a, b, c)                  ;                \
-    d = d + u;                                             \
-    h = u + v;                                             \
-}
+#define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
+    s = ROTR(a, 2) ^ ROTR(a, 13) ^ ROTR(a, 22);               \
+    t = ROTR(e, 6) ^ ROTR(e, 11) ^ ROTR(e, 25);               \
+    u = t + CHO(e, f, g) + h + K[i] + w[i];                   \
+    v = s + MAJ(a, b, c)                  ;                   \
+    d = d + u;                                                \
+    h = u + v;                                                \
+} while (0)
 class SHA256Base {
 protected:
     static constexpr uint32_t K[64] = {

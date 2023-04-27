@@ -8,22 +8,22 @@
 #define GG1(i) (5 * (i) + 1 & 0xf)
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
-#define HH1(N, a, b, c, d, s, w, K, R, i) {      \
+#define HH1(N, a, b, c, d, s, w, K, R, i) do {   \
     s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
     a = b + ROTL(s, R[i]);                       \
-}
-#define HH4(N, a, b, c, d, s, w, K, R, i) {      \
+} while (0)
+#define HH4(N, a, b, c, d, s, w, K, R, i) do {   \
     HH1(N, a, b, c, d, s, w, K, R, i     );      \
     HH1(N, d, a, b, c, s, w, K, R, i +  1);      \
     HH1(N, c, d, a, b, s, w, K, R, i +  2);      \
     HH1(N, b, c, d, a, s, w, K, R, i +  3);      \
-}
-#define HHX(N, a, b, c, d, s, w, K, R, i) {      \
+} while (0)
+#define HHX(N, a, b, c, d, s, w, K, R, i) do {   \
     HH4(N, a, b, c, d, s, w, K, R, i     );      \
     HH4(N, a, b, c, d, s, w, K, R, i +  4);      \
     HH4(N, a, b, c, d, s, w, K, R, i +  8);      \
     HH4(N, a, b, c, d, s, w, K, R, i + 12);      \
-}
+} while (0)
 class MD5 {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,

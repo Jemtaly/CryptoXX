@@ -1,13 +1,13 @@
 #pragma once
 #include "hash.hpp"
-#define UNROTLL_5(F) { F(0); F(1); F(2); F(3); F(4); }
-#define UNROTLL_X(F) {                           \
+#define UNROTLL_5(F) do { F(0); F(1); F(2); F(3); F(4); } while (0)
+#define UNROTLL_X(F) do {                        \
     F(0, 0); F(0, 1); F(0, 2); F(0, 3); F(0, 4); \
     F(1, 0); F(1, 1); F(1, 2); F(1, 3); F(1, 4); \
     F(2, 0); F(2, 1); F(2, 2); F(2, 3); F(2, 4); \
     F(3, 0); F(3, 1); F(3, 2); F(3, 3); F(3, 4); \
     F(4, 0); F(4, 1); F(4, 2); F(4, 3); F(4, 4); \
-}
+} while (0)
 #define C_A(   x) C[x] = A[0][x] ^ A[1][x] ^ A[2][x] ^ A[3][x] ^ A[4][x]
 #define D_C(   x) D[x] = C[(x + 4) % 5] ^ ROTL(C[(x + 1) % 5], 1)
 #define A_D(y, x) A[y][x] ^= D[x]

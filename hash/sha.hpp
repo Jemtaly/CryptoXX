@@ -8,23 +8,23 @@
 #define KK1 0x6ED9EBA1U
 #define KK2 0x8F1BBCDCU
 #define KK3 0xCA62C1D6U
-#define GG1(N, a, b, c, d, e, w, i) {                    \
+#define GG1(N, a, b, c, d, e, w, i) do {                 \
     e = ROTL(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
     b = ROTL(b, 30);                                     \
-}
-#define GG5(N, a, b, c, d, e, w, i) {                    \
+} while (0)
+#define GG5(N, a, b, c, d, e, w, i) do {                 \
     GG1(N, a, b, c, d, e, w, i     );                    \
     GG1(N, e, a, b, c, d, w, i +  1);                    \
     GG1(N, d, e, a, b, c, w, i +  2);                    \
     GG1(N, c, d, e, a, b, w, i +  3);                    \
     GG1(N, b, c, d, e, a, w, i +  4);                    \
-}
-#define GGX(N, a, b, c, d, e, w, i) {                    \
+} while (0)
+#define GGX(N, a, b, c, d, e, w, i) do {                 \
     GG5(N, a, b, c, d, e, w, i     );                    \
     GG5(N, a, b, c, d, e, w, i +  5);                    \
     GG5(N, a, b, c, d, e, w, i + 10);                    \
     GG5(N, a, b, c, d, e, w, i + 15);                    \
-}
+} while (0)
 class SHA {
     void compress(uint32_t *w) {
         uint32_t a = h[0];

@@ -1,11 +1,11 @@
 #pragma once
 #include "stream.hpp"
-#define QROUND(s, a, b, c, d) {                        \
+#define QROUND(s, a, b, c, d) do {                     \
     s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d], 16); \
     s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b], 12); \
     s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d],  8); \
     s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b],  7); \
-}
+} while (0)
 template <int RND>
     requires (RND == 8 || RND == 12 || RND == 20)
 class ChaCha {

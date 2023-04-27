@@ -4,12 +4,12 @@
 #define CHUNK_END   0x02
 #define PARENT      0x04
 #define ROOT        0x08
-#define QROUND(v, m, S, a, b, c, d, x, y) {                      \
+#define QROUND(v, m, S, a, b, c, d, x, y) do {                   \
     v[a] += v[b] + m[S[x]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 16); \
     v[c] += v[d]          ; v[b] ^= v[c]; v[b] = ROTR(v[b], 12); \
     v[a] += v[b] + m[S[y]]; v[d] ^= v[a]; v[d] = ROTR(v[d],  8); \
     v[c] += v[d]          ; v[b] ^= v[c]; v[b] = ROTR(v[b],  7); \
-}
+} while (0)
 typedef uint8_t index_t;
 struct BLAKE3Compressor {
     static constexpr uint32_t IV[8] = {

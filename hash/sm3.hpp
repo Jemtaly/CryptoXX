@@ -8,7 +8,7 @@
 #define GG1(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define KK0 0x79CC4519U
 #define KK1 0x7A879D8AU
-#define HH1(N, a, b, c, d, e, f, g, h, w, j) {            \
+#define HH1(N, a, b, c, d, e, f, g, h, w, j) do {         \
     s = ROTL(a, 12);                                      \
     t = ROTL(s + e + ROTL(KK##N, j), 7);                  \
     u = FF##N(a, b, c) + d + (t ^ s) + (w[j] ^ w[j + 4]); \
@@ -17,19 +17,19 @@
     f = ROTL(f, 19);                                      \
     d =     u ;                                           \
     h = PPE(v);                                           \
-}
-#define HH4(N, a, b, c, d, e, f, g, h, w, i) {            \
+} while (0)
+#define HH4(N, a, b, c, d, e, f, g, h, w, i) do {         \
     HH1(N, a, b, c, d, e, f, g, h, w, i     );            \
     HH1(N, d, a, b, c, h, e, f, g, w, i +  1);            \
     HH1(N, c, d, a, b, g, h, e, f, w, i +  2);            \
     HH1(N, b, c, d, a, f, g, h, e, w, i +  3);            \
-}
-#define HHX(N, a, b, c, d, e, f, g, h, w, i) {            \
+} while (0)
+#define HHX(N, a, b, c, d, e, f, g, h, w, i) do {         \
     HH4(N, a, b, c, d, e, f, g, h, w, i     );            \
     HH4(N, a, b, c, d, e, f, g, h, w, i +  4);            \
     HH4(N, a, b, c, d, e, f, g, h, w, i +  8);            \
     HH4(N, a, b, c, d, e, f, g, h, w, i + 12);            \
-}
+} while (0)
 class SM3 {
     void compress(uint32_t *w) {
         uint32_t A = h[0];
