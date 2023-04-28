@@ -238,7 +238,7 @@ constexpr inline void XORB_BW(uint8_t *arr, T const *a, int n) {
         for (int j = 0; j < 64; j++) {                                            \
             Arr[j] = {i, b};                                                      \
             i = Next;                                                             \
-            b = b && Cond;                                                        \
+            b = b && (Cond);                                                      \
         }                                                                         \
         Arr[64] = {i, b};                                                         \
         return Arr;                                                               \

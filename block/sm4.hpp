@@ -49,49 +49,62 @@ class SM4 {
         }
         return LUT_S;
     }();
-    uint32_t k[36] = {
-        0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc,
-    };
+    static uint32_t K_ROUND(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
+        uint32_t x = b ^ c ^ d ^ k;
+        return LUT_K[0][x & 0xff] ^ LUT_K[1][x >> 8 & 0xff] ^ LUT_K[2][x >> 16 & 0xff] ^ LUT_K[3][x >> 24];
+    }
+    static uint32_t S_ROUND(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
+        uint32_t x = b ^ c ^ d ^ k;
+        return LUT_S[0][x & 0xff] ^ LUT_S[1][x >> 8 & 0xff] ^ LUT_S[2][x >> 16 & 0xff] ^ LUT_S[3][x >> 24];
+    }
+    uint32_t rk[32];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     SM4(uint8_t const *mk) {
-        k[0] ^= GET_BE<uint32_t>(mk     );
-        k[1] ^= GET_BE<uint32_t>(mk +  4);
-        k[2] ^= GET_BE<uint32_t>(mk +  8);
-        k[3] ^= GET_BE<uint32_t>(mk + 12);
-        for (int i = 0; i < 32; i++) {
-            uint32_t a = k[i + 1] ^ k[i + 2] ^ k[i + 3] ^ CK[i];
-            k[i + 4] = k[i] ^ LUT_K[0][a & 0xff] ^ LUT_K[1][a >> 8 & 0xff] ^ LUT_K[2][a >> 16 & 0xff] ^ LUT_K[3][a >> 24];
+        uint32_t a, b, c, d;
+        a = GET_BE<uint32_t>(mk     ) ^ 0xa3b1bac6;
+        b = GET_BE<uint32_t>(mk +  4) ^ 0x56aa3350;
+        c = GET_BE<uint32_t>(mk +  8) ^ 0x677d9197;
+        d = GET_BE<uint32_t>(mk + 12) ^ 0xb27022dc;
+        for (int i = 0; i < 32; i += 4) {
+            rk[i    ] = a ^= K_ROUND(b, c, d, CK[i    ]);
+            rk[i + 1] = b ^= K_ROUND(c, d, a, CK[i + 1]);
+            rk[i + 2] = c ^= K_ROUND(d, a, b, CK[i + 2]);
+            rk[i + 3] = d ^= K_ROUND(a, b, c, CK[i + 3]);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t t[36];
-        t[0] = GET_BE<uint32_t>(src     );
-        t[1] = GET_BE<uint32_t>(src +  4);
-        t[2] = GET_BE<uint32_t>(src +  8);
-        t[3] = GET_BE<uint32_t>(src + 12);
-        for (int i = 0; i < 32; i++) {
-            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
-            t[i + 4] = t[i] ^ LUT_S[0][a & 0xff] ^ LUT_S[1][a >> 8 & 0xff] ^ LUT_S[2][a >> 16 & 0xff] ^ LUT_S[3][a >> 24];
+        uint32_t a, b, c, d;
+        a = GET_BE<uint32_t>(src     );
+        b = GET_BE<uint32_t>(src +  4);
+        c = GET_BE<uint32_t>(src +  8);
+        d = GET_BE<uint32_t>(src + 12);
+        for (int i = 0; i < 32; i += 4) {
+            a ^= S_ROUND(b, c, d, rk[i    ]);
+            b ^= S_ROUND(c, d, a, rk[i + 1]);
+            c ^= S_ROUND(d, a, b, rk[i + 2]);
+            d ^= S_ROUND(a, b, c, rk[i + 3]);
         }
-        PUT_BE(dst     , t[35]);
-        PUT_BE(dst +  4, t[34]);
-        PUT_BE(dst +  8, t[33]);
-        PUT_BE(dst + 12, t[32]);
+        PUT_BE(dst     , d);
+        PUT_BE(dst +  4, c);
+        PUT_BE(dst +  8, b);
+        PUT_BE(dst + 12, a);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        uint32_t t[36];
-        t[0] = GET_BE<uint32_t>(src     );
-        t[1] = GET_BE<uint32_t>(src +  4);
-        t[2] = GET_BE<uint32_t>(src +  8);
-        t[3] = GET_BE<uint32_t>(src + 12);
-        for (int i = 0; i < 32; i++) {
-            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[35 - i];
-            t[i + 4] = t[i] ^ LUT_S[0][a & 0xff] ^ LUT_S[1][a >> 8 & 0xff] ^ LUT_S[2][a >> 16 & 0xff] ^ LUT_S[3][a >> 24];
+        uint32_t a, b, c, d;
+        a = GET_BE<uint32_t>(src     );
+        b = GET_BE<uint32_t>(src +  4);
+        c = GET_BE<uint32_t>(src +  8);
+        d = GET_BE<uint32_t>(src + 12);
+        for (int i = 0; i < 32; i += 4) {
+            a ^= S_ROUND(b, c, d, rk[31 - i]);
+            b ^= S_ROUND(c, d, a, rk[30 - i]);
+            c ^= S_ROUND(d, a, b, rk[29 - i]);
+            d ^= S_ROUND(a, b, c, rk[28 - i]);
         }
-        PUT_BE(dst     , t[35]);
-        PUT_BE(dst +  4, t[34]);
-        PUT_BE(dst +  8, t[33]);
-        PUT_BE(dst + 12, t[32]);
+        PUT_BE(dst     , d);
+        PUT_BE(dst +  4, c);
+        PUT_BE(dst +  8, b);
+        PUT_BE(dst + 12, a);
     }
 };

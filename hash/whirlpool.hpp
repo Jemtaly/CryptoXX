@@ -11,10 +11,10 @@ union WhirlpoolRow {
     uint8_t b[8];
 };
 class Whirlpool {
-    static constexpr uint8_t L_INI[16] = {
+    static constexpr uint8_t H_INI[16] = {
         0x1, 0xB, 0x9, 0xC, 0xD, 0x6, 0xF, 0x3, 0xE, 0x8, 0x7, 0x4, 0xA, 0x2, 0x5, 0x0,
     };
-    static constexpr uint8_t H_INI[16] = {
+    static constexpr uint8_t L_INI[16] = {
         0xF, 0x0, 0xD, 0x7, 0xB, 0xE, 0x5, 0xA, 0x9, 0x2, 0xC, 0x1, 0x3, 0x4, 0x8, 0x6,
     };
     static constexpr uint8_t S_INI[16] = {
@@ -22,15 +22,15 @@ class Whirlpool {
     };
     static constexpr auto S_BOX = []() {
         std::array<uint8_t, 256> S_BOX = {};
-        uint8_t ha, la, hb, lb, tt;
-        for (ha = 0; ha < 16; ha++) {
-            for (la = 0; la < 16; la++) {
-                hb = H_INI[ha];
-                lb = L_INI[la];
-                tt = S_INI[hb ^ lb];
-                hb = H_INI[hb ^ tt];
-                lb = L_INI[lb ^ tt];
-                S_BOX[ha | la << 4] = hb | lb << 4;
+        uint8_t li, hi, lo, ho, tt;
+        for (li = 0; li < 16; li++) {
+            for (hi = 0; hi < 16; hi++) {
+                lo = L_INI[li];
+                ho = H_INI[hi];
+                tt = S_INI[lo ^ ho];
+                lo = L_INI[lo ^ tt];
+                ho = H_INI[ho ^ tt];
+                S_BOX[li | hi << 4] = lo | ho << 4;
             }
         }
         return S_BOX;
