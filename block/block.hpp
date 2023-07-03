@@ -10,6 +10,8 @@ public:
     template <class... vals_t>
     BlockCipherEncrypter(vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...), use(0) {}
+    // Function returns the pointer to the next byte to be written.
+    // Output buffer must be at least (end - src) + BLOCK_SIZE bytes.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
         if (BLK + src <= end + use) {
             memcpy(buf + use, src, BLK - use);
@@ -43,6 +45,8 @@ public:
     template <class... vals_t>
     BlockCipherDecrypter(vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...), use(0) {}
+    // Function returns the pointer to the next byte to be written.
+    // Output buffer must be at least (end - src) + BLOCK_SIZE bytes.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
         if (BLK + src <  end + use) {
             memcpy(buf + use, src, BLK - use);

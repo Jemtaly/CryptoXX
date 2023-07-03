@@ -14,6 +14,7 @@ public:
         sc(std::forward<vals_t>(vals)...), use(SEC) {
         memcpy(cfb, civ, CFB);
     }
+    // Function returns the pointer to the next byte to be written.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
         while (SEC + src < end + use) {
             for (; use < SEC; ++use, ++src, ++dst) {
@@ -43,6 +44,7 @@ public:
         sc(std::forward<vals_t>(vals)...), use(SEC) {
         memcpy(cfb, civ, CFB);
     }
+    // Function returns the pointer to the next byte to be written.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
         while (SEC + src < end + use) {
             for (; use < SEC; ++use, ++src, ++dst) {
