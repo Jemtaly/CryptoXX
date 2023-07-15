@@ -1,37 +1,18 @@
 #include <stdio.h>
-#include "block/rijndael.hpp"
 #include "block/sm4.hpp"
+#include "block/rijndael.hpp"
 #include "block/twofish.hpp"
 #include "block/serpent.hpp"
 #include "block/cbc.hpp"
+#include "block/ecb.hpp"
 #include "async/cfb.hpp"
-#include "stream/ofb.hpp"
 #include "stream/ctr.hpp"
+#include "stream/ofb.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 #define BUFSIZE 65536
 #define REC_ERR 1
-#define REC_OFP 2
-#define REC_IFP 4
-#define REC_SM4 8
-#define AES_128 16
-#define AES_256 32
-#define AES_192 64
-#define TWO_128 128
-#define TWO_256 256
-#define TWO_192 512
-#define REC_ENC 1024
-#define REC_DEC 2048
-#define REC_ECB 4096
-#define REC_CBC 8192
-#define REC_CFB 16384
-#define REC_OFB 32768
-#define REC_CTR 65536
-#define SER_128 131072
-#define SER_192 262144
-#define SER_256 524288
-#define REC_ALG (REC_SM4 | AES_128 | AES_192 | AES_256 | TWO_128 | TWO_192 | TWO_256 | SER_128 | SER_192 | SER_256)
-#define REC_MOD (REC_ECB | REC_CBC | REC_CFB | REC_OFB | REC_CTR)
-#define REC_OPM (REC_ENC | REC_DEC)
+#define REC_IFP 2
+#define REC_OFP 4
 template <typename StreamCipher, typename... Args>
 void sc_xxc(FILE *ifp, FILE *ofp, Args &&...args) {
     StreamCipherCrypter<StreamCipher> scc(std::forward<Args>(args)...);
@@ -71,23 +52,22 @@ void bc_dec(FILE *ifp, FILE *ofp, Args &&...args) {
     fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
 }
 template <typename BlockCipher>
-void process(int rec, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *key) {
-    if ((rec & REC_CTR) != 0) {
-        sc_xxc<CTRMode<BlockCipher>>(ifp, ofp, civ, key);
-    } else if ((rec & REC_OFB) != 0) {
-        sc_xxc<OFBMode<BlockCipher>>(ifp, ofp, civ, key);
-    } else if ((rec & REC_CFB) != 0 && (rec & REC_ENC) != 0) {
-        ac_enc<CFBMode<BlockCipher>>(ifp, ofp, civ, key);
-    } else if ((rec & REC_CFB) != 0 && (rec & REC_DEC) != 0) {
-        ac_dec<CFBMode<BlockCipher>>(ifp, ofp, civ, key);
-    } else if ((rec & REC_CBC) != 0 && (rec & REC_ENC) != 0) {
-        bc_enc<CBCMode<BlockCipher>>(ifp, ofp, civ, key);
-    } else if ((rec & REC_CBC) != 0 && (rec & REC_DEC) != 0) {
-        bc_dec<CBCMode<BlockCipher>>(ifp, ofp, civ, key);
-    } else if ((rec & REC_ENC) != 0) {
-        bc_enc<BlockCipher>(ifp, ofp, key);
-    } else if ((rec & REC_DEC) != 0) {
-        bc_dec<BlockCipher>(ifp, ofp, key);
+void process(char mod, char opm, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *key) {
+    switch (mod) {
+    case 'N': sc_xxc<CTRMode<BlockCipher>>(ifp, ofp, civ, key); break;
+    case 'O': sc_xxc<OFBMode<BlockCipher>>(ifp, ofp, civ, key); break;
+    case 'C': switch (opm) {
+        case 'e': ac_enc<CFBMode<BlockCipher>>(ifp, ofp, civ, key); break;
+        case 'd': ac_dec<CFBMode<BlockCipher>>(ifp, ofp, civ, key); break;
+        } break;
+    case 'H': switch (opm) {
+        case 'e': bc_enc<CBCMode<BlockCipher>>(ifp, ofp, civ, key); break;
+        case 'd': bc_dec<CBCMode<BlockCipher>>(ifp, ofp, civ, key); break;
+        } break;
+    default: switch (opm) {
+        case 'e': bc_enc<ECBMode<BlockCipher>>(ifp, ofp, key); break;
+        case 'd': bc_dec<ECBMode<BlockCipher>>(ifp, ofp, key); break;
+        } break;
     }
 }
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
@@ -105,110 +85,113 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     return hex[len * 2] == '\0';
 }
 int main(int argc, char *argv[]) {
-    int rec = 0;
+    long rec = 0;
+    char alg = 0;
+    char mod = 0;
+    char opm = 0;
     FILE *ifp = stdin, *ofp = stdout;
     uint8_t *key = NULL, *civ = NULL;
     for (int i = 1; (rec & REC_ERR) == 0 && i < argc; i++) {
         if (argv[i][0] == '-') {
             if (argv[i][1] == 'E' && argv[i][2] == '\0') {
-                if ((rec & REC_MOD) == 0) {
-                    rec |= REC_ECB;
+                if (mod == 0) {
+                    mod = 'E';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'N' && argv[i][2] == '\0') {
-                if ((rec & REC_MOD) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
-                    rec |= REC_CTR;
+                if (mod == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
+                    mod = 'N';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'O' && argv[i][2] == '\0') {
-                if ((rec & REC_MOD) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
-                    rec |= REC_OFB;
+                if (mod == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
+                    mod = 'O';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'C' && argv[i][2] == '\0') {
-                if ((rec & REC_MOD) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
-                    rec |= REC_CFB;
+                if (mod == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
+                    mod = 'C';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'H' && argv[i][2] == '\0') {
-                if ((rec & REC_MOD) == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
-                    rec |= REC_CBC;
+                if (mod == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
+                    mod = 'H';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'd' && argv[i][2] == '\0') {
-                if ((rec & REC_OPM) == 0) {
-                    rec |= REC_DEC;
+                if (opm == 0) {
+                    opm = 'd';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == 'e' && argv[i][2] == '\0') {
-                if ((rec & REC_OPM) == 0) {
-                    rec |= REC_ENC;
+                if (opm == 0) {
+                    opm = 'e';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '1' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
-                    rec |= REC_SM4;
+                if (alg == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                    alg = '1';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '2' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
-                    rec |= AES_128;
+                if (alg == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                    alg = '2';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '3' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
-                    rec |= AES_192;
+                if (alg == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
+                    alg = '3';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
-                    rec |= AES_256;
+                if (alg == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
+                    alg = '4';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '5' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
-                    rec |= TWO_128;
+                if (alg == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                    alg = '5';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
-                    rec |= TWO_192;
+                if (alg == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
+                    alg = '6';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '7' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
-                    rec |= TWO_256;
+                if (alg == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
+                    alg = '7';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
-                    rec |= SER_128;
+                if (alg == 0 && i + 1 < argc && hex2bin(16, argv[++i], key = new uint8_t[16])) {
+                    alg = '8';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '9' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
-                    rec |= SER_192;
+                if (alg == 0 && i + 1 < argc && hex2bin(24, argv[++i], key = new uint8_t[24])) {
+                    alg = '9';
                 } else {
                     rec |= REC_ERR;
                 }
             } else if (argv[i][1] == '0' && argv[i][2] == '\0') {
-                if ((rec & REC_ALG) == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
-                    rec |= SER_256;
+                if (alg == 0 && i + 1 < argc && hex2bin(32, argv[++i], key = new uint8_t[32])) {
+                    alg = '0';
                 } else {
                     rec |= REC_ERR;
                 }
@@ -231,53 +214,48 @@ int main(int argc, char *argv[]) {
             rec |= REC_ERR;
         }
     }
-    if ((rec & REC_ALG) == 0 || (rec & REC_OPM) == 0 && (rec & (REC_OFB | REC_CTR)) == 0) {
+    if (alg == 0 || opm == 0 && (mod != 'C' && mod != 'O')) {
         rec |= REC_ERR;
     }
     if ((rec & REC_ERR) != 0) {
-        fprintf(stderr, "Description: SM4/AES Encryption/Decryption Tool\n");
-        fprintf(stderr, "Usage: %s (-1 KEY | -2 ~ -4 KEY | -5 ~ -7 KEY | -8 ~ -0 KEY)\n", argv[0]);
-        fprintf(stderr, "       [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]\n");
-        fprintf(stderr, "Options:\n");
-        fprintf(stderr, "  -1 KEY      SM4 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -2 KEY      AES-128 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -3 KEY      AES-192 (KEY: 192-bit key in hex)\n");
-        fprintf(stderr, "  -4 KEY      AES-256 (KEY: 256-bit key in hex)\n");
-        fprintf(stderr, "  -5 KEY      Twofish-128 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -6 KEY      Twofish-192 (KEY: 192-bit key in hex)\n");
-        fprintf(stderr, "  -7 KEY      Twofish-256 (KEY: 256-bit key in hex)\n");
-        fprintf(stderr, "  -8 KEY      Serpent-128 (KEY: 128-bit key in hex)\n");
-        fprintf(stderr, "  -9 KEY      Serpent-192 (KEY: 192-bit key in hex)\n");
-        fprintf(stderr, "  -0 KEY      Serpent-256 (KEY: 256-bit key in hex)\n");
-        fprintf(stderr, "  -e          encryption\n");
-        fprintf(stderr, "  -d          decryption\n");
-        fprintf(stderr, "  -E          ECB mode (default)\n");
-        fprintf(stderr, "  -N IV       CTR mode (IV: 128-bit IV in hex)\n");
-        fprintf(stderr, "  -O IV       OFB mode (IV: 128-bit IV in hex)\n");
-        fprintf(stderr, "  -C IV       CFB mode (IV: 128-bit IV in hex)\n");
-        fprintf(stderr, "  -H IV       CBC mode (IV: 128-bit IV in hex)\n");
-        fprintf(stderr, "  -i INFILE   input file (default: stdin)\n");
-        fprintf(stderr, "  -o OUTFILE  output file (default: stdout)\n");
-    } else if ((rec & REC_SM4) != 0) {
-        process<SM4>(rec, ifp, ofp, civ, key);
-    } else if ((rec & AES_128) != 0) {
-        process<AES128>(rec, ifp, ofp, civ, key);
-    } else if ((rec & AES_192) != 0) {
-        process<AES192>(rec, ifp, ofp, civ, key);
-    } else if ((rec & AES_256) != 0) {
-        process<AES256>(rec, ifp, ofp, civ, key);
-    } else if ((rec & TWO_128) != 0) {
-        process<Twofish128>(rec, ifp, ofp, civ, key);
-    } else if ((rec & TWO_192) != 0) {
-        process<Twofish192>(rec, ifp, ofp, civ, key);
-    } else if ((rec & TWO_256) != 0) {
-        process<Twofish256>(rec, ifp, ofp, civ, key);
-    } else if ((rec & SER_128) != 0) {
-        process<Serpent128>(rec, ifp, ofp, civ, key);
-    } else if ((rec & SER_192) != 0) {
-        process<Serpent192>(rec, ifp, ofp, civ, key);
-    } else if ((rec & SER_256) != 0) {
-        process<Serpent256>(rec, ifp, ofp, civ, key);
+        fprintf(stderr,
+                "Description: Encryption/Decryption Tool\n"
+                "Usage: %s (-1 KEY | -2 ~ -4 KEY | -5 ~ -7 KEY | -8 ~ -0 KEY)\n"
+                "       [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]\n"
+                "Options:\n"
+                "  -1 KEY      SM4 (KEY: 128-bit key in hex)\n"
+                "  -2 KEY      AES-128 (KEY: 128-bit key in hex)\n"
+                "  -3 KEY      AES-192 (KEY: 192-bit key in hex)\n"
+                "  -4 KEY      AES-256 (KEY: 256-bit key in hex)\n"
+                "  -5 KEY      Twofish-128 (KEY: 128-bit key in hex)\n"
+                "  -6 KEY      Twofish-192 (KEY: 192-bit key in hex)\n"
+                "  -7 KEY      Twofish-256 (KEY: 256-bit key in hex)\n"
+                "  -8 KEY      Serpent-128 (KEY: 128-bit key in hex)\n"
+                "  -9 KEY      Serpent-192 (KEY: 192-bit key in hex)\n"
+                "  -0 KEY      Serpent-256 (KEY: 256-bit key in hex)\n"
+                "  -e          encryption\n"
+                "  -d          decryption\n"
+                "  -E          ECB mode (default)\n"
+                "  -N IV       CTR mode (IV: 128-bit IV in hex)\n"
+                "  -O IV       OFB mode (IV: 128-bit IV in hex)\n"
+                "  -C IV       CFB mode (IV: 128-bit IV in hex)\n"
+                "  -H IV       CBC mode (IV: 128-bit IV in hex)\n"
+                "  -i INFILE   input file (default: stdin)\n"
+                "  -o OUTFILE  output file (default: stdout)\n",
+                argv[0]);
+    } else {
+        switch (alg) {
+        case '1': process<SM4>(mod, opm, ifp, ofp, civ, key); break;
+        case '2': process<AES128>(mod, opm, ifp, ofp, civ, key); break;
+        case '3': process<AES192>(mod, opm, ifp, ofp, civ, key); break;
+        case '4': process<AES256>(mod, opm, ifp, ofp, civ, key); break;
+        case '5': process<Twofish128>(mod, opm, ifp, ofp, civ, key); break;
+        case '6': process<Twofish192>(mod, opm, ifp, ofp, civ, key); break;
+        case '7': process<Twofish256>(mod, opm, ifp, ofp, civ, key); break;
+        case '8': process<Serpent128>(mod, opm, ifp, ofp, civ, key); break;
+        case '9': process<Serpent192>(mod, opm, ifp, ofp, civ, key); break;
+        case '0': process<Serpent256>(mod, opm, ifp, ofp, civ, key); break;
+        }
     }
     if (key) {
         delete[] key;
@@ -285,10 +263,10 @@ int main(int argc, char *argv[]) {
     if (civ) {
         delete[] civ;
     }
-    if ((rec & REC_IFP) != 0) {
+    if (ifp != stdin) {
         fclose(ifp);
     }
-    if ((rec & REC_OFP) != 0) {
+    if (ofp != stdout) {
         fclose(ofp);
     }
     return rec & REC_ERR;
