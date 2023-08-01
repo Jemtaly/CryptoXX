@@ -139,7 +139,7 @@ private:
     static constexpr auto T = []() {
         CAST256Key C = {.m = 0x5a827999, .r = 19};
         CAST256Key M = {.m = 0x6ed9eba1, .r = 17};
-        std::array<std::array<CAST256Key, 8>, 24> T;
+        std::array<std::array<CAST256Key, 8>, 24> T = {};
         for (int i = 0; i < 24; i++) {
             for (int j = 0; j < 8; j++) {
                 T[i][j] = C;
