@@ -45,11 +45,9 @@ void process(int rec, FILE *file, uint8_t const *key, size_t len) {
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
-            (bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - '0') << (i % 2 ? 0 : 4);
-        } else if (hex[i] >= 'a' && hex[i] <= 'f') {
-            (bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - 'a' + 10) << (i % 2 ? 0 : 4);
-        } else if (hex[i] >= 'A' && hex[i] <= 'F') {
-            (bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - 'A' + 10) << (i % 2 ? 0 : 4);
+            bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 0 & 0xf) << (i % 2 ? 0 : 4);
+        } else if (hex[i] >= 'a' && hex[i] <= 'f' || hex[i] >= 'A' && hex[i] <= 'F') {
+            bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 9 & 0xf) << (i % 2 ? 0 : 4);
         } else {
             return false;
         }

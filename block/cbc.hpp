@@ -19,6 +19,7 @@ public:
         bc.encrypt(dst, dst);
         memcpy(rec, dst, BLK);
     }
+    // dst has to be different from src (TODO: make it work with the same buffer)
     void decrypt(uint8_t const *src, uint8_t *dst) {
         bc.decrypt(src, dst);
         for (size_t i = 0; i < BLK; i++) {

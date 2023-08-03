@@ -8,76 +8,60 @@
 #include "async/cfb.hpp"
 #include "stream/ctr.hpp"
 #include "stream/ofb.hpp"
-#define BLK BlockCipher::BLOCK_SIZE
+#define BLK BlockCipherCrypter::BLOCK_SIZE
 #define BUFSIZE 65536
 #define REC_ERR 1
 #define REC_IFP 2
 #define REC_OFP 4
-template <typename StreamCipher, typename... Args>
-void sc_xxc(FILE *ifp, FILE *ofp, Args &&...args) {
-    StreamCipherCrypter<StreamCipher> scc(std::forward<Args>(args)...);
-    uint8_t buf[BUFSIZE];
-    while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
+template <typename StreamCipherCrypter, typename... Args>
+void sc_crypt(FILE *ifp, FILE *ofp, Args &&...args) {
+    StreamCipherCrypter scc(std::forward<Args>(args)...);
+    uint8_t src[BUFSIZE], dst[BUFSIZE];
+    while (fwrite(dst, 1, scc.update(dst, src, (uint8_t *)src + fread(src, 1, BUFSIZE, ifp)) - (uint8_t *)dst, ofp) == BUFSIZE) {}
 }
-template <typename AsyncCipher, typename... Args>
-void ac_enc(FILE *ifp, FILE *ofp, Args &&...args) {
-    AsyncCipherEncrypter<AsyncCipher> scc(std::forward<Args>(args)...);
-    uint8_t buf[BUFSIZE];
-    while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
-}
-template <typename AsyncCipher, typename... Args>
-void ac_dec(FILE *ifp, FILE *ofp, Args &&...args) {
-    AsyncCipherDecrypter<AsyncCipher> scc(std::forward<Args>(args)...);
-    uint8_t buf[BUFSIZE];
-    while (fwrite(buf, 1, scc.update(buf, buf, (uint8_t *)buf + fread(buf, 1, BUFSIZE, ifp)) - (uint8_t *)buf, ofp) == BUFSIZE) {}
-}
-template <typename BlockCipher, typename... Args>
-void bc_enc(FILE *ifp, FILE *ofp, Args &&...args) {
-    BlockCipherEncrypter<BlockCipher> bcf(std::forward<Args>(args)...);
+template <typename BlockCipherCrypter, typename... Args>
+void bc_crypt(FILE *ifp, FILE *ofp, Args &&...args) {
+    BlockCipherCrypter bcc(std::forward<Args>(args)...);
     uint8_t src[BUFSIZE], dst[BUFSIZE + BLK];
     size_t read;
     while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
-        fwrite(dst, 1, bcf.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
+        fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
     }
-    fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
-}
-template <typename BlockCipher, typename... Args>
-void bc_dec(FILE *ifp, FILE *ofp, Args &&...args) {
-    BlockCipherDecrypter<BlockCipher> bcf(std::forward<Args>(args)...);
-    uint8_t src[BUFSIZE], dst[BUFSIZE];
-    size_t read;
-    while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
-        fwrite(dst, 1, bcf.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
+    fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, ofp);
+    if (uint8_t *end = bcc.fflush(dst); end) {
+        fwrite(dst, 1, end - (uint8_t *)dst, ofp);
+    } else {
+        fprintf(stderr, "Error: BlockCipherCrypter::fflush() failed, the input may be corrupted.\n");
     }
-    fwrite(dst, 1, bcf.fflush(bcf.update(dst, src, (uint8_t *)src + read)) - (uint8_t *)dst, ofp);
 }
 template <typename BlockCipher>
 void process(char mod, char opm, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *key) {
     switch (mod) {
-    case 'N': sc_xxc<CTRMode<BlockCipher>>(ifp, ofp, civ, key); break;
-    case 'O': sc_xxc<OFBMode<BlockCipher>>(ifp, ofp, civ, key); break;
-    case 'C': switch (opm) {
-        case 'e': ac_enc<CFBMode<BlockCipher>>(ifp, ofp, civ, key); break;
-        case 'd': ac_dec<CFBMode<BlockCipher>>(ifp, ofp, civ, key); break;
+    case 'N': sc_crypt<StreamCipherCrypter<CTRMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+    case 'O': sc_crypt<StreamCipherCrypter<OFBMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+    case 'C':
+        switch (opm) {
+        case 'e': sc_crypt<AsyncCipherEncrypter<CFBMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+        case 'd': sc_crypt<AsyncCipherDecrypter<CFBMode<BlockCipher>>>(ifp, ofp, civ, key); break;
         } break;
-    case 'H': switch (opm) {
-        case 'e': bc_enc<CBCMode<BlockCipher>>(ifp, ofp, civ, key); break;
-        case 'd': bc_dec<CBCMode<BlockCipher>>(ifp, ofp, civ, key); break;
+    case 'H':
+        switch (opm) {
+        case 'e': bc_crypt<BlockCipherEncrypter<CBCMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+        case 'd': bc_crypt<BlockCipherDecrypter<CBCMode<BlockCipher>>>(ifp, ofp, civ, key); break;
         } break;
-    default: switch (opm) {
-        case 'e': bc_enc<ECBMode<BlockCipher>>(ifp, ofp, key); break;
-        case 'd': bc_dec<ECBMode<BlockCipher>>(ifp, ofp, key); break;
+    default:
+        switch (opm) {
+        case 'e': bc_crypt<BlockCipherEncrypter<ECBMode<BlockCipher>>>(ifp, ofp, key); break;
+        case 'd': bc_crypt<BlockCipherDecrypter<ECBMode<BlockCipher>>>(ifp, ofp, key); break;
         } break;
     }
 }
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
-            (bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - '0') << (i % 2 ? 0 : 4);
-        } else if (hex[i] >= 'a' && hex[i] <= 'f') {
-            (bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - 'a' + 10) << (i % 2 ? 0 : 4);
-        } else if (hex[i] >= 'A' && hex[i] <= 'F') {
-            (bin[i / 2] &= (i % 2 ? 0xf0 : 0x0f)) |= (hex[i] - 'A' + 10) << (i % 2 ? 0 : 4);
+            bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 0 & 0xf) << (i % 2 ? 0 : 4);
+        } else if (hex[i] >= 'a' && hex[i] <= 'f' || hex[i] >= 'A' && hex[i] <= 'F') {
+            bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 9 & 0xf) << (i % 2 ? 0 : 4);
         } else {
             return false;
         }
@@ -214,7 +198,7 @@ int main(int argc, char *argv[]) {
             rec |= REC_ERR;
         }
     }
-    if (alg == 0 || opm == 0 && (mod != 'C' && mod != 'O')) {
+    if (alg == 0 || opm == 0 && (mod != 'N' && mod != 'O')) {
         rec |= REC_ERR;
     }
     if ((rec & REC_ERR) != 0) {

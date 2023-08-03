@@ -7,6 +7,7 @@ class BlockCipherEncrypter {
     size_t use;
     uint8_t buf[BLK];
 public:
+    static constexpr size_t BLOCK_SIZE = BLK;
     template <class... vals_t>
     BlockCipherEncrypter(vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...), use(0) {}
@@ -42,6 +43,7 @@ class BlockCipherDecrypter {
     size_t use;
     uint8_t buf[BLK];
 public:
+    static constexpr size_t BLOCK_SIZE = BLK;
     template <class... vals_t>
     BlockCipherDecrypter(vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...), use(0) {}
