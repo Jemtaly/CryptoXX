@@ -1,27 +1,27 @@
 #pragma once
 #include "../utils.hpp"
-#define BLK BlockCipher::BLOCK_SIZE
-template <class BlockCipher>
+#define BLK BlockCipherMode::BLOCK_SIZE
+template <class BlockCipherMode>
 class BlockCipherEncrypter {
-    BlockCipher bc;
+    BlockCipherMode bce;
     size_t use;
     uint8_t buf[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     template <class... vals_t>
     BlockCipherEncrypter(vals_t &&...vals):
-        bc(std::forward<vals_t>(vals)...), use(0) {}
+        bce(std::forward<vals_t>(vals)...), use(0) {}
     // Function returns the pointer to the next byte to be written.
     // Output buffer must be at least (end - src) + BLOCK_SIZE bytes.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
         if (BLK + src <= end + use) {
             memcpy(buf + use, src, BLK - use);
-            bc.encrypt(buf, dst);
+            bce.crypt(buf, dst);
             src += BLK - use;
             dst += BLK;
             use -= use;
             for (; BLK + src <= end; src += BLK, dst += BLK) {
-                bc.encrypt(src, dst);
+                bce.crypt(src, dst);
             }
         }
         memcpy(buf + use, src, end - src);
@@ -31,33 +31,33 @@ public:
     }
     uint8_t *fflush(uint8_t *dst) {
         memset(buf + use, BLK - use, BLK - use);
-        bc.encrypt(buf, dst);
+        bce.crypt(buf, dst);
         use -= use;
         dst += BLK;
         return dst;
     }
 };
-template <class BlockCipher>
+template <class BlockCipherMode>
 class BlockCipherDecrypter {
-    BlockCipher bc;
+    BlockCipherMode bcd;
     size_t use;
     uint8_t buf[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     template <class... vals_t>
     BlockCipherDecrypter(vals_t &&...vals):
-        bc(std::forward<vals_t>(vals)...), use(0) {}
+        bcd(std::forward<vals_t>(vals)...), use(0) {}
     // Function returns the pointer to the next byte to be written.
     // Output buffer must be at least (end - src) + BLOCK_SIZE bytes.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
         if (BLK + src <  end + use) {
             memcpy(buf + use, src, BLK - use);
-            bc.decrypt(buf, dst);
+            bcd.crypt(buf, dst);
             src += BLK - use;
             dst += BLK;
             use -= use;
             for (; BLK + src <  end; src += BLK, dst += BLK) {
-                bc.decrypt(src, dst);
+                bcd.crypt(src, dst);
             }
         }
         memcpy(buf + use, src, end - src);
@@ -67,7 +67,7 @@ public:
     }
     uint8_t *fflush(uint8_t *dst) {
         if (use != BLK) { return nullptr; }
-        bc.decrypt(buf, dst);
+        bcd.crypt(buf, dst);
         use -= use;
         dst += BLK - dst[BLK - 1];
         return dst;

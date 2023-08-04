@@ -5,10 +5,10 @@
 #include "block/serpent.hpp"
 #include "block/cbc.hpp"
 #include "block/ecb.hpp"
-#include "async/cfb.hpp"
+#include "block/pcbc.hpp"
 #include "stream/ctr.hpp"
 #include "stream/ofb.hpp"
-#define BLK BlockCipherCrypter::BLOCK_SIZE
+#include "async/cfb.hpp"
 #define BUFSIZE 65536
 #define REC_ERR 1
 #define REC_IFP 2
@@ -22,13 +22,13 @@ void sc_crypt(FILE *ifp, FILE *ofp, Args &&...args) {
 template <typename BlockCipherCrypter, typename... Args>
 void bc_crypt(FILE *ifp, FILE *ofp, Args &&...args) {
     BlockCipherCrypter bcc(std::forward<Args>(args)...);
-    uint8_t src[BUFSIZE], dst[BUFSIZE + BLK];
+    uint8_t src[BUFSIZE], dst[BUFSIZE + BlockCipherCrypter::BLOCK_SIZE];
     size_t read;
     while ((read = fread(src, 1, BUFSIZE, ifp)) == BUFSIZE) {
         fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, ofp);
     }
     fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, ofp);
-    if (uint8_t *end = bcc.fflush(dst); end) {
+    if (uint8_t *end = bcc.fflush(dst); end >= (uint8_t *)dst) {
         fwrite(dst, 1, end - (uint8_t *)dst, ofp);
     } else {
         fprintf(stderr, "Error: BlockCipherCrypter::fflush() failed, the input may be corrupted.\n");
@@ -37,22 +37,27 @@ void bc_crypt(FILE *ifp, FILE *ofp, Args &&...args) {
 template <typename BlockCipher>
 void process(char mod, char opm, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8_t const *key) {
     switch (mod) {
-    case 'N': sc_crypt<StreamCipherCrypter<CTRMode<BlockCipher>>>(ifp, ofp, civ, key); break;
-    case 'O': sc_crypt<StreamCipherCrypter<OFBMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+    case 'N': sc_crypt<CTRCrypter<BlockCipher>>(ifp, ofp, civ, key); break;
+    case 'O': sc_crypt<OFBCrypter<BlockCipher>>(ifp, ofp, civ, key); break;
     case 'C':
         switch (opm) {
-        case 'e': sc_crypt<AsyncCipherEncrypter<CFBMode<BlockCipher>>>(ifp, ofp, civ, key); break;
-        case 'd': sc_crypt<AsyncCipherDecrypter<CFBMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+        case 'e': sc_crypt<CFBEncrypter<BlockCipher>>(ifp, ofp, civ, key); break;
+        case 'd': sc_crypt<CFBDecrypter<BlockCipher>>(ifp, ofp, civ, key); break;
+        } break;
+    case 'P':
+        switch (opm) {
+        case 'e': bc_crypt<PCBCEncrypter<BlockCipher>>(ifp, ofp, civ, key); break;
+        case 'd': bc_crypt<PCBCDecrypter<BlockCipher>>(ifp, ofp, civ, key); break;
         } break;
     case 'H':
         switch (opm) {
-        case 'e': bc_crypt<BlockCipherEncrypter<CBCMode<BlockCipher>>>(ifp, ofp, civ, key); break;
-        case 'd': bc_crypt<BlockCipherDecrypter<CBCMode<BlockCipher>>>(ifp, ofp, civ, key); break;
+        case 'e': bc_crypt<CBCEncrypter<BlockCipher>>(ifp, ofp, civ, key); break;
+        case 'd': bc_crypt<CBCDecrypter<BlockCipher>>(ifp, ofp, civ, key); break;
         } break;
     default:
         switch (opm) {
-        case 'e': bc_crypt<BlockCipherEncrypter<ECBMode<BlockCipher>>>(ifp, ofp, key); break;
-        case 'd': bc_crypt<BlockCipherDecrypter<ECBMode<BlockCipher>>>(ifp, ofp, key); break;
+        case 'e': bc_crypt<ECBEncrypter<BlockCipher>>(ifp, ofp, key); break;
+        case 'd': bc_crypt<ECBDecrypter<BlockCipher>>(ifp, ofp, key); break;
         } break;
     }
 }
@@ -104,6 +109,12 @@ int main(int argc, char *argv[]) {
             } else if (argv[i][1] == 'H' && argv[i][2] == '\0') {
                 if (mod == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
                     mod = 'H';
+                } else {
+                    rec |= REC_ERR;
+                }
+            } else if (argv[i][1] == 'P' && argv[i][2] == '\0') {
+                if (mod == 0 && i + 1 < argc && hex2bin(16, argv[++i], civ = new uint8_t[16])) {
+                    mod = 'P';
                 } else {
                     rec |= REC_ERR;
                 }
@@ -224,6 +235,7 @@ int main(int argc, char *argv[]) {
                 "  -O IV       OFB mode (IV: 128-bit IV in hex)\n"
                 "  -C IV       CFB mode (IV: 128-bit IV in hex)\n"
                 "  -H IV       CBC mode (IV: 128-bit IV in hex)\n"
+                "  -P IV       PCBC mode (IV: 128-bit IV in hex)\n"
                 "  -i INFILE   input file (default: stdin)\n"
                 "  -o OUTFILE  output file (default: stdout)\n",
                 argv[0]);

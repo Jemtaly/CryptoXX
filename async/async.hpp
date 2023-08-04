@@ -23,7 +23,7 @@ public:
             for (size_t i = 0; i < CFB; ++i) {
                 cfb[i] = cfb[i + SEC];
             }
-            sc.crypt(cfb, buf);
+            sc.generate(cfb, buf);
             use -= SEC;
         }
         for (; src < end; ++use, ++src, ++dst) {
@@ -53,7 +53,7 @@ public:
             for (size_t i = 0; i < CFB; ++i) {
                 cfb[i] = cfb[i + SEC];
             }
-            sc.crypt(cfb, buf);
+            sc.generate(cfb, buf);
             use -= SEC;
         }
         for (; src < end; ++use, ++src, ++dst) {
