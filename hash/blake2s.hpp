@@ -67,8 +67,7 @@ public:
         if (len > 0) {
             uint32_t m[16] = {};
             READB_LE(m, key, len);
-            lo += 64;
-            lo >= 64 || ++hi;
+            (lo += 64) < 64 && ++hi;
             compress(m, 0);
         }
     }
@@ -76,15 +75,13 @@ public:
     void push(uint8_t const *blk) {
         uint32_t m[16] = {};
         READB_LE(m, blk, 64);
-        lo += 64;
-        lo >= 64 || ++hi;
+        (lo += 64) < 64 && ++hi;
         compress(m, 0);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dig) {
         uint32_t m[16] = {};
         READB_LE(m, src, len);
-        lo += len;
-        lo >= len || ++hi;
+        (lo += len) < len && ++hi;
         compress(m, 1);
         WRITEB_LE(dig, h, DN);
     }

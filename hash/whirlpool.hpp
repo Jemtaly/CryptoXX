@@ -129,20 +129,20 @@ public:
     void push(uint8_t const *data) {
         WhirlpoolRow w[8];
         memcpy(w, data, 64);
-        (ctr[3] += 512) < 512
-            && ++ctr[2] == 0
-            && ++ctr[1] == 0
-            && ++ctr[0] == 0;
+        (ctr[3] += 64 * 8)
+            < 64 * 8 && ++ctr[2]
+            == 0 && ++ctr[1]
+            == 0 && ++ctr[0];
         compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *hash) {
         WhirlpoolRow w[8];
         memset(w, 0, 64);
         memcpy(w, src, len);
-        (ctr[3] += len * 8) < len * 8
-            && ++ctr[2] == 0
-            && ++ctr[1] == 0
-            && ++ctr[0] == 0;
+        (ctr[3] += len * 8)
+            < len * 8 && ++ctr[2]
+            == 0 && ++ctr[1]
+            == 0 && ++ctr[0];
         ((uint8_t *)w)[len] = 0x80;
         if (len >= 32) {
             compress(w);

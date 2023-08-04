@@ -12,15 +12,14 @@
 #include "hash/blake3.hpp"
 #include "hash/whirlpool.hpp"
 #include "hash/hmac.hpp"
-#define BLK Hash::BLOCK_SIZE
-#define DIG Hash::DIGEST_SIZE
+#define DIG HashWrapper::DIGEST_SIZE
 #define BUFSIZE 65536
 #define REC_ERR 1
 #define REC_IFP 2
 #define REC_MAC 4
-template <typename Hash, typename... Args>
+template <typename HashWrapper, typename... Args>
 void hash(FILE *file, Args &&...args) {
-    HashWrapper<Hash> hash(std::forward<Args>(args)...);
+    HashWrapper hash(std::forward<Args>(args)...);
     uint8_t buf[BUFSIZE];
     size_t read;
     while ((read = fread(buf, 1, BUFSIZE, file)) == BUFSIZE) {
@@ -37,9 +36,9 @@ void hash(FILE *file, Args &&...args) {
 template <typename Hash>
 void process(int rec, FILE *file, uint8_t const *key, size_t len) {
     if ((rec & REC_MAC) == 0) {
-        hash<Hash>(file);
+        hash<HashWrapper<Hash>>(file);
     } else {
-        hash<HMAC<Hash>>(file, key, len);
+        hash<HMACWrapper<Hash>>(file, key, len);
     }
 }
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
@@ -206,8 +205,8 @@ int main(int argc, char *argv[]) {
                 argv[0], argv[0]);
     } else {
         switch (alg) {
-        case '0': process<CRC32>(rec, fp, key, len); break;
-        case '1': process<CRC64>(rec, fp, key, len); break;
+        case '0': hash<HashWrapper<CRC32>>(fp); break;
+        case '1': hash<HashWrapper<CRC64>>(fp); break;
         case 'M': process<MD5>(rec, fp, key, len); break;
         case 'X': process<SHA>(rec, fp, key, len); break;
         case 'S': process<SM3>(rec, fp, key, len); break;
@@ -222,7 +221,7 @@ int main(int argc, char *argv[]) {
         case 's': process<BLAKE2s256>(rec, fp, key, len); break;
         case 'b': process<BLAKE2b512>(rec, fp, key, len); break;
         case 'B': process<BLAKE3>(rec, fp, key, len); break;
-        case 'W': process<Whirlpool>(rec, fp, key, len); break;
+        case 'W': hash<HashWrapper<Whirlpool>>(fp); break;
         }
     }
     if (key) {

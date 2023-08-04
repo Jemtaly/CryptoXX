@@ -59,16 +59,14 @@ public:
     void push(uint8_t const *blk) {
         uint32_t w[80];
         READB_BE(w, blk, 64);
-        lo += 512;
-        lo >= 512 || hi++;
+        (lo += 64 * 8) < 64 * 8 && ++hi;
         compress(w);
     }
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         uint32_t w[80];
         memset(w, 0, 64);
         READB_BE(w, src, len);
-        lo += len * 8;
-        lo >= len * 8 || hi++;
+        (lo += len * 8) < len * 8 && ++hi;
         BYTE_BE(w, len) = 0x80;
         if (len >= 56) {
             compress(w);

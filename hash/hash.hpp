@@ -11,6 +11,7 @@ class HashWrapper<Hash, false> {
     size_t use;
     uint8_t mem[BLK];
 public:
+    static constexpr size_t DIGEST_SIZE = DIG;
     template <class... vals_t>
     HashWrapper(vals_t &&...vals):
         hash(std::forward<vals_t>(vals)...), use(0) {}
@@ -39,6 +40,7 @@ class HashWrapper<Hash, true> {
     size_t use;
     uint8_t mem[BLK];
 public:
+    static constexpr size_t DIGEST_SIZE = DIG;
     template <class... vals_t>
     HashWrapper(vals_t &&...vals):
         hash(std::forward<vals_t>(vals)...), use(0) {}
