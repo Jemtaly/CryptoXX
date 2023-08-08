@@ -4,7 +4,7 @@
 #define DIG Hash::DIGEST_SIZE
 #define NPD Hash::NO_PADDING
 template <class Hash>
-    requires (DIG < BLK || NPD && DIG == BLK)
+    requires (DIG <= BLK)
 class HMAC {
     Hash inner;
     Hash outer;
@@ -21,13 +21,14 @@ public:
         } else {
             memcpy(buf, key, len);
         }
-        uint8_t ibf[BLK], obf[BLK];
-        for (int j = 0; j < BLK; j++) {
-            ibf[j] = buf[j] ^ 0x36;
-            obf[j] = buf[j] ^ 0x5c;
+        for (size_t i = 0; i < BLK; i++) {
+            buf[i] ^= 0x36;
         }
-        inner.push(ibf);
-        outer.push(obf);
+        inner.push(buf);
+        for (size_t i = 0; i < BLK; i++) {
+            buf[i] ^= 0x36 ^ 0x5c;
+        }
+        outer.push(buf);
     }
     void push(uint8_t const *blk) {
         inner.push(blk);
@@ -35,7 +36,12 @@ public:
     void hash(uint8_t const *src, size_t len, uint8_t *dst) {
         uint8_t buf[DIG];
         inner.hash(src, len, buf);
-        outer.hash(buf, DIG, dst);
+        if constexpr (DIG == BLK && not NPD) {
+            outer.push(buf);
+            outer.hash(NULL,  0, dst);
+        } else {
+            outer.hash(buf, DIG, dst);
+        }
     }
 };
 template <class Hash>

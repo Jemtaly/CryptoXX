@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
             rec |= REC_ERR;
         }
     }
-    if (alg == 0 || (rec & REC_MAC) != 0 && (alg == '0' || alg == '1' || alg == 'W')) {
+    if (alg == 0 || (rec & REC_MAC) != 0 && (alg == '0' || alg == '1')) {
         rec |= REC_ERR;
     }
     if ((rec & REC_ERR) != 0) {
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
         case 's': process<BLAKE2s256>(rec, fp, key, len); break;
         case 'b': process<BLAKE2b512>(rec, fp, key, len); break;
         case 'B': process<BLAKE3>(rec, fp, key, len); break;
-        case 'W': hash<HashWrapper<Whirlpool>>(fp); break;
+        case 'W': process<Whirlpool>(rec, fp, key, len); break;
         }
     }
     if (key) {
