@@ -121,6 +121,7 @@ class RijndaelTmpl: public RijndaelBase {
     RijndaelClmn rk[R + 1][B];
 public:
     static constexpr size_t BLOCK_SIZE = B * 4;
+    static constexpr size_t KEY_SIZE = K * 4;
     RijndaelTmpl(const uint8_t *mk) {
         memcpy((RijndaelClmn *)rk, mk, K * 4);
         for (int i = K; i < (R + 1) * B; ++i) {

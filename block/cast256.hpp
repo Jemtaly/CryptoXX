@@ -164,6 +164,7 @@ private:
     CAST256Key K[12][4];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 32;
     CAST256(uint8_t const *key) {
         uint32_t A = GET_BE<uint32_t>(key     );
         uint32_t B = GET_BE<uint32_t>(key +  4);

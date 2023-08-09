@@ -44,6 +44,7 @@ class IDEA {
     uint16_t d[52];
 public:
     static constexpr size_t BLOCK_SIZE = 8;
+    static constexpr size_t KEY_SIZE = 16;
     IDEA(uint8_t const *key) {
         READ_BE(e, key, 8);
         for (int i = 8; i < 52; i++) {

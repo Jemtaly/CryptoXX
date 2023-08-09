@@ -423,6 +423,7 @@ class SerpentTmpl: public SerpentBase {
     uint32_t rk[140] = {};
 public:
     static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 4 * L;
     SerpentTmpl(uint8_t const *kin) {
         uint32_t x[5]; // 5th element is used as a temporary
         READ_LE(rk, kin, L);

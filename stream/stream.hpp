@@ -1,12 +1,16 @@
 #pragma once
 #include "../utils.hpp"
 #define SEC StreamCipher::SECTION_SIZE
+#define KEY StreamCipher::KEY_SIZE
+#define CIV StreamCipher::CIV_SIZE
 template <class StreamCipher>
 class StreamCipherCrypter {
     StreamCipher sc;
     size_t use;
     uint8_t buf[SEC];
 public:
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = CIV;
     template <class... vals_t>
     StreamCipherCrypter(vals_t &&...vals):
         sc(std::forward<vals_t>(vals)...), use(SEC) {}
@@ -26,3 +30,5 @@ public:
     }
 };
 #undef SEC
+#undef KEY
+#undef CIV

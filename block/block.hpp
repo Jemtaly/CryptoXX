@@ -1,6 +1,8 @@
 #pragma once
 #include "../utils.hpp"
 #define BLK BlockCipherMode::BLOCK_SIZE
+#define KEY BlockCipherMode::KEY_SIZE
+#define CIV BlockCipherMode::CIV_SIZE
 template <class BlockCipherMode>
 class BlockCipherEncrypter {
     BlockCipherMode bce;
@@ -8,6 +10,8 @@ class BlockCipherEncrypter {
     uint8_t buf[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = CIV;
     template <class... vals_t>
     BlockCipherEncrypter(vals_t &&...vals):
         bce(std::forward<vals_t>(vals)...), use(0) {}
@@ -44,6 +48,8 @@ class BlockCipherDecrypter {
     uint8_t buf[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = CIV;
     template <class... vals_t>
     BlockCipherDecrypter(vals_t &&...vals):
         bcd(std::forward<vals_t>(vals)...), use(0) {}
@@ -74,3 +80,5 @@ public:
     }
 };
 #undef BLK
+#undef KEY
+#undef CIV

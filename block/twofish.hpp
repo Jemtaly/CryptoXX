@@ -76,6 +76,7 @@ class TwofishTmpl: public TwofishBase {
     uint32_t mks[4][256];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 8 * L;
     TwofishTmpl(uint8_t const *kin) {
         uint32_t key[2 * L];
         uint32_t vec[2 * L];

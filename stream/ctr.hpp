@@ -1,12 +1,15 @@
 #pragma once
 #include "stream.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
+#define KEY BlockCipher::KEY_SIZE
 template <class BlockCipher>
 class CTRGen {
     BlockCipher const bc;
     uint8_t ctr[BLK];
 public:
     static constexpr size_t SECTION_SIZE = BLK;
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = BLK;
     template <class... vals_t>
     CTRGen(uint8_t const *civ, vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {
@@ -20,3 +23,4 @@ public:
 template <class BlockCipher>
 using CTRCrypter = StreamCipherCrypter<CTRGen<BlockCipher>>;
 #undef BLK
+#undef KEY

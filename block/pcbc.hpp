@@ -1,12 +1,15 @@
 #pragma once
 #include "block.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
+#define KEY BlockCipher::KEY_SIZE
 template <class BlockCipher>
 class PCBCEnc {
     BlockCipher const bc;
     uint8_t rec[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = BLK;
     template <class... vals_t>
     PCBCEnc(uint8_t const *civ, vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {
@@ -28,6 +31,8 @@ class PCBCDec {
     uint8_t rec[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = BLK;
     template <class... vals_t>
     PCBCDec(uint8_t const *civ, vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {
@@ -48,3 +53,4 @@ using PCBCEncrypter = BlockCipherEncrypter<PCBCEnc<BlockCipher>>;
 template <class BlockCipher>
 using PCBCDecrypter = BlockCipherDecrypter<PCBCDec<BlockCipher>>;
 #undef BLK
+#undef KEY

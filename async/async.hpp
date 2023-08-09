@@ -2,6 +2,7 @@
 #include "../utils.hpp"
 #define CFB AsyncCipher::FEEDBACK_SIZE
 #define SEC AsyncCipher::SECTION_SIZE
+#define KEY AsyncCipher::KEY_SIZE
 template <class AsyncCipher>
 class AsyncCipherEncrypter {
     AsyncCipher const ac;
@@ -9,6 +10,8 @@ class AsyncCipherEncrypter {
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
 public:
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = CFB;
     template <class... vals_t>
     AsyncCipherEncrypter(uint8_t const *civ, vals_t &&...vals):
         ac(std::forward<vals_t>(vals)...), use(SEC) {
@@ -39,6 +42,8 @@ class AsyncCipherDecrypter {
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
 public:
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = CFB;
     template <class... vals_t>
     AsyncCipherDecrypter(uint8_t const *civ, vals_t &&...vals):
         ac(std::forward<vals_t>(vals)...), use(SEC) {
@@ -64,3 +69,4 @@ public:
 };
 #undef CFB
 #undef SEC
+#undef KEY

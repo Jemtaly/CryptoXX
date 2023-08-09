@@ -126,6 +126,7 @@ class DES {
     uint<48> rk[16];
 public:
     static constexpr size_t BLOCK_SIZE = 8;
+    static constexpr size_t KEY_SIZE = 8;
     DES(uint8_t const *mk) {
         uint<56> t = permutation<64, 56>(GET_BE<uint<64>>(mk), PC_1);
         uint<28> l = t >> 28, r = t & 0x0FFFFFFF;

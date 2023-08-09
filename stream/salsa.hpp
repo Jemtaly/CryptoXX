@@ -12,13 +12,26 @@ class Salsa {
     uint32_t input[16];
 public:
     static constexpr size_t SECTION_SIZE = 64;
-    Salsa(uint32_t const *key, uint32_t const *counter):
-        input{
-            0x61707865, key    [0], key    [1], key    [2], // "expa"
-            key    [3], 0x3320646e, counter[2], counter[3], // "nd 3"
-            counter[0], counter[1], 0x79622d32, key    [4], // "2-by"
-            key    [5], key    [6], key    [7], 0x6b206574, // "te k"
-        } {}
+    static constexpr size_t KEY_SIZE = 32;
+    static constexpr size_t CIV_SIZE = 8;
+    Salsa(uint8_t const *civ, uint8_t const *key) {
+        input[0x0] = 0x61707865;
+        input[0x5] = 0x3320646e;
+        input[0xa] = 0x79622d32;
+        input[0xf] = 0x6b206574;
+        input[0x1] = GET_LE(key,  0);
+        input[0x2] = GET_LE(key,  4);
+        input[0x3] = GET_LE(key,  8);
+        input[0x4] = GET_LE(key, 12);
+        input[0xb] = GET_LE(key, 16);
+        input[0xc] = GET_LE(key, 20);
+        input[0xd] = GET_LE(key, 24);
+        input[0xe] = GET_LE(key, 28);
+        input[0x8] = GET_LE(civ,  0);
+        input[0x9] = GET_LE(civ,  4);
+        input[0x6] = 0x00000000;
+        input[0x7] = 0x00000000;
+    }
     void generate(uint8_t *buf) {
         uint32_t state[16] = {
             input[0x0], input[0x1], input[0x2], input[0x3],
@@ -39,7 +52,10 @@ public:
         for (int i = 0; i < 16; i++) {
             PUT_LE(buf, state[i] + input[i]);
         }
-        ++input[ 8] == 0 && ++input[ 9] == 0;
+        ++input[ 8] == 0 && ++input[ 9];
     }
 };
+using Salsa8 = Salsa<8>;
+using Salsa12 = Salsa<12>;
+using Salsa20 = Salsa<20>;
 #undef QROUND

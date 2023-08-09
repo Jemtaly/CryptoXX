@@ -12,13 +12,26 @@ class ChaCha {
     uint32_t input[16];
 public:
     static constexpr size_t SECTION_SIZE = 64;
-    ChaCha(uint32_t const *key, uint32_t const *counter):
-        input{
-            0x61707865, 0x3320646e, 0x79622d32, 0x6b206574, // "expand 32-byte k"
-            key    [0], key    [1], key    [2], key    [3],
-            key    [4], key    [5], key    [6], key    [7],
-            counter[0], counter[1], counter[2], counter[3],
-        } {}
+    static constexpr size_t KEY_SIZE = 32;
+    static constexpr size_t CIV_SIZE = 8;
+    ChaCha(uint8_t const *civ, uint8_t const *key) {
+        input[0x0] = 0x61707865;
+        input[0x1] = 0x3320646e;
+        input[0x2] = 0x79622d32;
+        input[0x3] = 0x6b206574;
+        input[0x4] = GET_LE(key,  0);
+        input[0x5] = GET_LE(key,  4);
+        input[0x6] = GET_LE(key,  8);
+        input[0x7] = GET_LE(key, 12);
+        input[0x8] = GET_LE(key, 16);
+        input[0x9] = GET_LE(key, 20);
+        input[0xa] = GET_LE(key, 24);
+        input[0xb] = GET_LE(key, 28);
+        input[0xc] = GET_LE(civ,  0);
+        input[0xd] = GET_LE(civ,  4);
+        input[0xe] = 0x00000000;
+        input[0xf] = 0x00000000;
+    }
     void generate(uint8_t *buf) {
         uint32_t state[16] = {
             input[0x0], input[0x1], input[0x2], input[0x3],
@@ -39,7 +52,10 @@ public:
         for (int i = 0; i < 16; i++) {
             PUT_LE(buf, state[i] + input[i]);
         }
-        ++input[12] == 0 && ++input[13] == 0;
+        ++input[12] == 0 && ++input[13];
     }
 };
+using ChaCha8 = ChaCha<8>;
+using ChaCha12 = ChaCha<12>;
+using ChaCha20 = ChaCha<20>;
 #undef QROUND

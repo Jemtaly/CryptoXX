@@ -82,7 +82,9 @@ class ZUC {
     }
 public:
     static constexpr size_t SECTION_SIZE = 4;
-    ZUC(uint8_t const *k, uint8_t const *iv): r1(0), r2(0) {
+    static constexpr size_t KEY_SIZE = 16;
+    static constexpr size_t CIV_SIZE = 16;
+    ZUC(uint8_t const *iv, uint8_t const *k): r1(0), r2(0) {
         for (int i = 0; i < 16; ++i) {
             lfsr[i] = k[i] << 23 | EK[i] << 8 | iv[i];
         }

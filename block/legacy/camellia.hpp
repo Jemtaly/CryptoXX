@@ -92,6 +92,7 @@ class CamelliaTmpl: public CamelliaBase {
     uint64_t kx[K];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = L * 8;
     CamelliaTmpl(const uint8_t *kxy) {
         uint64_t lh, ll;
         uint64_t rh, rl;

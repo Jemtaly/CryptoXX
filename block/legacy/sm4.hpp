@@ -34,6 +34,7 @@ class SM4 {
     };
 public:
     static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 16;
     SM4(uint8_t const *mk) {
         k[0] ^= GET_BE<uint32_t>(mk     );
         k[1] ^= GET_BE<uint32_t>(mk +  4);

@@ -60,6 +60,7 @@ class SM4 {
     uint32_t rk[32];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 16;
     SM4(uint8_t const *mk) {
         uint32_t a, b, c, d;
         a = GET_BE<uint32_t>(mk     ) ^ 0xa3b1bac6;

@@ -56,8 +56,8 @@ void process(char mod, char opm, FILE *ifp, FILE *ofp, uint8_t const *civ, uint8
         } break;
     default:
         switch (opm) {
-        case 'e': bc_crypt<ECBEncrypter<BlockCipher>>(ifp, ofp, key); break;
-        case 'd': bc_crypt<ECBDecrypter<BlockCipher>>(ifp, ofp, key); break;
+        case 'e': bc_crypt<ECBEncrypter<BlockCipher>>(ifp, ofp, civ, key); break;
+        case 'd': bc_crypt<ECBDecrypter<BlockCipher>>(ifp, ofp, civ, key); break;
         } break;
     }
 }

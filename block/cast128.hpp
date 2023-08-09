@@ -279,6 +279,7 @@ private:
     CAST128Key K[16];
 public:
     static constexpr size_t BLOCK_SIZE = 8;
+    static constexpr size_t KEY_SIZE = 16;
     CAST128(uint8_t const *key) {
         uint32_t x[4], z[4];
         x[0] = GET_BE<uint32_t>(key     );
