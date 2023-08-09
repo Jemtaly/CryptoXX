@@ -1,11 +1,11 @@
 #pragma once
 #include "des.hpp"
-class TDES {
+class TDES3K {
     DES des[3];
 public:
     static constexpr size_t BLOCK_SIZE = DES::BLOCK_SIZE;
     static constexpr size_t KEY_SIZE = DES::KEY_SIZE * 3;
-    TDES(uint8_t const *mk):
+    TDES3K(uint8_t const *mk):
         des{
             mk + DES::KEY_SIZE * 0,
             mk + DES::KEY_SIZE * 1,
@@ -18,6 +18,27 @@ public:
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         des[2].decrypt(src, dst);
+        des[1].encrypt(dst, dst);
+        des[0].decrypt(dst, dst);
+    }
+};
+class TDES2K {
+    DES des[2];
+public:
+    static constexpr size_t BLOCK_SIZE = DES::BLOCK_SIZE;
+    static constexpr size_t KEY_SIZE = DES::KEY_SIZE * 2;
+    TDES2K(uint8_t const *mk):
+        des{
+            mk + DES::KEY_SIZE * 0,
+            mk + DES::KEY_SIZE * 1,
+        } {}
+    void encrypt(uint8_t const *src, uint8_t *dst) const {
+        des[0].encrypt(src, dst);
+        des[1].decrypt(dst, dst);
+        des[0].encrypt(dst, dst);
+    }
+    void decrypt(uint8_t const *src, uint8_t *dst) const {
+        des[0].decrypt(src, dst);
         des[1].encrypt(dst, dst);
         des[0].decrypt(dst, dst);
     }

@@ -55,62 +55,9 @@ protected:
         }
         return MDS;
     }();
-};
-template <int L>
-    requires (L == 2 || L == 3 || L == 4)
-class TwofishTmpl: public TwofishBase {
-    static uint32_t h_fun(uint8_t b, uint32_t const *key) {
-        uint32_t x = (uint32_t)b * 0x01010101;
-        switch (L) {
-        case 4:
-            x = (Q[1][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[6];
-        case 3:
-            x = (Q[1][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[0][x >> 24] << 24) ^ key[4];
-        case 2:
-            x = (Q[0][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[2];
-            x = (Q[0][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[1][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[0];
-        }
-        return x;
-    }
     uint32_t rnk[40];
     uint32_t mks[4][256];
 public:
-    static constexpr size_t BLOCK_SIZE = 16;
-    static constexpr size_t KEY_SIZE = 8 * L;
-    TwofishTmpl(uint8_t const *kin) {
-        uint32_t key[2 * L];
-        uint32_t vec[2 * L];
-        READ_LE(key, kin, 2 * L);
-        for (int i = 0; i < L; i++) {
-            uint32_t h = key[2 * i + 1];
-            uint32_t l = key[2 * i    ];
-            for (int j = 0; j < 8; j++) {
-                uint8_t t, u, v;
-                t =          h >> 24;
-                h = h << 8 | l >> 24;
-                l = l << 8          ;
-                u = t << 1 ^ (t & 0x80 ? 0x4d : 0x00)    ;
-                v = t >> 1 ^ (t & 0x01 ? 0xa6 : 0x00) ^ u;
-                h ^= v << 24 | u << 16 | v << 8 | t;
-            }
-            vec[2 * (L - 1 - i)] = h;
-        }
-        for (int i = 0; i < 256; i++) {
-            uint32_t t = h_fun(i    , vec    );
-            mks[0][i] = MDS[0][t       & 0xff];
-            mks[1][i] = MDS[1][t >>  8 & 0xff];
-            mks[2][i] = MDS[2][t >> 16 & 0xff];
-            mks[3][i] = MDS[3][t >> 24       ];
-        }
-        for (int i = 0; i < 40; i += 2) {
-            uint32_t a = h_fun(i    , key    );
-            uint32_t b = h_fun(i + 1, key + 1);
-            a = MDS[0][a & 0xff] ^ MDS[1][a >> 8 & 0xff] ^ MDS[2][a >> 16 & 0xff] ^ MDS[3][a >> 24];
-            b = MDS[0][b & 0xff] ^ MDS[1][b >> 8 & 0xff] ^ MDS[2][b >> 16 & 0xff] ^ MDS[3][b >> 24];
-            b = ROTL(b, 8), a += b, rnk[i    ] = a;
-            b += a, b = ROTL(b, 9), rnk[i + 1] = b;
-        }
-    }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t a, b, c, d, x, y;
         a = GET_LE<uint32_t>(src     );
@@ -176,6 +123,60 @@ public:
         PUT_LE(dst +  4, d);
         PUT_LE(dst +  8, a);
         PUT_LE(dst + 12, b);
+    }
+};
+template <int L>
+    requires (L == 2 || L == 3 || L == 4)
+class TwofishTmpl: public TwofishBase {
+    static uint32_t h_fun(uint8_t b, uint32_t const *key) {
+        uint32_t x = (uint32_t)b * 0x01010101;
+        switch (L) {
+        case 4:
+            x = (Q[1][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[6];
+        case 3:
+            x = (Q[1][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[0][x >> 24] << 24) ^ key[4];
+        case 2:
+            x = (Q[0][x & 0xff] | Q[1][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[2];
+            x = (Q[0][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[1][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[0];
+        }
+        return x;
+    }
+public:
+    static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 8 * L;
+    TwofishTmpl(uint8_t const *kin) {
+        uint32_t key[2 * L];
+        uint32_t vec[2 * L];
+        READ_LE(key, kin, 2 * L);
+        for (int i = 0; i < L; i++) {
+            uint32_t h = key[2 * i + 1];
+            uint32_t l = key[2 * i    ];
+            for (int j = 0; j < 8; j++) {
+                uint8_t t, u, v;
+                t =          h >> 24;
+                h = h << 8 | l >> 24;
+                l = l << 8          ;
+                u = t << 1 ^ (t & 0x80 ? 0x4d : 0x00)    ;
+                v = t >> 1 ^ (t & 0x01 ? 0xa6 : 0x00) ^ u;
+                h ^= v << 24 | u << 16 | v << 8 | t;
+            }
+            vec[2 * (L - 1 - i)] = h;
+        }
+        for (int i = 0; i < 256; i++) {
+            uint32_t t = h_fun(i    , vec    );
+            mks[0][i] = MDS[0][t       & 0xff];
+            mks[1][i] = MDS[1][t >>  8 & 0xff];
+            mks[2][i] = MDS[2][t >> 16 & 0xff];
+            mks[3][i] = MDS[3][t >> 24       ];
+        }
+        for (int i = 0; i < 40; i += 2) {
+            uint32_t a = h_fun(i    , key    );
+            uint32_t b = h_fun(i + 1, key + 1);
+            a = MDS[0][a & 0xff] ^ MDS[1][a >> 8 & 0xff] ^ MDS[2][a >> 16 & 0xff] ^ MDS[3][a >> 24];
+            b = MDS[0][b & 0xff] ^ MDS[1][b >> 8 & 0xff] ^ MDS[2][b >> 16 & 0xff] ^ MDS[3][b >> 24];
+            b = ROTL(b, 8), a += b, rnk[i    ] = a;
+            b += a, b = ROTL(b, 9), rnk[i + 1] = b;
+        }
     }
 };
 using Twofish128 = TwofishTmpl<2>;

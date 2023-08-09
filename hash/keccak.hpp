@@ -32,10 +32,6 @@ protected:
         {41, 45, 15, 21,  8},
         {18,  2, 61, 56, 14},
     };
-};
-template <uint8_t PAD_BYTE, size_t BLK, size_t DIG>
-    requires (DIG <= BLK && BLK <= 200)
-class KeccakTmpl: public KeccakBase {
     void permute() {
         for (int i = 0; i < 24; i++) {
             uint64_t C[5];
@@ -50,6 +46,10 @@ class KeccakTmpl: public KeccakBase {
         }
     }
     uint64_t A[5][5] = {};
+};
+template <uint8_t PAD_BYTE, size_t BLK, size_t DIG>
+    requires (DIG <= BLK && BLK <= 200)
+class KeccakTmpl: public KeccakBase {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;

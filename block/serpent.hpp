@@ -416,57 +416,10 @@
     R[0] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
-class SerpentBase {};
-template <int L>
-    requires (L == 4 || L == 6 || L == 8)
-class SerpentTmpl: public SerpentBase {
+class SerpentBase {
+protected:
     uint32_t rk[140] = {};
 public:
-    static constexpr size_t BLOCK_SIZE = 16;
-    static constexpr size_t KEY_SIZE = 4 * L;
-    SerpentTmpl(uint8_t const *kin) {
-        uint32_t x[5]; // 5th element is used as a temporary
-        READ_LE(rk, kin, L);
-        if constexpr (L < 8) {
-            rk[L] = 1; // padding with 1 bit and 0 bits to make 256 bits
-        }
-        for (int i = 0; i < 132; ++i) {
-            rk[i + 8] = ROTL(rk[i] ^ rk[i + 3] ^ rk[i + 5] ^ rk[i + 7] ^ 0x9E3779B9 ^ i, 11);
-        }
-        LK( 0, x); SB3(x); SK( 0, x);
-        LK( 1, x); SB2(x); SK( 1, x);
-        LK( 2, x); SB1(x); SK( 2, x);
-        LK( 3, x); SB0(x); SK( 3, x);
-        LK( 4, x); SB7(x); SK( 4, x);
-        LK( 5, x); SB6(x); SK( 5, x);
-        LK( 6, x); SB5(x); SK( 6, x);
-        LK( 7, x); SB4(x); SK( 7, x);
-        LK( 8, x); SB3(x); SK( 8, x);
-        LK( 9, x); SB2(x); SK( 9, x);
-        LK(10, x); SB1(x); SK(10, x);
-        LK(11, x); SB0(x); SK(11, x);
-        LK(12, x); SB7(x); SK(12, x);
-        LK(13, x); SB6(x); SK(13, x);
-        LK(14, x); SB5(x); SK(14, x);
-        LK(15, x); SB4(x); SK(15, x);
-        LK(16, x); SB3(x); SK(16, x);
-        LK(17, x); SB2(x); SK(17, x);
-        LK(18, x); SB1(x); SK(18, x);
-        LK(19, x); SB0(x); SK(19, x);
-        LK(20, x); SB7(x); SK(20, x);
-        LK(21, x); SB6(x); SK(21, x);
-        LK(22, x); SB5(x); SK(22, x);
-        LK(23, x); SB4(x); SK(23, x);
-        LK(24, x); SB3(x); SK(24, x);
-        LK(25, x); SB2(x); SK(25, x);
-        LK(26, x); SB1(x); SK(26, x);
-        LK(27, x); SB0(x); SK(27, x);
-        LK(28, x); SB7(x); SK(28, x);
-        LK(29, x); SB6(x); SK(29, x);
-        LK(30, x); SB5(x); SK(30, x);
-        LK(31, x); SB4(x); SK(31, x);
-        LK(32, x); SB3(x); SK(32, x);
-    }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t x[5]; // 5th element is used as a temporary
         READ_LE(x, src, 4);
@@ -540,6 +493,56 @@ public:
         LTROTR(x); IB1(x); XK( 1, x);
         LTROTR(x); IB0(x); XK( 0, x);
         WRITE_LE(dst, x, 4);
+    }
+};
+template <int L>
+    requires (L == 4 || L == 6 || L == 8)
+class SerpentTmpl: public SerpentBase {
+public:
+    static constexpr size_t BLOCK_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 4 * L;
+    SerpentTmpl(uint8_t const *kin) {
+        uint32_t x[5]; // 5th element is used as a temporary
+        READ_LE(rk, kin, L);
+        if constexpr (L < 8) {
+            rk[L] = 1; // padding with 1 bit and 0 bits to make 256 bits
+        }
+        for (int i = 0; i < 132; ++i) {
+            rk[i + 8] = ROTL(rk[i] ^ rk[i + 3] ^ rk[i + 5] ^ rk[i + 7] ^ 0x9E3779B9 ^ i, 11);
+        }
+        LK( 0, x); SB3(x); SK( 0, x);
+        LK( 1, x); SB2(x); SK( 1, x);
+        LK( 2, x); SB1(x); SK( 2, x);
+        LK( 3, x); SB0(x); SK( 3, x);
+        LK( 4, x); SB7(x); SK( 4, x);
+        LK( 5, x); SB6(x); SK( 5, x);
+        LK( 6, x); SB5(x); SK( 6, x);
+        LK( 7, x); SB4(x); SK( 7, x);
+        LK( 8, x); SB3(x); SK( 8, x);
+        LK( 9, x); SB2(x); SK( 9, x);
+        LK(10, x); SB1(x); SK(10, x);
+        LK(11, x); SB0(x); SK(11, x);
+        LK(12, x); SB7(x); SK(12, x);
+        LK(13, x); SB6(x); SK(13, x);
+        LK(14, x); SB5(x); SK(14, x);
+        LK(15, x); SB4(x); SK(15, x);
+        LK(16, x); SB3(x); SK(16, x);
+        LK(17, x); SB2(x); SK(17, x);
+        LK(18, x); SB1(x); SK(18, x);
+        LK(19, x); SB0(x); SK(19, x);
+        LK(20, x); SB7(x); SK(20, x);
+        LK(21, x); SB6(x); SK(21, x);
+        LK(22, x); SB5(x); SK(22, x);
+        LK(23, x); SB4(x); SK(23, x);
+        LK(24, x); SB3(x); SK(24, x);
+        LK(25, x); SB2(x); SK(25, x);
+        LK(26, x); SB1(x); SK(26, x);
+        LK(27, x); SB0(x); SK(27, x);
+        LK(28, x); SB7(x); SK(28, x);
+        LK(29, x); SB6(x); SK(29, x);
+        LK(30, x); SB5(x); SK(30, x);
+        LK(31, x); SB4(x); SK(31, x);
+        LK(32, x); SB3(x); SK(32, x);
     }
 };
 using Serpent128 = SerpentTmpl<4>;
