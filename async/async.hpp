@@ -4,14 +4,14 @@
 #define SEC AsyncCipher::SECTION_SIZE
 template <class AsyncCipher>
 class AsyncCipherEncrypter {
-    AsyncCipher sc;
+    AsyncCipher const ac;
     size_t use;
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
 public:
     template <class... vals_t>
     AsyncCipherEncrypter(uint8_t const *civ, vals_t &&...vals):
-        sc(std::forward<vals_t>(vals)...), use(SEC) {
+        ac(std::forward<vals_t>(vals)...), use(SEC) {
         memcpy(cfb, civ, CFB);
     }
     // Function returns the pointer to the next byte to be written.
@@ -23,7 +23,7 @@ public:
             for (size_t i = 0; i < CFB; ++i) {
                 cfb[i] = cfb[i + SEC];
             }
-            sc.generate(cfb, buf);
+            ac.generate(cfb, buf);
             use -= SEC;
         }
         for (; src < end; ++use, ++src, ++dst) {
@@ -34,14 +34,14 @@ public:
 };
 template <class AsyncCipher>
 class AsyncCipherDecrypter {
-    AsyncCipher sc;
+    AsyncCipher const ac;
     size_t use;
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
 public:
     template <class... vals_t>
     AsyncCipherDecrypter(uint8_t const *civ, vals_t &&...vals):
-        sc(std::forward<vals_t>(vals)...), use(SEC) {
+        ac(std::forward<vals_t>(vals)...), use(SEC) {
         memcpy(cfb, civ, CFB);
     }
     // Function returns the pointer to the next byte to be written.
@@ -53,7 +53,7 @@ public:
             for (size_t i = 0; i < CFB; ++i) {
                 cfb[i] = cfb[i + SEC];
             }
-            sc.generate(cfb, buf);
+            ac.generate(cfb, buf);
             use -= SEC;
         }
         for (; src < end; ++use, ++src, ++dst) {
