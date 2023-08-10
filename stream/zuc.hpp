@@ -75,10 +75,13 @@ class ZUC {
         f = mod_add(f, ROTL31(lfsr[10], 21));
         f = mod_add(f, ROTL31(lfsr[13], 17));
         f = mod_add(f, ROTL31(lfsr[15], 15));
+        if constexpr (INIT) {
+            f = mod_add(f, w >> 1);
+        }
         for (int i = 0; i < 15; ++i) {
             lfsr[i] = lfsr[i + 1];
         }
-        lfsr[15] = INIT ? mod_add(f, w >> 1) : f;
+        lfsr[15] = f;
     }
 public:
     static constexpr size_t SECTION_SIZE = 4;
