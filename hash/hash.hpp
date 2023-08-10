@@ -2,7 +2,7 @@
 #include "../utils.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
-#define NPD Hash::NO_PADDING // If true, then the last block is not padded when the input is a multiple of the block size.
+#define NPD Hash::NO_PADDING // Messages whose length is a positive integer multiple of the block size do not need to be padded.
 template <class Hash, bool = NPD>
 class HashWrapper;
 template <class Hash>

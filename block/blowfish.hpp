@@ -268,7 +268,7 @@ class Blowfish {
     };
 public:
     static constexpr size_t BLOCK_SIZE = 8;
-    static constexpr size_t KEY_SIZE = 16;
+    static constexpr size_t KEY_SIZE = 16; // MIN: 4, MAX: 56
     Blowfish(uint8_t const *key, size_t len = 16) {
         uint8_t buf[72];
         for (int i = 0; i < 72; i++) {
