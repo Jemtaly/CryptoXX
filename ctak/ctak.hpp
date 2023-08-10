@@ -1,11 +1,11 @@
 #pragma once
 #include "../utils.hpp"
-#define CFB AsyncCipher::FEEDBACK_SIZE
-#define SEC AsyncCipher::SECTION_SIZE
-#define KEY AsyncCipher::KEY_SIZE
-template <class AsyncCipher>
-class AsyncCipherEncrypter {
-    AsyncCipher const ac;
+#define CFB CTAKCipher::FEEDBACK_SIZE
+#define SEC CTAKCipher::SECTION_SIZE
+#define KEY CTAKCipher::KEY_SIZE
+template <class CTAKCipher>
+class CTAKCipherEncrypter {
+    CTAKCipher const ac;
     size_t use;
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
@@ -13,7 +13,7 @@ public:
     static constexpr size_t KEY_SIZE = KEY;
     static constexpr size_t CIV_SIZE = CFB;
     template <class... vals_t>
-    AsyncCipherEncrypter(uint8_t const *civ, vals_t &&...vals):
+    CTAKCipherEncrypter(uint8_t const *civ, vals_t &&...vals):
         ac(std::forward<vals_t>(vals)...), use(SEC) {
         memcpy(cfb, civ, CFB);
     }
@@ -35,9 +35,9 @@ public:
         return dst;
     }
 };
-template <class AsyncCipher>
-class AsyncCipherDecrypter {
-    AsyncCipher const ac;
+template <class CTAKCipher>
+class CTAKCipherDecrypter {
+    CTAKCipher const ac;
     size_t use;
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
@@ -45,7 +45,7 @@ public:
     static constexpr size_t KEY_SIZE = KEY;
     static constexpr size_t CIV_SIZE = CFB;
     template <class... vals_t>
-    AsyncCipherDecrypter(uint8_t const *civ, vals_t &&...vals):
+    CTAKCipherDecrypter(uint8_t const *civ, vals_t &&...vals):
         ac(std::forward<vals_t>(vals)...), use(SEC) {
         memcpy(cfb, civ, CFB);
     }

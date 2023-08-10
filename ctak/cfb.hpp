@@ -1,5 +1,5 @@
 #pragma once
-#include "async.hpp"
+#include "ctak.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 #define KEY BlockCipher::KEY_SIZE
 template <class BlockCipher>
@@ -17,8 +17,8 @@ public:
     }
 };
 template <class BlockCipher>
-using CFBEncrypter = AsyncCipherEncrypter<CFBGen<BlockCipher>>;
+using CFBEncrypter = CTAKCipherEncrypter<CFBGen<BlockCipher>>;
 template <class BlockCipher>
-using CFBDecrypter = AsyncCipherDecrypter<CFBGen<BlockCipher>>;
+using CFBDecrypter = CTAKCipherDecrypter<CFBGen<BlockCipher>>;
 #undef BLK
 #undef KEY
