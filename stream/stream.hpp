@@ -29,6 +29,32 @@ public:
         return dst;
     }
 };
+template <class StreamCipher>
+class PseudoRandomGenerator {
+    StreamCipher sc;
+    size_t use;
+    uint8_t buf[SEC];
+public:
+    static constexpr size_t KEY_SIZE = KEY;
+    static constexpr size_t CIV_SIZE = CIV;
+    template <class... vals_t>
+    PseudoRandomGenerator(vals_t &&...vals):
+        sc(std::forward<vals_t>(vals)...), use(SEC) {}
+    void generate(uint8_t *dst, uint8_t *end) {
+        if (SEC + dst <= end + use) {
+            memcpy(dst, buf + use, SEC - use);
+            dst += SEC - use;
+            use -= use;
+            for (; SEC + dst <= end; dst += SEC) {
+                sc.generate(dst);
+            }
+        }
+        sc.generate(buf);
+        memcpy(dst, buf + use, end - dst);
+        use += end - dst;
+        dst += end - dst;
+    }
+};
 #undef SEC
 #undef KEY
 #undef CIV
