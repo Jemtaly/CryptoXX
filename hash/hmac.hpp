@@ -11,8 +11,9 @@ class HMAC {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
+    static constexpr size_t KEY_SIZE = BLK; // MIN: 0
     static constexpr bool NO_PADDING = NPD;
-    HMAC(uint8_t const *key, size_t len) {
+    HMAC(uint8_t const *key, size_t len = KEY_SIZE) {
         uint8_t buf[BLK] = {};
         if (len > BLK) {
             HashWrapper<Hash> tmp;

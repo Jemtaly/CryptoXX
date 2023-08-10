@@ -1,6 +1,5 @@
 #pragma once
 #include "hash.hpp"
-#define DIG sizeof(digest_t)
 template <std::unsigned_integral digest_t, digest_t EXP, digest_t CIV, digest_t CXV>
 class CRC {
     static constexpr auto LUT = []() {
@@ -17,7 +16,7 @@ class CRC {
     digest_t sta = CIV;
 public:
     static constexpr size_t BLOCK_SIZE = 1;
-    static constexpr size_t DIGEST_SIZE = DIG;
+    static constexpr size_t DIGEST_SIZE = sizeof(digest_t);
     static constexpr bool NO_PADDING = false;
     void push(uint8_t const *blk) {
         sta = sta >> 8 ^ LUT[sta & 0xff ^ *blk];
@@ -28,4 +27,3 @@ public:
 };
 using CRC32 = CRC<uint32_t, 0xedb88320, 0xffffffff, 0xffffffff>;
 using CRC64 = CRC<uint64_t, 0xc96c5795d7870f42, 0xffffffffffffffff, 0xffffffffffffffff>;
-#undef DIG

@@ -63,8 +63,9 @@ class BLAKE2bTmpl: public BLAKE2bBase {
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN;
+    static constexpr size_t KEY_SIZE = 128; // MIN: 0, MAX: 128
     static constexpr bool NO_PADDING = true;
-    BLAKE2bTmpl(uint8_t const *key, size_t len) {
+    BLAKE2bTmpl(uint8_t const *key, size_t len = KEY_SIZE) {
         h[0] ^= 0x01010000 ^ len << 8 ^ DN;
         if (len > 0) {
             uint64_t m[16] = {};

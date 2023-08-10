@@ -6,9 +6,9 @@
 #include "block/cbc.hpp"
 #include "block/ecb.hpp"
 #include "block/pcbc.hpp"
+#include "ctak/cfb.hpp"
 #include "stream/ctr.hpp"
 #include "stream/ofb.hpp"
-#include "async/cfb.hpp"
 #define BUFSIZE 65536
 #define REC_ERR 1
 #define REC_IFP 2
