@@ -22,5 +22,11 @@ public:
 };
 template <class BlockCipher>
 using OFBCrypter = StreamCipherCrypter<OFBGen<BlockCipher>>;
+template <class BlockCipher>
+using OFBEncrypter = StreamCipherEncrypter<OFBGen<BlockCipher>>;
+template <class BlockCipher>
+using OFBDecrypter = StreamCipherDecrypter<OFBGen<BlockCipher>>;
+template <class BlockCipher>
+using OFBGenerator = PseudoRandomGenerator<OFBGen<BlockCipher>>;
 #undef BLK
 #undef KEY

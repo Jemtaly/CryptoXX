@@ -22,5 +22,11 @@ public:
 };
 template <class BlockCipher>
 using CTRCrypter = StreamCipherCrypter<CTRGen<BlockCipher>>;
+template <class BlockCipher>
+using CTREncrypter = StreamCipherEncrypter<CTRGen<BlockCipher>>;
+template <class BlockCipher>
+using CTRDecrypter = StreamCipherDecrypter<CTRGen<BlockCipher>>;
+template <class BlockCipher>
+using CTRGenerator = PseudoRandomGenerator<CTRGen<BlockCipher>>;
 #undef BLK
 #undef KEY

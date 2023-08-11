@@ -19,18 +19,18 @@ public:
         input[0x5] = 0x3320646e;
         input[0xa] = 0x79622d32;
         input[0xf] = 0x6b206574;
-        input[0x1] = GET_LE(key,  0);
-        input[0x2] = GET_LE(key,  4);
-        input[0x3] = GET_LE(key,  8);
-        input[0x4] = GET_LE(key, 12);
-        input[0xb] = GET_LE(key, 16);
-        input[0xc] = GET_LE(key, 20);
-        input[0xd] = GET_LE(key, 24);
-        input[0xe] = GET_LE(key, 28);
+        input[0x1] = GET_LE<uint32_t>(key +  0);
+        input[0x2] = GET_LE<uint32_t>(key +  4);
+        input[0x3] = GET_LE<uint32_t>(key +  8);
+        input[0x4] = GET_LE<uint32_t>(key + 12);
+        input[0xb] = GET_LE<uint32_t>(key + 16);
+        input[0xc] = GET_LE<uint32_t>(key + 20);
+        input[0xd] = GET_LE<uint32_t>(key + 24);
+        input[0xe] = GET_LE<uint32_t>(key + 28);
         input[0x8] = 0x00000000;
         input[0x9] = 0x00000000;
-        input[0x6] = GET_LE(civ,  0);
-        input[0x7] = GET_LE(civ,  4);
+        input[0x6] = GET_LE<uint32_t>(civ +  0);
+        input[0x7] = GET_LE<uint32_t>(civ +  4);
     }
     void generate(uint8_t *buf) {
         uint32_t state[16] = {

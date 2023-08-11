@@ -22,13 +22,13 @@ protected:
         {10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13,  0},
     };
 };
-template <size_t DN, typename Derived>
+template <size_t DN, typename Box>
 class BLAKE2sTmpl: public BLAKE2sBase {
     void compress(uint32_t const *m, bool fin) {
         uint32_t v[16] = {
             h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
-            Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
-            Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+            Box::IV[0], Box::IV[1], Box::IV[2], Box::IV[3],
+            Box::IV[4], Box::IV[5], Box::IV[6], Box::IV[7],
         };
         v[12] ^= lo;
         v[13] ^= hi;
@@ -55,8 +55,8 @@ class BLAKE2sTmpl: public BLAKE2sBase {
     uint32_t hi = 0;
     uint32_t lo = 0;
     uint32_t h[8] = {
-        Derived::IV[0], Derived::IV[1], Derived::IV[2], Derived::IV[3],
-        Derived::IV[4], Derived::IV[5], Derived::IV[6], Derived::IV[7],
+        Box::IV[0], Box::IV[1], Box::IV[2], Box::IV[3],
+        Box::IV[4], Box::IV[5], Box::IV[6], Box::IV[7],
     };
 public:
     static constexpr size_t BLOCK_SIZE = 64;
@@ -86,18 +86,18 @@ public:
         WRITEB_LE(dig, h, DN);
     }
 };
-class BLAKE2s256: public BLAKE2sTmpl<32, BLAKE2s256> {
-public:
+struct BLAKE2s256IV {
     static constexpr uint32_t IV[8] = {
         0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
         0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
     };
 };
-class BLAKE2s224: public BLAKE2sTmpl<28, BLAKE2s224> {
-public:
+struct BLAKE2s224IV {
     static constexpr uint32_t IV[8] = {
         0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
         0xFFC00B31, 0x68581511, 0x64F98FA7, 0xBEFA4FA4,
     };
 };
+using BLAKE2s256 = BLAKE2sTmpl<32, BLAKE2s256IV>;
+using BLAKE2s224 = BLAKE2sTmpl<28, BLAKE2s224IV>;
 #undef QROUND

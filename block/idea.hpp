@@ -66,7 +66,7 @@ public:
             d[i + 5] = e[47 - i];
         }
     }
-    void encrypt(uint8_t const *src, uint8_t *dst) {
+    void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint16_t x[4], y[4], t[6];
         READ_BE(x, src, 4);
         for (int i = 0; i < 48; i += 6) {
@@ -91,7 +91,7 @@ public:
         y[3] = mul(x[3], e[51]);
         WRITE_BE(dst, y, 4);
     }
-    void decrypt(uint8_t const *src, uint8_t *dst) {
+    void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint16_t x[4], y[4], t[6];
         READ_BE(x, src, 4);
         for (int i = 0; i < 48; i += 6) {
