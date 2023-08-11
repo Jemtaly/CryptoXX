@@ -27,10 +27,10 @@ public:
         input[0x9] = GET_LE(key, 20);
         input[0xa] = GET_LE(key, 24);
         input[0xb] = GET_LE(key, 28);
-        input[0xc] = GET_LE(civ,  0);
-        input[0xd] = GET_LE(civ,  4);
-        input[0xe] = 0x00000000;
-        input[0xf] = 0x00000000;
+        input[0xc] = 0x00000000;
+        input[0xd] = 0x00000000;
+        input[0xe] = GET_LE(civ,  0);
+        input[0xf] = GET_LE(civ,  4);
     }
     void generate(uint8_t *buf) {
         uint32_t state[16] = {
