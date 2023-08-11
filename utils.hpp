@@ -148,8 +148,8 @@ constexpr inline void READB_FW(T *a, uint8_t const *arr, int n) {
 template <std::unsigned_integral T>
 constexpr inline void READB_BW(T *a, uint8_t const *arr, int n) {
     READ_BW(a, arr, n / sizeof(T));
-    for (int i = 0; i < n % sizeof(T); i++) {
-        ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][i] = arr[n - 1 - i];
+    for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
+        ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)] = arr[i];
     }
 }
 template <std::unsigned_integral T>
@@ -159,8 +159,8 @@ constexpr inline void WRITEB_FW(uint8_t *arr, T const *a, int n) {
 template <std::unsigned_integral T>
 constexpr inline void WRITEB_BW(uint8_t *arr, T const *a, int n) {
     WRITE_BW(arr, a, n / sizeof(T));
-    for (int i = 0; i < n % sizeof(T); i++) {
-        arr[n - 1 - i] = ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][i];
+    for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
+        arr[i] = ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
     }
 }
 template <std::unsigned_integral T>
