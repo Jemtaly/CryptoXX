@@ -77,13 +77,13 @@ public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 16;
     static constexpr bool NO_PADDING = false;
-    void push(uint8_t const *blk) {
+    void input(uint8_t const *blk) {
         uint32_t w[16];
         READB_LE(w, blk, 64);
         (lo += 64 * 8) < 64 * 8 && ++hi;
         compress(w);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dst) {
+    void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint32_t w[16];
         memset(w, 0, 64);
         READB_LE(w, src, len);

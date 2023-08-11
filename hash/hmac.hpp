@@ -11,9 +11,8 @@ class HMAC {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr size_t KEY_SIZE = BLK; // MIN: 0
     static constexpr bool NO_PADDING = NPD;
-    HMAC(uint8_t const *key, size_t len = KEY_SIZE) {
+    HMAC(uint8_t const *key, size_t len) {
         uint8_t buf[BLK] = {};
         if (len > BLK) {
             HashWrapper<Hash> tmp;
@@ -25,23 +24,23 @@ public:
         for (size_t i = 0; i < BLK; i++) {
             buf[i] ^= 0x36;
         }
-        inner.push(buf);
+        inner.input(buf);
         for (size_t i = 0; i < BLK; i++) {
             buf[i] ^= 0x36 ^ 0x5c;
         }
-        outer.push(buf);
+        outer.input(buf);
     }
-    void push(uint8_t const *blk) {
-        inner.push(blk);
+    void input(uint8_t const *blk) {
+        inner.input(blk);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dst) {
+    void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint8_t buf[DIG];
-        inner.hash(src, len, buf);
+        inner.final(src, len, buf);
         if constexpr (DIG == BLK && not NPD) {
-            outer.push(buf);
-            outer.hash(NULL,  0, dst);
+            outer.input(buf);
+            outer.final(NULL,  0, dst);
         } else {
-            outer.hash(buf, DIG, dst);
+            outer.final(buf, DIG, dst);
         }
     }
 };

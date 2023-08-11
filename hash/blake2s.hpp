@@ -61,9 +61,8 @@ class BLAKE2sTmpl: public BLAKE2sBase {
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DN;
-    static constexpr size_t KEY_SIZE = 64; // MIN: 0, MAX: 64
     static constexpr bool NO_PADDING = true;
-    BLAKE2sTmpl(uint8_t const *key, size_t len = KEY_SIZE) {
+    BLAKE2sTmpl(uint8_t const *key, size_t len) {
         h[0] ^= 0x01010000 ^ len << 8 ^ DN;
         if (len > 0) {
             uint32_t m[16] = {};
@@ -73,13 +72,13 @@ public:
         }
     }
     BLAKE2sTmpl(): BLAKE2sTmpl(nullptr, 0) {}
-    void push(uint8_t const *blk) {
+    void input(uint8_t const *blk) {
         uint32_t m[16] = {};
         READB_LE(m, blk, 64);
         (lo += 64) < 64 && ++hi;
         compress(m, 0);
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *dig) {
+    void final(uint8_t const *src, size_t len, uint8_t *dig) {
         uint32_t m[16] = {};
         READB_LE(m, src, len);
         (lo += len) < len && ++hi;

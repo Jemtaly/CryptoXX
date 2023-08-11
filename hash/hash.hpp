@@ -18,20 +18,20 @@ public:
     void update(uint8_t const *src, uint8_t const *end) {
         if (BLK + src <= use + end) {
             memcpy(mem + use, src, BLK - use);
-            hash.push(mem);
+            hash.input(mem);
             src += BLK - use;
             use -= use;
             for (; src + BLK <= end; src += BLK) {
-                hash.push(src);
+                hash.input(src);
             }
         }
         memcpy(mem + use, src, end - src);
         use += end - src;
         src += end - src;
     }
-    void digest(uint8_t *dst) const {
-        Hash copy = hash;
-        copy.hash(mem, use, dst);
+    // The object should not be used after calling this function.
+    void digest(uint8_t *dst) {
+        hash.final(mem, use, dst);
     }
 };
 template <class Hash>
@@ -47,20 +47,20 @@ public:
     void update(uint8_t const *src, uint8_t const *end) {
         if (BLK + src <  use + end) {
             memcpy(mem + use, src, BLK - use);
-            hash.push(mem);
+            hash.input(mem);
             src += BLK - use;
             use -= use;
             for (; src + BLK <  end; src += BLK) {
-                hash.push(src);
+                hash.input(src);
             }
         }
         memcpy(mem + use, src, end - src);
         use += end - src;
         src += end - src;
     }
-    void digest(uint8_t *dst) const {
-        Hash copy = hash;
-        copy.hash(mem, use, dst);
+    // The object should not be used after calling this function.
+    void digest(uint8_t *dst) {
+        hash.final(mem, use, dst);
     }
 };
 #undef BLK

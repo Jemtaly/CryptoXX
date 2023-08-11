@@ -78,7 +78,7 @@ public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 32;
     static constexpr bool NO_PADDING = true;
-    void push(uint8_t const *blk) {
+    void input(uint8_t const *blk) {
         uint32_t m[16] = {};
         READB_LE(m, blk, 64);
         BLAKE3Compressor comp;
@@ -107,7 +107,7 @@ public:
         }
         comp.operate();
     }
-    void hash(uint8_t const *blk, size_t len, uint8_t *dig) {
+    void final(uint8_t const *blk, size_t len, uint8_t *dig) {
         uint32_t m[16] = {};
         READB_LE(m, blk, len);
         BLAKE3Compressor comp;

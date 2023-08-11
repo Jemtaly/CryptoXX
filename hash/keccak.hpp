@@ -54,11 +54,11 @@ public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
     static constexpr bool NO_PADDING = false;
-    void push(uint8_t const *blk) {
+    void input(uint8_t const *blk) {
         XORB_LE((uint64_t *)A, blk, BLK);
         permute();
     }
-    void hash(uint8_t const *src, size_t len, uint8_t *out) {
+    void final(uint8_t const *src, size_t len, uint8_t *out) {
         XORB_LE((uint64_t *)A, src, len);
         BYTE_LE((uint64_t *)A, len) ^= PAD_BYTE;
         BYTE_LE((uint64_t *)A, BLK - 1) ^= 0x80;
