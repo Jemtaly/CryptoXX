@@ -49,9 +49,22 @@ public:
             QROUND(state,  2,  7,  8, 13);
             QROUND(state,  3,  4,  9, 14);
         }
-        for (int i = 0; i < 16; i++) {
-            PUT_LE(buf, state[i] + input[i]);
-        }
+        PUT_LE(buf +  0, state[0x0] += input[0x0]);
+        PUT_LE(buf +  4, state[0x1] += input[0x1]);
+        PUT_LE(buf +  8, state[0x2] += input[0x2]);
+        PUT_LE(buf + 12, state[0x3] += input[0x3]);
+        PUT_LE(buf + 16, state[0x4] += input[0x4]);
+        PUT_LE(buf + 20, state[0x5] += input[0x5]);
+        PUT_LE(buf + 24, state[0x6] += input[0x6]);
+        PUT_LE(buf + 28, state[0x7] += input[0x7]);
+        PUT_LE(buf + 32, state[0x8] += input[0x8]);
+        PUT_LE(buf + 36, state[0x9] += input[0x9]);
+        PUT_LE(buf + 40, state[0xa] += input[0xa]);
+        PUT_LE(buf + 44, state[0xb] += input[0xb]);
+        PUT_LE(buf + 48, state[0xc] += input[0xc]);
+        PUT_LE(buf + 52, state[0xd] += input[0xd]);
+        PUT_LE(buf + 56, state[0xe] += input[0xe]);
+        PUT_LE(buf + 60, state[0xf] += input[0xf]);
         ++input[12] == 0 && ++input[13];
     }
 };
