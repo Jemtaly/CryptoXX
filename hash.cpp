@@ -12,35 +12,7 @@
 #include "hash/blake3.hpp"
 #include "hash/whirlpool.hpp"
 #include "hash/hmac.hpp"
-#define DIG HashWrapper::DIGEST_SIZE
 #define BUFSIZE 65536
-#define REC_ERR 1
-#define REC_IFP 2
-#define REC_MAC 4
-template <typename HashWrapper, typename... Args>
-void hash(FILE *file, Args &&...args) {
-    HashWrapper hash(std::forward<Args>(args)...);
-    uint8_t buf[BUFSIZE];
-    size_t read;
-    while ((read = fread(buf, 1, BUFSIZE, file)) == BUFSIZE) {
-        hash.update(buf, (uint8_t *)buf + BUFSIZE);
-    }
-    hash.update(buf, (uint8_t *)buf + read);
-    uint8_t digest[DIG];
-    hash.digest(digest);
-    for (int i = 0; i < DIG; i++) {
-        printf("%02x", digest[i]);
-    }
-    printf("\n");
-}
-template <typename Hash>
-void process(int rec, FILE *file, uint8_t const *key, size_t len) {
-    if ((rec & REC_MAC) == 0) {
-        hash<HashWrapper<Hash>>(file);
-    } else {
-        hash<HMACWrapper<Hash>>(file, key, len);
-    }
-}
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
@@ -53,182 +25,112 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     }
     return hex[len * 2] == '\0';
 }
-int main(int argc, char *argv[]) {
-    long rec = 0;
-    char alg = 0;
-    FILE *fp = stdin;
-    uint8_t *key = NULL;
-    size_t len = 0;
-    for (int i = 1; (rec & REC_ERR) == 0 && i < argc; i++) {
-        if (argv[i][0] == '-') {
-            if (argv[i][1] == 'H' && argv[i][2] == '\0') {
-                if ((rec & REC_MAC) == 0 && i + 2 < argc && (len = atoll(argv[++i]), hex2bin(len, argv[++i], key = new uint8_t[len]))) {
-                    rec |= REC_MAC;
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 'M' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 'M';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 'X' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 'X';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 'S' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 'S';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '0' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '0';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '1' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '1';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '2' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '2';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '3' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '3';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '4' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '4';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '5' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '5';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '6' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '6';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '7' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '7';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '8' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '8';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == '9' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = '9';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 'b' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 'b';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 's' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 's';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 'B' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 'B';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else if (argv[i][1] == 'W' && argv[i][2] == '\0') {
-                if (alg == 0) {
-                    alg = 'W';
-                } else {
-                    rec |= REC_ERR;
-                }
-            } else {
-                rec |= REC_ERR;
-            }
-        } else if ((rec & REC_IFP) == 0 && (fp = fopen(argv[i], "rb"))) {
-            rec |= REC_IFP;
-        } else {
-            rec |= REC_ERR;
-        }
+template <typename HashWrapper, typename ...Args>
+void do_hash(Args &&...args) {
+    HashWrapper hash(std::forward<Args>(args)...);
+    uint8_t buf[BUFSIZE];
+    size_t read;
+    while ((read = fread(buf, 1, BUFSIZE, stdin)) == BUFSIZE) {
+        hash.update(buf, (uint8_t *)buf + BUFSIZE);
     }
-    if (alg == 0 || (rec & REC_MAC) != 0 && (alg == '0' || alg == '1')) {
-        rec |= REC_ERR;
+    hash.update(buf, (uint8_t *)buf + read);
+    uint8_t digest[HashWrapper::DIGEST_SIZE];
+    hash.digest(digest);
+    for (int i = 0; i < HashWrapper::DIGEST_SIZE; i++) {
+        printf("%02x", digest[i]);
     }
-    if ((rec & REC_ERR) != 0) {
-        fprintf(stderr,
-                "Description: HMAC/Hash Calculator\n"
-                "Usage: %s [FILE] (-0 | -1 | -W)\n"
-                "       %s [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s | -B) [-H LEN KEY]\n"
-                "Options:\n"
-                "  FILE        input file (default: stdin)\n"
-                "  -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)\n"
-                "  -0          CRC-32\n"
-                "  -1          CRC-64\n"
-                "  -M          MD5\n"
-                "  -X          SHA-1\n"
-                "  -S          SM3\n"
-                "  -2,  -3     SHA-224, SHA-256\n"
-                "  -4,  -5     SHA-384, SHA-512\n"
-                "  -6,  -7     SHA3-224, SHA3-256\n"
-                "  -8,  -9     SHA3-384, SHA3-512\n"
-                "  -s          BLAKE2s\n"
-                "  -b          BLAKE2b\n"
-                "  -3          BLAKE3\n"
-                "  -W          Whirlpool\n",
-                argv[0], argv[0]);
+    printf("\n");
+}
+constexpr uint32_t hash(char const *str) {
+    return *str ? *str + hash(str + 1) * 16777619UL : 2166136261UL;
+}
+template <typename Hash>
+void hmac_select(int argc, char *argv[]) {
+    if (argc == 0) {
+        do_hash<HashWrapper<Hash>>();
     } else {
-        switch (alg) {
-        case '0': hash<HashWrapper<CRC32>>(fp); break;
-        case '1': hash<HashWrapper<CRC64>>(fp); break;
-        case 'M': process<MD5>(rec, fp, key, len); break;
-        case 'X': process<SHA>(rec, fp, key, len); break;
-        case 'S': process<SM3>(rec, fp, key, len); break;
-        case '2': process<SHA224>(rec, fp, key, len); break;
-        case '3': process<SHA256>(rec, fp, key, len); break;
-        case '4': process<SHA384>(rec, fp, key, len); break;
-        case '5': process<SHA512>(rec, fp, key, len); break;
-        case '6': process<SHA3<224>>(rec, fp, key, len); break;
-        case '7': process<SHA3<256>>(rec, fp, key, len); break;
-        case '8': process<SHA3<384>>(rec, fp, key, len); break;
-        case '9': process<SHA3<512>>(rec, fp, key, len); break;
-        case 's': process<BLAKE2s256>(rec, fp, key, len); break;
-        case 'b': process<BLAKE2b512>(rec, fp, key, len); break;
-        case 'B': process<BLAKE3>(rec, fp, key, len); break;
-        case 'W': process<Whirlpool>(rec, fp, key, len); break;
+        auto len = strlen(argv[0]) / 2;
+        if (len < 0) {
+            fprintf(stderr, "Error: Key too short.\n");
+            exit(1);
         }
+        uint8_t bin[len];
+        if (not hex2bin(len, argv[0], bin)) {
+            fprintf(stderr, "Error: Invalid hex string.\n");
+            exit(1);
+        }
+        do_hash<HMACWrapper<Hash>>((uint8_t *)bin, len);
     }
-    if (key) {
-        delete[] key;
+}
+template <typename Hash>
+void bmac_select(int argc, char *argv[]) {
+    if (argc == 0) {
+        do_hash<HashWrapper<Hash>>();
+    } else {
+        size_t len = strlen(argv[0]) / 2;
+        if (len > Hash::BLOCK_SIZE) {
+            fprintf(stderr, "Error: Key too long.\n");
+            exit(1);
+        }
+        uint8_t bin[len];
+        if (not hex2bin(len, argv[0], bin)) {
+            fprintf(stderr, "Error: Invalid hex string.\n");
+            exit(1);
+        }
+        do_hash<HashWrapper<Hash>>((uint8_t *)bin, len);
     }
-    if (fp != stdin) {
-        fclose(fp);
+}
+void alg_select(int argc, char *argv[]) {
+    if (argc == 0) {
+        fprintf(stderr, "Error: No algorithm specified.\n");
+        exit(1);
     }
-    return rec & REC_ERR;
+    switch (hash(argv[0])) {
+    case hash("SM3"):
+        hmac_select<SM3>(argc - 1, argv + 1); break;
+    case hash("MD5"):
+        hmac_select<MD5>(argc - 1, argv + 1); break;
+    case hash("SHA"):
+        hmac_select<SHA>(argc - 1, argv + 1); break;
+    case hash("SHA224"):
+        hmac_select<SHA224>(argc - 1, argv + 1); break;
+    case hash("SHA256"):
+        hmac_select<SHA256>(argc - 1, argv + 1); break;
+    case hash("SHA384"):
+        hmac_select<SHA384>(argc - 1, argv + 1); break;
+    case hash("SHA512"):
+        hmac_select<SHA512>(argc - 1, argv + 1); break;
+    case hash("SHA3-224"):
+        hmac_select<SHA3<224>>(argc - 1, argv + 1); break;
+    case hash("SHA3-256"):
+        hmac_select<SHA3<256>>(argc - 1, argv + 1); break;
+    case hash("SHA3-384"):
+        hmac_select<SHA3<384>>(argc - 1, argv + 1); break;
+    case hash("SHA3-512"):
+        hmac_select<SHA3<512>>(argc - 1, argv + 1); break;
+    case hash("SHAKE128"):
+        hmac_select<SHAKE<128, 256>>(argc - 1, argv + 1); break;
+    case hash("SHAKE256"):
+        hmac_select<SHAKE<256, 512>>(argc - 1, argv + 1); break;
+    case hash("BLAKE2b384"):
+        hmac_select<BLAKE2b384>(argc - 1, argv + 1); break;
+    case hash("BLAKE2b512"):
+        hmac_select<BLAKE2b512>(argc - 1, argv + 1); break;
+    case hash("BLAKE2s256"):
+        hmac_select<BLAKE2s256>(argc - 1, argv + 1); break;
+    case hash("BLAKE2s224"):
+        hmac_select<BLAKE2s224>(argc - 1, argv + 1); break;
+    case hash("Whirlpool"):
+        hmac_select<Whirlpool>(argc - 1, argv + 1); break;
+    case hash("CRC32"):
+        do_hash<HashWrapper<CRC32>>(); break;
+    case hash("CRC64"):
+        do_hash<HashWrapper<CRC64>>(); break;
+    default:
+        fprintf(stderr, "Error: Invalid algorithm.\n"); break;
+    }
+}
+int main(int argc, char *argv[]) {
+    alg_select(argc - 1, argv + 1);
+    return 0;
 }
