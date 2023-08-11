@@ -1,6 +1,6 @@
-#include <algorithm>
 #include <cstdio>
 #include <string>
+#include <stdexcept>
 #include "block/des.hpp"
 #include "block/idea.hpp"
 #include "block/3des.hpp"
@@ -37,22 +37,18 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
 }
 void read_key(int argc, char *argv[], uint8_t *key, size_t key_size) {
     if (argc == 0) {
-        fprintf(stderr, "Error: No key specified.\n");
-        exit(1);
+        throw std::runtime_error("No key specified.\n");
     }
     if (not hex2bin(key_size, argv[0], key)) {
-        fprintf(stderr, "Error: Invalid key.\n");
-        exit(1);
+        throw std::runtime_error("Invalid key. Required length: " + std::to_string(key_size * 2) + ".\n");
     }
 }
 void read_civ(int argc, char *argv[], uint8_t *civ, size_t civ_size) {
     if (argc == 0) {
-        fprintf(stderr, "Error: No civ specified.\n");
-        exit(1);
+        throw std::runtime_error("No iv specified.\n");
     }
     if (not hex2bin(civ_size, argv[0], civ)) {
-        fprintf(stderr, "Error: Invalid civ.\n");
-        exit(1);
+        throw std::runtime_error("Invalid iv. Required length: " + std::to_string(civ_size * 2) + ".\n");
     }
 }
 template <typename StreamCipherCrypter>
@@ -110,8 +106,7 @@ void bc_cry(int argc, char *argv[]) {
     if (uint8_t *end = bcc.fflush(dst); end >= (uint8_t *)dst) {
         fwrite(dst, 1, end - (uint8_t *)dst, stdout);
     } else {
-        fprintf(stderr, "Error: BlockCipherCrypter::fflush() failed, the input may be corrupted.\n");
-        exit(1);
+        throw std::runtime_error("BlockCipherCrypter::fflush() failed, the input may be corrupted.\n");
     }
 }
 constexpr uint32_t hash(char const *str) {
@@ -120,8 +115,7 @@ constexpr uint32_t hash(char const *str) {
 template <typename BlockCipher>
 void bc_select(int argc, char *argv[]) {
     if (argc == 0) {
-        fprintf(stderr, "Error: No mode specified.\n");
-        exit(1);
+        throw std::runtime_error("No mode specified.\n");
     }
     switch (hash(argv[0])) {
     case hash("ECBEnc"):
@@ -153,14 +147,13 @@ void bc_select(int argc, char *argv[]) {
     case hash("CTRGen"):
         sc_gen<CTRGenerator<BlockCipher>>(argc - 1, argv + 1); break;
     default:
-        fprintf(stderr, "Error: Invalid mode.\n"); break;
+        throw std::runtime_error("Invalid mode.\n"); break;
     }
 }
 template <typename StreamCipher>
 void sc_select(int argc, char *argv[]) {
     if (argc == 0) {
-        fprintf(stderr, "Error: No mode specified.\n");
-        exit(1);
+        throw std::runtime_error("No mode specified.\n");
     }
     switch (hash(argv[0])) {
     case hash("Enc"):
@@ -170,13 +163,12 @@ void sc_select(int argc, char *argv[]) {
     case hash("Gen"):
         sc_gen<PseudoRandomGenerator<StreamCipher>>(argc - 1, argv + 1); break;
     default:
-        fprintf(stderr, "Error: Invalid mode.\n"); break;
+        throw std::runtime_error("Invalid mode.\n"); break;
     }
 }
 void alg_select(int argc, char *argv[]) {
     if (argc == 0) {
-        fprintf(stderr, "Error: No algorithm specified.\n");
-        exit(1);
+        throw std::runtime_error("No algorithm specified.\n");
     }
     switch (hash(argv[0])) {
     case hash("AES128"):
@@ -228,10 +220,16 @@ void alg_select(int argc, char *argv[]) {
     case hash("ZUC"):
         sc_select<ZUC>(argc - 1, argv + 1); break;
     default:
-        fprintf(stderr, "Error: Invalid algorithm.\n"); break;
+        throw std::runtime_error("Invalid algorithm.\n"); break;
     }
 }
 int main(int argc, char *argv[]) {
-    alg_select(argc - 1, argv + 1);
+    try {
+        alg_select(argc - 1, argv + 1);
+    } catch (std::exception const &e) {
+        fprintf(stderr, "Error: %s", e.what());
+        fprintf(stderr, "Usage: %s <algorithm> <mode> <key> [iv]\n", argv[0]);
+        return 1;
+    }
     return 0;
 }

@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <string>
+#include <stdexcept>
 #include "hash/crc.hpp"
 #include "hash/sm3.hpp"
 #include "hash/md5.hpp"
@@ -50,14 +51,9 @@ void hmac_select(int argc, char *argv[]) {
         do_hash<HashWrapper<Hash>>();
     } else {
         auto len = strlen(argv[0]) / 2;
-        if (len < 0) {
-            fprintf(stderr, "Error: Key too short.\n");
-            exit(1);
-        }
         uint8_t bin[len];
-        if (not hex2bin(len, argv[0], bin)) {
-            fprintf(stderr, "Error: Invalid hex string.\n");
-            exit(1);
+        if (not hex2bin(len, argv[0], bin) || len < 0) {
+            throw std::runtime_error("Invalid key. Required length: 0 <= len.\n");
         }
         do_hash<HMACWrapper<Hash>>((uint8_t *)bin, len);
     }
@@ -68,22 +64,16 @@ void bmac_select(int argc, char *argv[]) {
         do_hash<HashWrapper<Hash>>();
     } else {
         size_t len = strlen(argv[0]) / 2;
-        if (len > Hash::BLOCK_SIZE) {
-            fprintf(stderr, "Error: Key too long.\n");
-            exit(1);
-        }
         uint8_t bin[len];
-        if (not hex2bin(len, argv[0], bin)) {
-            fprintf(stderr, "Error: Invalid hex string.\n");
-            exit(1);
+        if (not hex2bin(len, argv[0], bin) || len < 0 || len > Hash::BLOCK_SIZE) {
+            throw std::runtime_error("Invalid key. Required length: 0 <= len <= " + std::to_string(Hash::BLOCK_SIZE) + ".\n");
         }
         do_hash<HashWrapper<Hash>>((uint8_t *)bin, len);
     }
 }
 void alg_select(int argc, char *argv[]) {
     if (argc == 0) {
-        fprintf(stderr, "Error: No algorithm specified.\n");
-        exit(1);
+        throw std::runtime_error("No algorithm specified.\n");
     }
     switch (hash(argv[0])) {
     case hash("SM3"):
@@ -127,10 +117,16 @@ void alg_select(int argc, char *argv[]) {
     case hash("CRC64"):
         do_hash<HashWrapper<CRC64>>(); break;
     default:
-        fprintf(stderr, "Error: Invalid algorithm.\n"); break;
+        throw std::runtime_error("Invalid algorithm.\n");
     }
 }
 int main(int argc, char *argv[]) {
-    alg_select(argc - 1, argv + 1);
+    try {
+        alg_select(argc - 1, argv + 1);
+    } catch (std::exception const &e) {
+        fprintf(stderr, "%s", e.what());
+        fprintf(stderr, "Usage: %s <algorithm> [key]\n", argv[0]);
+        return 1;
+    }
     return 0;
 }
