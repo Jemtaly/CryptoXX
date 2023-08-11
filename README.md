@@ -55,39 +55,27 @@ clang++ cipher.cpp -std=c++20 -O2 -o cipher.exe
 
 ```txt
 Description: SM4/AES Encryption/Decryption Tool
-Usage: cipher.exe (-S KEY | -2 ~ -4 KEY | -5 ~ -7 KEY | -8 ~ -0 KEY)
-       [-e | -d] [-E | -N IV | -O IV | -C IV | -H IV] [-i INFILE] [-o OUTFILE]
-Options:
-  -S KEY      SM4 (KEY: 128-bit key in hex)
-  -2 KEY      AES-128 (KEY: 128-bit key in hex)
-  -3 KEY      AES-192 (KEY: 192-bit key in hex)
-  -4 KEY      AES-256 (KEY: 256-bit key in hex)
-  -5 KEY      Twofish-128 (KEY: 128-bit key in hex)
-  -6 KEY      Twofish-192 (KEY: 192-bit key in hex)
-  -7 KEY      Twofish-256 (KEY: 256-bit key in hex)
-  -8 KEY      Serpent-128 (KEY: 128-bit key in hex)
-  -9 KEY      Serpent-192 (KEY: 192-bit key in hex)
-  -0 KEY      Serpent-256 (KEY: 256-bit key in hex)
-  -e          encryption
-  -d          decryption
-  -E          ECB mode (default)
-  -N IV       CTR mode (IV: 128-bit IV in hex)
-  -O IV       OFB mode (IV: 128-bit IV in hex)
-  -C IV       CFB mode (IV: 128-bit IV in hex)
-  -H IV       CBC mode (IV: 128-bit IV in hex)
-  -i INFILE   input file (default: stdin)
-  -o OUTFILE  output file (default: stdout)
+Usage: cipher.exe <algorithm> <mode> <key> [iv]
+- The modes supported by block ciphers include:
+  CTREnc, CTRDec, CTRGen, OFBEnc, OFBDec, OFBGen,
+  CFBEnc, CFBDec, ECBEnc, ECBDec, CBCEnc, CBCDec, 
+  PCBCEnc, PCBCDec.
+- The modes supported by stream ciphers include:
+  Enc (encryption mode), Dec (decryption mode), Gen (Pseudo random generator mode).
 ```
 
 ```sh
-./cipher.exe -6 0123456789abcdeffedcba9876543210 -e -i in.txt -o out.txt
+./cipher.exe AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.txt
 # Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.txt.
 
-./cipher.exe -6 0123456789abcdeffedcba9876543210 -d -i out.txt
+./cipher.exe AES192 ECBDec 0123456789abcdeffedcba9876543210 < out.txt
 # Decrypt out.txt and output to command line.
 
-./cipher.exe -S 0123456789abcdeffedcba9876543210 -c 0123456789abcdeffedcba9876543210 -o out.txt
-# Read from command line and encrypt/decrypt in CTR mode with the SM4 algorithm.
+./cipher.exe RC4 Enc 0123456789abcdeffedcba9876543210 > out.txt
+# Read from command line and encrypt with RC4 algorithm.
+
+./cipher.exe SM4 CTRGen 0123456789abcdeffedcba9876543210 0123456789abcdeffedcba9876543210 | head -c 1024 > random.txt
+# Generate 1024 random bits with SM4-CTR mode.
 ```
 
 ### hash.cpp
@@ -102,32 +90,15 @@ clang++ hash.cpp -std=c++20 -O2 -o hash.exe
 
 ```
 Description: HMAC/Hash Calculator
-Usage: hash.exe [FILE] (-0 | -1 | -W)
-       hash.exe [FILE] (-2 ~ -9 | -M | -X | -S | -b | -s | -B) [-H LEN KEY]
-Options:
-  FILE        input file (default: stdin)
-  -H LEN KEY  HMAC (LEN: key byte length, KEY: key in hex)
-  -0          CRC-32
-  -1          CRC-64
-  -M          MD5
-  -X          SHA-1
-  -S          SM3
-  -2,  -3     SHA-224, SHA-256
-  -4,  -5     SHA-384, SHA-512
-  -6,  -7     SHA3-224, SHA3-256
-  -8,  -9     SHA3-384, SHA3-512
-  -s          BLAKE2s
-  -b          BLAKE2b
-  -B          BLAKE3
-  -W          Whirlpool
+Usage: hash.exe <algorithm> [key]
 ```
 
 ```sh
-cat in.txt | ./hash.exe -M
+./hash.exe MD5 < in.txt
 # Output the MD5 checksum of in.txt.
 
-./hash.exe -8 -H 3 6b6579 in.txt
-# Output the SHA-256-HMAC of in.txt with key "\x6b\x65\x79" ("key").
+./hash.exe SHA3-256 6b6579 < in.txt
+# Output the SHA3-256-HMAC of in.txt with key "\x6b\x65\x79" ("key").
 ```
 
 ## Library usage documentation / 密码库使用说明
