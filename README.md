@@ -41,17 +41,25 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 
 ## Compiling and running the sample program / 编译并运行示例程序
 
-### cipher.cpp
+### Compile / 编译
 
-- Compile
-
-```sh
+```bash
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
-clang++ cipher.cpp -std=c++20 -O2 -o cipher
+clang++ cipher.cpp -std=c++20 -O2 -o cipher.out
+clang++ hash.cpp -std=c++20 -O2 -o hash.out
 ```
 
-- Usage
+### Test / 测试
+
+```sh
+./cipher_text.sh # Run the test script of the encryption and decryption algorithms.
+./hash_test.sh # Run the test script of the hash algorithms.
+```
+
+### Usage / 使用
+
+- cipher.out
 
 ```txt
 Usage: ./cipher <algorithm> <mode> <key> [iv]
@@ -73,32 +81,24 @@ Supported block cipher modes:
 * Key and iv should be hex strings.
 ```
 
-```sh
-./cipher AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.txt
-# Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.txt.
+```bash
+./cipher.out AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.enc
+# Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.enc.
 
-./cipher AES192 ECBDec 0123456789abcdeffedcba9876543210 < out.txt
-# Decrypt out.txt and output to command line.
+./cipher.out AES192 ECBDec 0123456789abcdeffedcba9876543210 < out.enc
+# Decrypt out.enc and output to command line.
 
-./cipher RC4 Enc 0123456789abcdeffedcba9876543210 > out.txt
+./cipher.out RC4 Enc 0123456789abcdeffedcba9876543210 > out.enc
 # Read from command line and encrypt with RC4 algorithm.
 
-./cipher SM4 CTRGen 0123456789abcdeffedcba9876543210 0123456789abcdeffedcba9876543210 | head -c 1024 > random.txt
-# Generate 1024 random bits with SM4-CTR mode.
+./cipher.out SM4 CTRGen 0123456789abcdeffedcba9876543210 0123456789abcdeffedcba9876543210 | head -c 1024 > random.bin
+# Generate 1024 random bytes with SM4-CTR mode to random.bin.
 ```
 
-### hash.cpp
-
-- Compile
-
-```sh
-clang++ hash.cpp -std=c++20 -O2 -o hash
-```
-
-- Usage
+- hash.out
 
 ```
-Usage: ./hash <algorithm> [key length] [key]
+Usage: ./hash.out <algorithm> [key length] [key]
 Available algorithms (Hash only):
     CRC32, CRC64, BLAKE3
 Available algorithms (Hash and MAC):
@@ -111,11 +111,11 @@ Available algorithms (Hash and HMAC):
 * Key should be a hex string.
 ```
 
-```sh
-./hash MD5 < in.txt
+```bash
+./hash.out MD5 < in.txt
 # Output the MD5 checksum of in.txt.
 
-./hash SHA3-256 3 6b6579 < in.txt
+./hash.out SHA3-256 3 6b6579 < in.txt
 # Output the SHA3-256-HMAC of in.txt with a 3-bytes key "\x6b\x65\x79" ("key").
 ```
 
