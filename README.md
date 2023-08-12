@@ -53,7 +53,7 @@ clang++ hash.cpp -std=c++20 -O2 -o hash.out
 ### Test / 测试
 
 ```sh
-./cipher_text.sh # Run the test script of the encryption and decryption algorithms.
+./cipher_test.sh # Run the test script of the encryption and decryption algorithms.
 ./hash_test.sh # Run the test script of the hash algorithms.
 ```
 
