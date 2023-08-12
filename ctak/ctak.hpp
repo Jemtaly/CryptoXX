@@ -15,7 +15,7 @@ public:
     template <class... vals_t>
     CTAKCipherEncrypter(uint8_t const *civ, vals_t &&...vals):
         ac(std::forward<vals_t>(vals)...), use(SEC) {
-        memcpy(cfb, civ, CFB);
+        memcpy(cfb + SEC, civ, CFB);
     }
     // Function returns the pointer to the next byte to be written.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
@@ -47,7 +47,7 @@ public:
     template <class... vals_t>
     CTAKCipherDecrypter(uint8_t const *civ, vals_t &&...vals):
         ac(std::forward<vals_t>(vals)...), use(SEC) {
-        memcpy(cfb, civ, CFB);
+        memcpy(cfb + SEC, civ, CFB);
     }
     // Function returns the pointer to the next byte to be written.
     uint8_t *update(uint8_t *dst, uint8_t const *src, uint8_t const *end) {
