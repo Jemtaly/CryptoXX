@@ -115,8 +115,8 @@ Available algorithms (Hash and HMAC):
 ./hash MD5 < in.txt
 # Output the MD5 checksum of in.txt.
 
-./hash SHA3-256 6b6579 < in.txt
-# Output the SHA3-256-HMAC of in.txt with key "\x6b\x65\x79" ("key").
+./hash SHA3-256 3 6b6579 < in.txt
+# Output the SHA3-256-HMAC of in.txt with a 3-bytes key "\x6b\x65\x79" ("key").
 ```
 
 ## Library usage documentation / 密码库使用说明
