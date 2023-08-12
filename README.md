@@ -43,7 +43,7 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 
 ### Compile / 编译
 
-```bash
+```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
 clang++ cipher.cpp -std=c++20 -O2 -o cipher.out
@@ -61,8 +61,8 @@ clang++ hash.cpp -std=c++20 -O2 -o hash.out
 
 - cipher.out
 
-```txt
-Usage: ./cipher <algorithm> <mode> <key> [iv]
+```
+Usage: ./cipher.out <algorithm> <mode> <key> [iv]
 Supported stream ciphers:
     ChaCha20, Salsa20, RC4, ZUC
 Supported stream cipher modes:
@@ -81,7 +81,7 @@ Supported block cipher modes:
 * Key and iv should be hex strings.
 ```
 
-```bash
+```sh
 ./cipher.out AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.enc
 # Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.enc.
 
@@ -111,7 +111,7 @@ Available algorithms (Hash and HMAC):
 * Key should be a hex string.
 ```
 
-```bash
+```sh
 ./hash.out MD5 < in.txt
 # Output the MD5 checksum of in.txt.
 
