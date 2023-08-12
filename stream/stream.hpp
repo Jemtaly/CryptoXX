@@ -6,7 +6,7 @@
 template <class StreamCipher>
 class PseudoRandomGenerator {
     StreamCipher sc;
-    size_t use;
+    size_t use; // The number of bytes already output in buf. 0 < use <= SEC
     uint8_t buf[SEC];
 public:
     static constexpr size_t KEY_SIZE = KEY;
@@ -15,11 +15,12 @@ public:
     PseudoRandomGenerator(vals_t &&...vals):
         sc(std::forward<vals_t>(vals)...), use(SEC) {}
     void generate(uint8_t *dst, uint8_t *end) {
-        if (SEC + dst <= end + use) {
+        fprintf(stderr, "use = %zu\n", use);
+        if (SEC + dst < end + use) {
             memcpy(dst, buf + use, SEC - use);
             dst += SEC - use;
             use -= use;
-            for (; SEC + dst <= end; dst += SEC) {
+            for (; SEC + dst < end; dst += SEC) {
                 sc.generate(dst);
             }
         }
@@ -32,7 +33,7 @@ public:
 template <class StreamCipher>
 class StreamCipherCrypter {
     StreamCipher sc;
-    size_t use;
+    size_t use; // The number of bytes already used to XOR with the plaintext in buf. 0 < use <= SEC
     uint8_t buf[SEC];
 public:
     static constexpr size_t KEY_SIZE = KEY;

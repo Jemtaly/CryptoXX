@@ -8,7 +8,7 @@ class HashWrapper;
 template <class Hash>
 class HashWrapper<Hash, false> {
     Hash hash;
-    size_t use;
+    size_t use; // The number of bytes of the current block already stored in mem. 0 <= use < BLK
     uint8_t mem[BLK];
 public:
     static constexpr size_t DIGEST_SIZE = DIG;
@@ -37,7 +37,7 @@ public:
 template <class Hash>
 class HashWrapper<Hash, true> {
     Hash hash;
-    size_t use;
+    size_t use; // The number of bytes of the current block already stored in mem. 0 < use <= BLK (except at the beginning of the message)
     uint8_t mem[BLK];
 public:
     static constexpr size_t DIGEST_SIZE = DIG;

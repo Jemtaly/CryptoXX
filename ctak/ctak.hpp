@@ -6,7 +6,7 @@
 template <class CTAKCipher>
 class CTAKCipherEncrypter {
     CTAKCipher const ac;
-    size_t use;
+    size_t use; // The number of bytes already XORed with the plaintext in buf. 0 < use <= SEC
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
 public:
@@ -38,7 +38,7 @@ public:
 template <class CTAKCipher>
 class CTAKCipherDecrypter {
     CTAKCipher const ac;
-    size_t use;
+    size_t use; // The number of bytes already covered by the ciphertext in buf. 0 < use <= SEC
     uint8_t cfb[CFB];
     uint8_t buf[SEC];
 public:

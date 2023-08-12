@@ -6,7 +6,7 @@
 template <class BlockCipherMode>
 class BlockCipherEncrypter {
     BlockCipherMode bce;
-    size_t use;
+    size_t use; // The number of bytes of the current block already stored in mem. 0 <= use < BLK
     uint8_t buf[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
@@ -44,7 +44,7 @@ public:
 template <class BlockCipherMode>
 class BlockCipherDecrypter {
     BlockCipherMode bcd;
-    size_t use;
+    size_t use; // The number of bytes of the current block already stored in mem. 0 < use <= BLK (except at the beginning of the message)
     uint8_t buf[BLK];
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
