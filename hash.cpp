@@ -14,6 +14,9 @@
 #include "hash/whirlpool.hpp"
 #include "hash/hmac.hpp"
 #define BUFSIZE 65536
+static char **Argv;
+static int Argc;
+static int Argi;
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
@@ -25,6 +28,14 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
         }
     }
     return hex[len * 2] == '\0';
+}
+void read_key(uint8_t *key, size_t key_size) {
+    if (Argi == Argc) {
+        throw std::runtime_error("No key specified.\n");
+    }
+    if (not hex2bin(key_size, Argv[Argi++], key)) {
+        throw std::runtime_error("Invalid key, should be a " + std::to_string(key_size) + "-byte hex string.\n");
+    }
 }
 template <typename HashWrapper, typename ...Args>
 void do_hash(Args &&...args) {
@@ -46,83 +57,103 @@ constexpr uint32_t hash(char const *str) {
     return *str ? *str + hash(str + 1) * 16777619UL : 2166136261UL;
 }
 template <typename Hash>
-void hmac_select(int argc, char *argv[]) {
-    if (argc == 0) {
+void h_select() {
+    if (Argi == Argc) {
         do_hash<HashWrapper<Hash>>();
     } else {
-        auto len = strlen(argv[0]) / 2;
+        auto len = std::stoi(Argv[Argi++]);
+        if (len < 0) {
+            throw std::runtime_error("Invalid key length, required: 0 <= len.\n");
+        }
         uint8_t bin[len];
-        if (not hex2bin(len, argv[0], bin) || len < 0) {
-            throw std::runtime_error("Invalid key. Required length: 0 <= len.\n");
+        read_key(bin, len);
+        if (Argi < Argc) {
+            throw std::runtime_error("Too many arguments.\n");
         }
         do_hash<HMACWrapper<Hash>>((uint8_t *)bin, len);
     }
 }
 template <typename Hash>
-void bmac_select(int argc, char *argv[]) {
-    if (argc == 0) {
+void b_select() {
+    if (Argi == Argc) {
         do_hash<HashWrapper<Hash>>();
     } else {
-        size_t len = strlen(argv[0]) / 2;
+        auto len = std::stoi(Argv[Argi++]);
+        if (len < 0 || len > Hash::BLOCK_SIZE) {
+            throw std::runtime_error("Invalid key length, required: 0 <= len <= " + std::to_string(Hash::BLOCK_SIZE) + ".\n");
+        }
         uint8_t bin[len];
-        if (not hex2bin(len, argv[0], bin) || len < 0 || len > Hash::BLOCK_SIZE) {
-            throw std::runtime_error("Invalid key. Required length: 0 <= len <= " + std::to_string(Hash::BLOCK_SIZE) + ".\n");
+        read_key(bin, len);
+        if (Argi < Argc) {
+            throw std::runtime_error("Too many arguments.\n");
         }
         do_hash<HashWrapper<Hash>>((uint8_t *)bin, len);
     }
 }
-void alg_select(int argc, char *argv[]) {
-    if (argc == 0) {
+template <typename Hash>
+void c_select() {
+    if (Argi < Argc) {
+        throw std::runtime_error("Too many arguments, the algorithm does not require a key.\n");
+    }
+    do_hash<HashWrapper<Hash>>();
+}
+void alg_select() {
+    if (Argi == Argc) {
         throw std::runtime_error("No algorithm specified.\n");
     }
-    switch (hash(argv[0])) {
+    switch (hash(Argv[Argi++])) {
     case hash("SM3"):
-        hmac_select<SM3>(argc - 1, argv + 1); break;
+        h_select<SM3>(); break;
     case hash("MD5"):
-        hmac_select<MD5>(argc - 1, argv + 1); break;
+        h_select<MD5>(); break;
     case hash("SHA"):
-        hmac_select<SHA>(argc - 1, argv + 1); break;
+        h_select<SHA>(); break;
     case hash("SHA224"):
-        hmac_select<SHA224>(argc - 1, argv + 1); break;
+        h_select<SHA224>(); break;
     case hash("SHA256"):
-        hmac_select<SHA256>(argc - 1, argv + 1); break;
+        h_select<SHA256>(); break;
     case hash("SHA384"):
-        hmac_select<SHA384>(argc - 1, argv + 1); break;
+        h_select<SHA384>(); break;
     case hash("SHA512"):
-        hmac_select<SHA512>(argc - 1, argv + 1); break;
+        h_select<SHA512>(); break;
     case hash("SHA3-224"):
-        hmac_select<SHA3<224>>(argc - 1, argv + 1); break;
+        h_select<SHA3<224>>(); break;
     case hash("SHA3-256"):
-        hmac_select<SHA3<256>>(argc - 1, argv + 1); break;
+        h_select<SHA3<256>>(); break;
     case hash("SHA3-384"):
-        hmac_select<SHA3<384>>(argc - 1, argv + 1); break;
+        h_select<SHA3<384>>(); break;
     case hash("SHA3-512"):
-        hmac_select<SHA3<512>>(argc - 1, argv + 1); break;
+        h_select<SHA3<512>>(); break;
     case hash("SHAKE128"):
-        hmac_select<SHAKE<128, 256>>(argc - 1, argv + 1); break;
+        h_select<SHAKE<128, 256>>(); break;
     case hash("SHAKE256"):
-        hmac_select<SHAKE<256, 512>>(argc - 1, argv + 1); break;
-    case hash("BLAKE2b384"):
-        hmac_select<BLAKE2b384>(argc - 1, argv + 1); break;
-    case hash("BLAKE2b512"):
-        hmac_select<BLAKE2b512>(argc - 1, argv + 1); break;
-    case hash("BLAKE2s256"):
-        hmac_select<BLAKE2s256>(argc - 1, argv + 1); break;
-    case hash("BLAKE2s224"):
-        hmac_select<BLAKE2s224>(argc - 1, argv + 1); break;
+        h_select<SHAKE<256, 512>>(); break;
     case hash("Whirlpool"):
-        hmac_select<Whirlpool>(argc - 1, argv + 1); break;
+        h_select<Whirlpool>(); break;
+    case hash("BLAKE2b384"):
+        b_select<BLAKE2b384>(); break;
+    case hash("BLAKE2b512"):
+        b_select<BLAKE2b512>(); break;
+    case hash("BLAKE2s256"):
+        b_select<BLAKE2s256>(); break;
+    case hash("BLAKE2s224"):
+        b_select<BLAKE2s224>(); break;
+    case hash("BLAKE3"):
+        c_select<BLAKE3>(); break;
     case hash("CRC32"):
-        do_hash<HashWrapper<CRC32>>(); break;
+        c_select<CRC32>(); break;
     case hash("CRC64"):
-        do_hash<HashWrapper<CRC64>>(); break;
+        c_select<CRC64>(); break;
     default:
         throw std::runtime_error("Invalid algorithm.\n");
     }
 }
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
+    Argv = argv;
+    Argc = argc;
+    Argi = 1;
     try {
-        alg_select(argc - 1, argv + 1);
+        alg_select();
     } catch (std::exception const &e) {
         fprintf(stderr, "%s", e.what());
         fprintf(stderr, "Usage: %s <algorithm> [key]\n", argv[0]);
