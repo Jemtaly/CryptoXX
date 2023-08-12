@@ -18,7 +18,7 @@ class CRC {
 public:
     static constexpr size_t BLOCK_SIZE = 1;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr bool NO_PADDING = false;
+    static constexpr bool NOT_ALWAYS_PADDING = false;
     void input(uint8_t const *blk) {
         sta = sta >> 8 ^ LUT[sta & 0xff ^ *blk];
     }

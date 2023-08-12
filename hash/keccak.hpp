@@ -53,7 +53,7 @@ class KeccakTmpl: public KeccakBase {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr bool NO_PADDING = false;
+    static constexpr bool NOT_ALWAYS_PADDING = false;
     void input(uint8_t const *blk) {
         XORB_LE((uint64_t *)A, blk, BLK);
         permute();

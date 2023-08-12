@@ -2,7 +2,7 @@
 #include "hash.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
-#define NPD Hash::NO_PADDING
+#define NAP Hash::NOT_ALWAYS_PADDING
 template <class Hash>
     requires (DIG <= BLK)
 class HMAC {
@@ -11,7 +11,7 @@ class HMAC {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr bool NO_PADDING = NPD;
+    static constexpr bool NOT_ALWAYS_PADDING = NAP;
     HMAC(uint8_t const *key, size_t len) {
         uint8_t buf[BLK] = {};
         if (len > BLK) {
@@ -36,7 +36,7 @@ public:
     void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint8_t buf[DIG];
         inner.final(src, len, buf);
-        if constexpr (DIG == BLK && not NPD) {
+        if constexpr (DIG == BLK && not NAP) {
             outer.input(buf);
             outer.final(NULL,  0, dst);
         } else {
@@ -48,4 +48,4 @@ template <class Hash>
 using HMACWrapper = HashWrapper<HMAC<Hash>>;
 #undef BLK
 #undef DIG
-#undef NPD
+#undef NAP
