@@ -125,7 +125,7 @@ class Whirlpool {
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 64;
-    static constexpr bool NO_PADDING = false;
+    static constexpr bool NOT_ALWAYS_PADDING = false;
     void input(uint8_t const *data) {
         WhirlpoolRow w[8];
         memcpy(w, data, 64);
