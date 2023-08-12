@@ -40,31 +40,30 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
 }
 void read_key(uint8_t *key, size_t key_size) {
     if (Argi == Argc) {
-        throw std::runtime_error("No key specified.\n");
+        throw std::runtime_error("No key specified.");
     }
     if (not hex2bin(key_size, Argv[Argi++], key)) {
-        throw std::runtime_error("Invalid key, should be a " + std::to_string(key_size) + "-byte hex string.\n");
+        throw std::runtime_error("Invalid key, should be a " + std::to_string(key_size) + "-byte hex string.");
     }
 }
 void read_civ(uint8_t *civ, size_t civ_size) {
     if (Argi == Argc) {
-        throw std::runtime_error("No iv specified.\n");
+        throw std::runtime_error("No iv specified.");
     }
     if (not hex2bin(civ_size, Argv[Argi++], civ)) {
-        throw std::runtime_error("Invalid iv, should be a " + std::to_string(civ_size) + "-byte hex string.\n");
+        throw std::runtime_error("Invalid iv, should be a " + std::to_string(civ_size) + "-byte hex string.");
     }
 }
 template <typename StreamCipherCrypter>
 void sc_cry() {
     uint8_t key[StreamCipherCrypter::KEY_SIZE];
-    static_assert(StreamCipherCrypter::KEY_SIZE != 0);
     read_key(key, StreamCipherCrypter::KEY_SIZE);
     uint8_t civ[StreamCipherCrypter::CIV_SIZE];
-    if (StreamCipherCrypter::CIV_SIZE != 0) {
+    if (StreamCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
         read_civ(civ, StreamCipherCrypter::CIV_SIZE);
     }
     if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.\n");
+        throw std::runtime_error("Too many arguments.");
     }
     StreamCipherCrypter scc(civ, key);
     uint8_t src[BUFSIZE], dst[BUFSIZE];
@@ -77,14 +76,13 @@ void sc_cry() {
 template <typename PseudoRandomGenerator>
 void pr_gen() {
     uint8_t key[PseudoRandomGenerator::KEY_SIZE];
-    static_assert(PseudoRandomGenerator::KEY_SIZE != 0);
     read_key(key, PseudoRandomGenerator::KEY_SIZE);
     uint8_t civ[PseudoRandomGenerator::CIV_SIZE];
-    if (PseudoRandomGenerator::CIV_SIZE != 0) {
+    if (PseudoRandomGenerator::CIV_SIZE != 0 || Argi < Argc) {
         read_civ(civ, PseudoRandomGenerator::CIV_SIZE);
     }
     if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.\n");
+        throw std::runtime_error("Too many arguments.");
     }
     PseudoRandomGenerator prg(civ, key);
     uint8_t dst[BUFSIZE];
@@ -96,14 +94,13 @@ void pr_gen() {
 template <typename BlockCipherCrypter>
 void bc_cry() {
     uint8_t key[BlockCipherCrypter::KEY_SIZE];
-    static_assert(BlockCipherCrypter::KEY_SIZE != 0);
     read_key(key, BlockCipherCrypter::KEY_SIZE);
     uint8_t civ[BlockCipherCrypter::CIV_SIZE];
-    if (BlockCipherCrypter::CIV_SIZE != 0) {
+    if (BlockCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
         read_civ(civ, BlockCipherCrypter::CIV_SIZE);
     }
     if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.\n");
+        throw std::runtime_error("Too many arguments.");
     }
     BlockCipherCrypter bcc(civ, key);
     uint8_t src[BUFSIZE], dst[BUFSIZE + BlockCipherCrypter::BLOCK_SIZE];
@@ -115,7 +112,7 @@ void bc_cry() {
     if (uint8_t *end = bcc.fflush(dst); end >= (uint8_t *)dst) {
         fwrite(dst, 1, end - (uint8_t *)dst, stdout);
     } else {
-        throw std::runtime_error("BlockCipherCrypter::fflush() failed, the input may be corrupted.\n");
+        throw std::runtime_error("BlockCipherCrypter::fflush() failed, the input may be corrupted.");
     }
 }
 constexpr uint32_t hash(char const *str) {
@@ -124,7 +121,7 @@ constexpr uint32_t hash(char const *str) {
 template <typename BlockCipher>
 void bc_select() {
     if (Argi == Argc) {
-        throw std::runtime_error("No mode specified.\n");
+        throw std::runtime_error("No mode specified.");
     }
     switch (hash(Argv[Argi++])) {
     case hash("ECBEnc"):
@@ -156,13 +153,13 @@ void bc_select() {
     case hash("CTRGen"):
         pr_gen<CTRGenerator<BlockCipher>>(); break;
     default:
-        throw std::runtime_error("Invalid mode.\n"); break;
+        throw std::runtime_error("Invalid mode.");
     }
 }
 template <typename StreamCipher>
 void sc_select() {
     if (Argi == Argc) {
-        throw std::runtime_error("No mode specified.\n");
+        throw std::runtime_error("No mode specified.");
     }
     switch (hash(Argv[Argi++])) {
     case hash("Enc"):
@@ -172,12 +169,12 @@ void sc_select() {
     case hash("Gen"):
         pr_gen<PseudoRandomGenerator<StreamCipher>>(); break;
     default:
-        throw std::runtime_error("Invalid mode.\n"); break;
+        throw std::runtime_error("Invalid mode.");
     }
 }
 void alg_select() {
     if (Argi == Argc) {
-        throw std::runtime_error("No algorithm specified.\n");
+        throw std::runtime_error("No algorithm specified.");
     }
     switch (hash(Argv[Argi++])) {
     case hash("AES128"):
@@ -229,7 +226,7 @@ void alg_select() {
     case hash("ZUC"):
         sc_select<ZUC>(); break;
     default:
-        throw std::runtime_error("Invalid algorithm.\n"); break;
+        throw std::runtime_error("Invalid algorithm.");
     }
 }
 int main(int argc, char **argv) {
@@ -239,8 +236,25 @@ int main(int argc, char **argv) {
     try {
         alg_select();
     } catch (std::exception const &e) {
-        fprintf(stderr, "Error: %s", e.what());
-        fprintf(stderr, "Usage: %s <algorithm> <mode> <key> [iv]\n", argv[0]);
+        fprintf(stderr,
+                "Error: %s\n"
+                "Usage: %s <algorithm> <mode> <key> [iv]\n"
+                "Supported stream ciphers:\n"
+                "    ChaCha20, Salsa20, RC4, ZUC\n"
+                "Supported stream cipher modes:\n"
+                "    Enc, Dec, Gen\n"
+                "Supported block ciphers:\n"
+                "    AES128, Camellia128, Serpent128, Twofish128,\n"
+                "    AES192, Camellia192, Serpent192, Twofish192,\n"
+                "    AES256, Camellia256, Serpent256, Twofish256,\n"
+                "    DES, TDES2K, TDES3K, IDEA, CAST128, CAST256,\n"
+                "    SM4, Blowfish\n"
+                "Supported block cipher modes:\n"
+                "    ECBEnc, ECBDec, CTREnc, CTRDec, CTRGen,\n"
+                "    CFBEnc, CFBDec, OFBEnc, OFBDec, OFBGen,\n"
+                "    CBCEnc, CBCDec, PCBCEnc, PCBCDec\n"
+                "* Program will read from stdin and write to stdout.\n"
+                "* Key and iv should be hex strings.\n", e.what(), argv[0]);
         return 1;
     }
     return 0;
