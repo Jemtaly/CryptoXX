@@ -48,33 +48,42 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
-clang++ cipher.cpp -std=c++20 -O2 -o cipher.exe
+clang++ cipher.cpp -std=c++20 -O2 -o cipher
 ```
 
 - Usage
 
 ```txt
-Description: SM4/AES Encryption/Decryption Tool
-Usage: cipher.exe <algorithm> <mode> <key> [iv]
-- The modes supported by block ciphers include:
-  CTREnc, CTRDec, CTRGen, OFBEnc, OFBDec, OFBGen,
-  CFBEnc, CFBDec, ECBEnc, ECBDec, CBCEnc, CBCDec, 
-  PCBCEnc, PCBCDec.
-- The modes supported by stream ciphers include:
-  Enc (encryption mode), Dec (decryption mode), Gen (Pseudo random generator mode).
+Usage: ./cipher <algorithm> <mode> <key> [iv]
+Supported stream ciphers:
+    ChaCha20, Salsa20, RC4, ZUC
+Supported stream cipher modes:
+    Enc, Dec, Gen
+Supported block ciphers:
+    AES128, Camellia128, Serpent128, Twofish128,
+    AES192, Camellia192, Serpent192, Twofish192,
+    AES256, Camellia256, Serpent256, Twofish256,
+    DES, TDES2K, TDES3K, IDEA, CAST128, CAST256,
+    SM4, Blowfish
+Supported block cipher modes:
+    ECBEnc, ECBDec, CTREnc, CTRDec, CTRGen,
+    CFBEnc, CFBDec, OFBEnc, OFBDec, OFBGen,
+    CBCEnc, CBCDec, PCBCEnc, PCBCDec
+* Program will read from stdin and write to stdout.
+* Key and iv should be hex strings.
 ```
 
 ```sh
-./cipher.exe AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.txt
+./cipher AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.txt
 # Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.txt.
 
-./cipher.exe AES192 ECBDec 0123456789abcdeffedcba9876543210 < out.txt
+./cipher AES192 ECBDec 0123456789abcdeffedcba9876543210 < out.txt
 # Decrypt out.txt and output to command line.
 
-./cipher.exe RC4 Enc 0123456789abcdeffedcba9876543210 > out.txt
+./cipher RC4 Enc 0123456789abcdeffedcba9876543210 > out.txt
 # Read from command line and encrypt with RC4 algorithm.
 
-./cipher.exe SM4 CTRGen 0123456789abcdeffedcba9876543210 0123456789abcdeffedcba9876543210 | head -c 1024 > random.txt
+./cipher SM4 CTRGen 0123456789abcdeffedcba9876543210 0123456789abcdeffedcba9876543210 | head -c 1024 > random.txt
 # Generate 1024 random bits with SM4-CTR mode.
 ```
 
@@ -83,21 +92,30 @@ Usage: cipher.exe <algorithm> <mode> <key> [iv]
 - Compile
 
 ```sh
-clang++ hash.cpp -std=c++20 -O2 -o hash.exe
+clang++ hash.cpp -std=c++20 -O2 -o hash
 ```
 
 - Usage
 
 ```
-Description: HMAC/Hash Calculator
-Usage: hash.exe <algorithm> [key]
+Usage: ./hash <algorithm> [key length] [key]
+Available algorithms (Hash only):
+    CRC32, CRC64, BLAKE3
+Available algorithms (Hash and MAC):
+    BLAKE2b384, BLAKE2b512, BLAKE2s256, BLAKE2s224
+Available algorithms (Hash and HMAC):
+    SHA224, SHA256, SHA3-224, SHA3-256, SHAKE128,
+    SHA384, SHA512, SHA3-384, SHA3-512, SHAKE256,
+    SM3, MD5, SHA, Whirlpool
+* Program will read from stdin and output to stdout.
+* Key should be a hex string.
 ```
 
 ```sh
-./hash.exe MD5 < in.txt
+./hash MD5 < in.txt
 # Output the MD5 checksum of in.txt.
 
-./hash.exe SHA3-256 6b6579 < in.txt
+./hash SHA3-256 6b6579 < in.txt
 # Output the SHA3-256-HMAC of in.txt with key "\x6b\x65\x79" ("key").
 ```
 
