@@ -15,7 +15,6 @@ public:
     PseudoRandomGenerator(vals_t &&...vals):
         sc(std::forward<vals_t>(vals)...), use(SEC) {}
     void generate(uint8_t *dst, uint8_t *end) {
-        fprintf(stderr, "use = %zu\n", use);
         if (SEC + dst < end + use) {
             memcpy(dst, buf + use, SEC - use);
             dst += SEC - use;
