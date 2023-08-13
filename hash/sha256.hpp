@@ -31,7 +31,7 @@ protected:
         0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
     };
 };
-template <int DN, typename Box>
+template <int DN, std::array<uint32_t, 8> IV>
 class SHA256Tmpl: public SHA256Base {
     void compress(uint32_t *w) {
         uint32_t A = h[0];
@@ -70,8 +70,8 @@ class SHA256Tmpl: public SHA256Base {
     uint32_t hi = 0;
     uint32_t lo = 0;
     uint32_t h[8] = {
-        Box::IV[0], Box::IV[1], Box::IV[2], Box::IV[3],
-        Box::IV[4], Box::IV[5], Box::IV[6], Box::IV[7],
+        IV[0], IV[1], IV[2], IV[3],
+        IV[4], IV[5], IV[6], IV[7],
     };
 public:
     static constexpr size_t BLOCK_SIZE = 64;
@@ -99,20 +99,14 @@ public:
         WRITEB_BE(dst, h, DN);
     }
 };
-struct SHA256IV {
-    static constexpr uint32_t IV[8] = {
-        0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
-        0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
-    };
-};
-struct SHA224IV {
-    static constexpr uint32_t IV[8] = {
-        0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
-        0xFFC00B31, 0x68581511, 0x64F98FA7, 0xBEFA4FA4,
-    };
-};
-using SHA256 = SHA256Tmpl<32, SHA256IV>;
-using SHA224 = SHA256Tmpl<28, SHA224IV>;
+using SHA256 = SHA256Tmpl<32, std::array<uint32_t, 8>{
+    0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
+    0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
+}>;
+using SHA224 = SHA256Tmpl<28, std::array<uint32_t, 8>{
+    0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
+    0xFFC00B31, 0x68581511, 0x64F98FA7, 0xBEFA4FA4,
+}>;
 #undef FF1
 #undef CHO
 #undef MAJ

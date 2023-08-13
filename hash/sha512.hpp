@@ -35,7 +35,7 @@ protected:
         0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817,
     };
 };
-template <int DN, typename Box>
+template <int DN, std::array<uint64_t, 8> IV>
 class SHA512Tmpl: public SHA512Base {
     void compress(uint64_t *w) {
         uint64_t A = h[0];
@@ -74,8 +74,8 @@ class SHA512Tmpl: public SHA512Base {
     uint64_t lo = 0;
     uint64_t hi = 0;
     uint64_t h[8] = {
-        Box::IV[0], Box::IV[1], Box::IV[2], Box::IV[3],
-        Box::IV[4], Box::IV[5], Box::IV[6], Box::IV[7],
+        IV[0], IV[1], IV[2], IV[3],
+        IV[4], IV[5], IV[6], IV[7],
     };
 public:
     static constexpr size_t BLOCK_SIZE = 128;
@@ -103,20 +103,18 @@ public:
         WRITEB_BE(dst, h, DN);
     }
 };
-struct SHA512IV {
-    static constexpr uint64_t IV[8] = {
-        0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
-        0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
-    };
-};
-struct SHA384IV {
-    static constexpr uint64_t IV[8] = {
-        0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,
-        0x67332667ffc00b31, 0x8eb44a8768581511, 0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
-    };
-};
-using SHA512 = SHA512Tmpl<64, SHA512IV>;
-using SHA384 = SHA512Tmpl<48, SHA384IV>;
+using SHA512 = SHA512Tmpl<64, std::array<uint64_t, 8>{
+    0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
+    0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
+    0x510e527fade682d1, 0x9b05688c2b3e6c1f,
+    0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
+}>;
+using SHA384 = SHA512Tmpl<48, std::array<uint64_t, 8>{
+    0xcbbb9d5dc1059ed8, 0x629a292a367cd507,
+    0x9159015a3070dd17, 0x152fecd8f70e5939,
+    0x67332667ffc00b31, 0x8eb44a8768581511,
+    0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
+}>;
 #undef FF1
 #undef CHO
 #undef MAJ

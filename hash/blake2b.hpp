@@ -24,13 +24,14 @@ protected:
         {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
     };
 };
-template <size_t DN, typename Box>
+template <size_t DN, std::array<uint64_t, 8> IV>
 class BLAKE2bTmpl: public BLAKE2bBase {
     void compress(uint64_t const *m, bool fin) {
         uint64_t v[16] = {
-            h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7],
-            Box::IV[0], Box::IV[1], Box::IV[2], Box::IV[3],
-            Box::IV[4], Box::IV[5], Box::IV[6], Box::IV[7],
+            h [0], h [1], h [2], h [3],
+            h [4], h [5], h [6], h [7],
+            IV[0], IV[1], IV[2], IV[3],
+            IV[4], IV[5], IV[6], IV[7],
         };
         v[12] ^= lo;
         v[13] ^= hi;
@@ -57,8 +58,8 @@ class BLAKE2bTmpl: public BLAKE2bBase {
     uint64_t hi = 0;
     uint64_t lo = 0;
     uint64_t h[8] = {
-        Box::IV[0], Box::IV[1], Box::IV[2], Box::IV[3],
-        Box::IV[4], Box::IV[5], Box::IV[6], Box::IV[7],
+        IV[0], IV[1], IV[2], IV[3],
+        IV[4], IV[5], IV[6], IV[7],
     };
 public:
     static constexpr size_t BLOCK_SIZE = 128;
@@ -88,18 +89,16 @@ public:
         WRITEB_LE(dig, h, DN);
     }
 };
-struct BLAKE2b512IV {
-    static constexpr uint64_t IV[8] = {
-        0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
-        0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
-    };
-};
-struct BLAKE2b384IV {
-    static constexpr uint64_t IV[8] = {
-        0xcbbb9d5dc1059ed8, 0x629a292a367cd507, 0x9159015a3070dd17, 0x152fecd8f70e5939,
-        0x67332667ffc00b31, 0x8eb44a8768581511, 0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
-    };
-};
-using BLAKE2b512 = BLAKE2bTmpl<64, BLAKE2b512IV>;
-using BLAKE2b384 = BLAKE2bTmpl<48, BLAKE2b384IV>;
+using BLAKE2b512 = BLAKE2bTmpl<64, std::array<uint64_t, 8>{
+    0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
+    0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
+    0x510e527fade682d1, 0x9b05688c2b3e6c1f,
+    0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
+}>;
+using BLAKE2b384 = BLAKE2bTmpl<48, std::array<uint64_t, 8>{
+    0xcbbb9d5dc1059ed8, 0x629a292a367cd507,
+    0x9159015a3070dd17, 0x152fecd8f70e5939,
+    0x67332667ffc00b31, 0x8eb44a8768581511,
+    0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
+}>;
 #undef QROUND
