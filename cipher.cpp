@@ -23,9 +23,8 @@
 #include "stream/salsa.hpp"
 #include "stream/chacha.hpp"
 #define BUFSIZE 65536
-static char **Argv;
-static int Argc;
-static int Argi;
+char **Argv;
+int Argc, Argi;
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
