@@ -53,7 +53,7 @@ class Whirlpool {
         }
         return p;
     };
-    // Generate LUT for SubBytes and MixWords steps
+    // Generate LUT for SubBytes and MixRows steps
     static constexpr auto generate_LUT = [](WhirlpoolWord poly, std::array<uint8_t, 256> const &S_BOX) {
         std::array<std::array<WhirlpoolWord, 256>, 8> LUT = {};
         for (int i = 0; i < 8; i++) {
