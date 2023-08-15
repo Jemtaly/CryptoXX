@@ -1,6 +1,6 @@
 #pragma once
 #include "block.hpp"
-union RijndaelClmn {
+union RijndaelWord {
     uint32_t w;
     uint8_t b[4];
 };
@@ -53,8 +53,8 @@ protected:
         return I_BOX;
     }();
     // Generate LUT for MixColumns step
-    static constexpr auto generate_MCT = [](RijndaelClmn poly) {
-        std::array<std::array<RijndaelClmn, 256>, 4> MCT = {};
+    static constexpr auto generate_MCT = [](RijndaelWord poly) {
+        std::array<std::array<RijndaelWord, 256>, 4> MCT = {};
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 256; j++) {
                 uint8_t p = multiply(poly.b[i], j);
@@ -71,7 +71,7 @@ protected:
 template <int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
 class RijndaelTmpl: public RijndaelBase {
-    static void mix_clmns_enc(RijndaelClmn *q) {
+    static void mix_clmns_enc(RijndaelWord *q) {
         FOR(i, 0, i + 1, i < B, {
             q[i].w =
                 MCT_E[0][q[i].b[0]].w ^
@@ -80,7 +80,7 @@ class RijndaelTmpl: public RijndaelBase {
                 MCT_E[3][q[i].b[3]].w;
         });
     }
-    static void mix_clmns_dec(RijndaelClmn *q) {
+    static void mix_clmns_dec(RijndaelWord *q) {
         FOR(i, 0, i + 1, i < B, {
             q[i].w =
                 MCT_D[0][q[i].b[0]].w ^
@@ -89,8 +89,8 @@ class RijndaelTmpl: public RijndaelBase {
                 MCT_D[3][q[i].b[3]].w;
         });
     }
-    static void sub_shift_enc(RijndaelClmn *q) {
-        RijndaelClmn t[B];
+    static void sub_shift_enc(RijndaelWord *q) {
+        RijndaelWord t[B];
         FOR(i, 0, i + 1, i < B, {
             t[i].w = q[i].w;
         });
@@ -101,8 +101,8 @@ class RijndaelTmpl: public RijndaelBase {
             q[i].b[3] = S_BOX[t[(i + 3) % B].b[3]];
         });
     }
-    static void sub_shift_dec(RijndaelClmn *q) {
-        RijndaelClmn t[B];
+    static void sub_shift_dec(RijndaelWord *q) {
+        RijndaelWord t[B];
         FOR(i, 0, i + 1, i < B, {
             t[i].w = q[i].w;
         });
@@ -113,19 +113,19 @@ class RijndaelTmpl: public RijndaelBase {
             q[(i + 1) % B].b[3] = I_BOX[t[i].b[3]];
         });
     }
-    static void add_round_key(RijndaelClmn *q, RijndaelClmn const *k) {
+    static void add_round_key(RijndaelWord *q, RijndaelWord const *k) {
         FOR(i, 0, i + 1, i < B, {
             q[i].w ^= k[i].w;
         });
     }
-    RijndaelClmn rk[R + 1][B];
+    RijndaelWord rk[R + 1][B];
 public:
     static constexpr size_t BLOCK_SIZE = B * 4;
     static constexpr size_t KEY_SIZE = K * 4;
     RijndaelTmpl(const uint8_t *mk) {
-        memcpy((RijndaelClmn *)rk, mk, K * 4);
+        memcpy((RijndaelWord *)rk, mk, K * 4);
         for (int i = K; i < (R + 1) * B; ++i) {
-            RijndaelClmn t = ((RijndaelClmn *)rk)[i - 1];
+            RijndaelWord t = ((RijndaelWord *)rk)[i - 1];
             if (i % K == 0) {
                 auto x = S_BOX[t.b[1]];
                 t.b[1] = S_BOX[t.b[2]];
@@ -138,11 +138,11 @@ public:
                 t.b[2] = S_BOX[t.b[2]];
                 t.b[3] = S_BOX[t.b[3]];
             }
-            ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - K].w ^ t.w;
+            ((RijndaelWord *)rk)[i].w = ((RijndaelWord *)rk)[i - K].w ^ t.w;
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[B];
+        RijndaelWord q[B];
         memcpy(q, src, B * 4);
         int round = 0;
         add_round_key(q, rk[round]);
@@ -156,7 +156,7 @@ public:
         memcpy(dst, q, B * 4);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[B];
+        RijndaelWord q[B];
         memcpy(q, src, B * 4);
         int round = R;
         add_round_key(q, rk[round]);

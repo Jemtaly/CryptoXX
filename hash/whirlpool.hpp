@@ -6,7 +6,7 @@
     LUT[4][t[(j + 4) % 8].b[4]].w ^ LUT[5][t[(j + 3) % 8].b[5]].w ^ \
     LUT[6][t[(j + 2) % 8].b[6]].w ^ LUT[7][t[(j + 1) % 8].b[7]].w   \
 )
-union WhirlpoolRow {
+union WhirlpoolWord {
     uint64_t w;
     uint8_t b[8];
 };
@@ -36,7 +36,7 @@ class Whirlpool {
         return S_BOX;
     }();
     static constexpr auto RC = []() {
-        std::array<WhirlpoolRow, 10> RC = {};
+        std::array<WhirlpoolWord, 10> RC = {};
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 8; j++) {
                 RC[i].b[j] = S_BOX[8 * i + j];
@@ -53,9 +53,9 @@ class Whirlpool {
         }
         return p;
     };
-    // Generate LUT for SubBytes and MixRows steps
-    static constexpr auto generate_LUT = [](WhirlpoolRow poly, std::array<uint8_t, 256> const &S_BOX) {
-        std::array<std::array<WhirlpoolRow, 256>, 8> LUT = {};
+    // Generate LUT for SubBytes and MixWords steps
+    static constexpr auto generate_LUT = [](WhirlpoolWord poly, std::array<uint8_t, 256> const &S_BOX) {
+        std::array<std::array<WhirlpoolWord, 256>, 8> LUT = {};
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 256; j++) {
                 uint8_t p = multiply(poly.b[i], S_BOX[j]);
@@ -67,8 +67,8 @@ class Whirlpool {
         return LUT;
     };
     static constexpr auto LUT = generate_LUT({.b = {1, 1, 4, 1, 8, 5, 2, 9}}, S_BOX);
-    void compress(WhirlpoolRow const *b) {
-        WhirlpoolRow s[8], k[8], t[8];
+    void compress(WhirlpoolWord const *b) {
+        WhirlpoolWord s[8], k[8], t[8];
         s[0].w = b[0].w ^ (k[0].w = h[0].w);
         s[1].w = b[1].w ^ (k[1].w = h[1].w);
         s[2].w = b[2].w ^ (k[2].w = h[2].w);
@@ -120,14 +120,14 @@ class Whirlpool {
         h[6].w ^= s[6].w ^ b[6].w;
         h[7].w ^= s[7].w ^ b[7].w;
     }
-    WhirlpoolRow h[8] = {};
+    WhirlpoolWord h[8] = {};
     uint64_t ctr[4] = {};
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 64;
     static constexpr bool NOT_ALWAYS_PADDING = false;
     void input(uint8_t const *data) {
-        WhirlpoolRow w[8];
+        WhirlpoolWord w[8];
         memcpy(w, data, 64);
         (ctr[3] += 64 * 8)
             < 64 * 8 && ++ctr[2]
@@ -136,7 +136,7 @@ public:
         compress(w);
     }
     void final(uint8_t const *src, size_t len, uint8_t *hash) {
-        WhirlpoolRow w[8];
+        WhirlpoolWord w[8];
         memset(w, 0, 64);
         memcpy(w, src, len);
         (ctr[3] += len * 8)

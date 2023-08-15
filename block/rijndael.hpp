@@ -1,6 +1,6 @@
 #pragma once
 #include "block.hpp"
-union RijndaelClmn {
+union RijndaelWord {
     uint32_t w;
     uint8_t b[4];
 };
@@ -60,8 +60,8 @@ protected:
         return IDENT;
     }();
     // Generate LUT for SubBytes and MixColumns steps
-    static constexpr auto generate_LUT = [](RijndaelClmn poly, std::array<uint8_t, 256> const &S_BOX) {
-        std::array<std::array<RijndaelClmn, 256>, 4> LUT = {};
+    static constexpr auto generate_LUT = [](RijndaelWord poly, std::array<uint8_t, 256> const &S_BOX) {
+        std::array<std::array<RijndaelWord, 256>, 4> LUT = {};
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 256; j++) {
                 uint8_t p = multiply(poly.b[i], S_BOX[j]);
@@ -81,15 +81,15 @@ protected:
 template <int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
 class RijndaelTmpl: public RijndaelBase {
-    RijndaelClmn rk[R + 1][B];
-    RijndaelClmn ik[R + 1][B];
+    RijndaelWord rk[R + 1][B];
+    RijndaelWord ik[R + 1][B];
 public:
     static constexpr size_t BLOCK_SIZE = B * 4;
     static constexpr size_t KEY_SIZE = K * 4;
     RijndaelTmpl(const uint8_t *mk) {
-        memcpy((RijndaelClmn *)rk, mk, K * 4);
+        memcpy((RijndaelWord *)rk, mk, K * 4);
         for (int i = K; i < (R + 1) * B; ++i) {
-            RijndaelClmn t = ((RijndaelClmn *)rk)[i - 1];
+            RijndaelWord t = ((RijndaelWord *)rk)[i - 1];
             if (i % K == 0) {
                 auto x = S_BOX[t.b[1]];
                 t.b[1] = S_BOX[t.b[2]];
@@ -102,7 +102,7 @@ public:
                 t.b[2] = S_BOX[t.b[2]];
                 t.b[3] = S_BOX[t.b[3]];
             }
-            ((RijndaelClmn *)rk)[i].w = ((RijndaelClmn *)rk)[i - K].w ^ t.w;
+            ((RijndaelWord *)rk)[i].w = ((RijndaelWord *)rk)[i - K].w ^ t.w;
         }
         // Generate decryption round key from encryption round key
         FOR(i, 0, i + 1, i < B, {
@@ -122,8 +122,8 @@ public:
         });
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[B];
-        RijndaelClmn t[B];
+        RijndaelWord q[B];
+        RijndaelWord t[B];
         memcpy(q, src, B * 4);
         FOR(i, 0, i + 1, i < B, {
             q[i].w ^= rk[0][i].w;
@@ -153,8 +153,8 @@ public:
         memcpy(dst, q, B * 4);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        RijndaelClmn q[B];
-        RijndaelClmn t[B];
+        RijndaelWord q[B];
+        RijndaelWord t[B];
         memcpy(q, src, B * 4);
         FOR(i, 0, i + 1, i < B, {
             q[i].w ^= ik[0][i].w;

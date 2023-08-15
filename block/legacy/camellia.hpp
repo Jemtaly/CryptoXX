@@ -1,9 +1,5 @@
 #pragma once
 #include "block.hpp"
-#define ROTL128(dh, dl, sh, sl, n) do {                \
-    (dh) = sh << (n) | (n > 0 ? sl >> (64 - (n)) : 0); \
-    (dl) = sl << (n) | (n > 0 ? sh >> (64 - (n)) : 0); \
-} while (0)
 class CamelliaBase {
 protected:
     static constexpr uint64_t SIGMA[6] = {
@@ -98,8 +94,7 @@ public:
         uint64_t rh, rl;
         uint64_t ah, al;
         uint64_t bh, bl;
-        uint64_t dh, dl;
-        uint64_t holder;
+        uint64_t d1, d2;
         lh = GET_BE<uint64_t>(kxy     );
         ll = GET_BE<uint64_t>(kxy +  8);
         if constexpr (L == 2) {
@@ -112,55 +107,54 @@ public:
             rh = GET_BE<uint64_t>(kxy + 16);
             rl = GET_BE<uint64_t>(kxy + 24);
         }
-        dh = lh ^ rh;
-        dl = ll ^ rl;
-        dl ^= f(dh, SIGMA[0]);
-        dh ^= f(dl, SIGMA[1]);
-        dh ^= lh;
-        dl ^= ll;
-        dl ^= f(dh, SIGMA[2]);
-        dh ^= f(dl, SIGMA[3]);
-        ah = dh;
-        al = dl;
-        dh ^= rh;
-        dl ^= rl;
-        dl ^= f(dh, SIGMA[4]);
-        dh ^= f(dl, SIGMA[5]);
-        bh = dh;
-        bl = dl;
+        d1 = lh ^ rh;
+        d2 = ll ^ rl;
+        d2 ^= f(d1, SIGMA[0]);
+        d1 ^= f(d2, SIGMA[1]);
+        d1 ^= lh;
+        d2 ^= ll;
+        d2 ^= f(d1, SIGMA[2]);
+        d1 ^= f(d2, SIGMA[3]);
+        ah = d1;
+        al = d2;
+        d1 ^= rh;
+        d2 ^= rl;
+        d2 ^= f(d1, SIGMA[4]);
+        d1 ^= f(d2, SIGMA[5]);
+        bh = d1;
+        bl = d2;
         if constexpr (L == 2) {
-            ROTL128(kx[ 0], kx[ 1], lh, ll,  0);
-            ROTL128(kx[ 2], kx[ 3], ah, al,  0);
-            ROTL128(kx[ 4], kx[ 5], lh, ll, 15);
-            ROTL128(kx[ 6], kx[ 7], ah, al, 15);
-            ROTL128(kx[ 8], kx[ 9], ah, al, 30);
-            ROTL128(kx[10], kx[11], lh, ll, 45);
-            ROTL128(kx[12], holder, ah, al, 45);
-            ROTL128(holder, kx[13], lh, ll, 60);
-            ROTL128(kx[14], kx[15], ah, al, 60);
-            ROTL128(kx[16], kx[17], ll, lh, 13);
-            ROTL128(kx[18], kx[19], ll, lh, 30);
-            ROTL128(kx[20], kx[21], al, ah, 30);
-            ROTL128(kx[22], kx[23], ll, lh, 47);
-            ROTL128(kx[24], kx[25], al, ah, 47);
+            kx[ 0] = lh;                         kx[ 1] = ll;
+            kx[ 2] = ah;                         kx[ 3] = al;
+            kx[ 4] = lh << 15 | ll >> (64 - 15); kx[ 5] = ll << 15 | lh >> (64 - 15);
+            kx[ 6] = ah << 15 | al >> (64 - 15); kx[ 7] = al << 15 | ah >> (64 - 15);
+            kx[ 8] = ah << 30 | al >> (64 - 30); kx[ 9] = al << 30 | ah >> (64 - 30);
+            kx[10] = lh << 45 | ll >> (64 - 45); kx[11] = ll << 45 | lh >> (64 - 45);
+            kx[12] = ah << 45 | al >> (64 - 45); kx[13] = ll << 60 | lh >> (64 - 60);
+            kx[14] = ah << 60 | al >> (64 - 60); kx[15] = al << 60 | ah >> (64 - 60);
+            kx[16] = lh >> 51 | ll << (64 - 51); kx[17] = ll >> 51 | lh << (64 - 51);
+            kx[18] = lh >> 34 | ll << (64 - 34); kx[19] = ll >> 34 | lh << (64 - 34);
+            kx[20] = ah >> 34 | al << (64 - 34); kx[21] = al >> 34 | ah << (64 - 34);
+            kx[22] = lh >> 17 | ll << (64 - 17); kx[23] = ll >> 17 | lh << (64 - 17);
+            kx[24] = ah >> 17 | al << (64 - 17); kx[25] = al >> 17 | ah << (64 - 17);
         } else {
-            ROTL128(kx[ 0], kx[ 1], lh, ll,  0);
-            ROTL128(kx[ 2], kx[ 3], bh, bl,  0);
-            ROTL128(kx[ 4], kx[ 5], rh, rl, 15);
-            ROTL128(kx[ 6], kx[ 7], ah, al, 15);
-            ROTL128(kx[ 8], kx[ 9], rh, rl, 30);
-            ROTL128(kx[10], kx[11], bh, bl, 30);
-            ROTL128(kx[12], kx[13], lh, ll, 45);
-            ROTL128(kx[14], kx[15], ah, al, 45);
-            ROTL128(kx[16], kx[17], lh, ll, 60);
-            ROTL128(kx[18], kx[19], rh, rl, 60);
-            ROTL128(kx[20], kx[21], bh, bl, 60);
-            ROTL128(kx[22], kx[23], ll, lh, 13);
-            ROTL128(kx[24], kx[25], al, ah, 13);
-            ROTL128(kx[26], kx[27], rl, rh, 30);
-            ROTL128(kx[28], kx[29], al, ah, 30);
-            ROTL128(kx[30], kx[31], ll, lh, 47);
-            ROTL128(kx[32], kx[33], bl, bh, 47);
+            kx[ 0] = lh;                         kx[ 1] = ll;
+            kx[ 2] = bh;                         kx[ 3] = bl;
+            kx[ 4] = rh << 15 | rl >> (64 - 15); kx[ 5] = rl << 15 | rh >> (64 - 15);
+            kx[ 6] = ah << 15 | al >> (64 - 15); kx[ 7] = al << 15 | ah >> (64 - 15);
+            kx[ 8] = rh << 30 | rl >> (64 - 30); kx[ 9] = rl << 30 | rh >> (64 - 30);
+            kx[10] = bh << 30 | bl >> (64 - 30); kx[11] = bl << 30 | bh >> (64 - 30);
+            kx[12] = lh << 45 | ll >> (64 - 45); kx[13] = ll << 45 | lh >> (64 - 45);
+            kx[14] = ah << 45 | al >> (64 - 45); kx[15] = al << 45 | ah >> (64 - 45);
+            kx[16] = lh << 60 | ll >> (64 - 60); kx[17] = ll << 60 | lh >> (64 - 60);
+            kx[18] = rh << 60 | rl >> (64 - 60); kx[19] = rl << 60 | rh >> (64 - 60);
+            kx[20] = bh << 60 | bl >> (64 - 60); kx[21] = bl << 60 | bh >> (64 - 60);
+            kx[22] = lh >> 51 | ll << (64 - 51); kx[23] = ll >> 51 | lh << (64 - 51);
+            kx[24] = ah >> 51 | al << (64 - 51); kx[25] = al >> 51 | ah << (64 - 51);
+            kx[26] = rh >> 34 | rl << (64 - 34); kx[27] = rl >> 34 | rh << (64 - 34);
+            kx[28] = ah >> 34 | al << (64 - 34); kx[29] = al >> 34 | ah << (64 - 34);
+            kx[30] = lh >> 17 | ll << (64 - 17); kx[31] = ll >> 17 | lh << (64 - 17);
+            kx[32] = bh >> 17 | bl << (64 - 17); kx[33] = bl >> 17 | bh << (64 - 17);
         }
     }
     void encrypt(const uint8_t *src, uint8_t *dst) const {
