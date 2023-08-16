@@ -95,10 +95,10 @@ class RijndaelTmpl: public RijndaelBase {
             t[i].w = q[i].w;
         });
         FOR(i, 0, i + 1, i < B, {
-            q[i].b[0] = S_BOX[t[ i         ].b[0]];
-            q[i].b[1] = S_BOX[t[(i + 1) % B].b[1]];
-            q[i].b[2] = S_BOX[t[(i + 2) % B].b[2]];
-            q[i].b[3] = S_BOX[t[(i + 3) % B].b[3]];
+            q[i].b[0] = S_BOX[t[ i             ].b[0]];
+            q[i].b[1] = S_BOX[t[(i +     1) % B].b[1]];
+            q[i].b[2] = S_BOX[t[(i +     2) % B].b[2]];
+            q[i].b[3] = S_BOX[t[(i +     3) % B].b[3]];
         });
     }
     static void sub_shift_dec(RijndaelWord *q) {
@@ -107,10 +107,10 @@ class RijndaelTmpl: public RijndaelBase {
             t[i].w = q[i].w;
         });
         FOR(i, 0, i + 1, i < B, {
-            q[ i         ].b[0] = I_BOX[t[i].b[0]];
-            q[(i + 3) % B].b[1] = I_BOX[t[i].b[1]];
-            q[(i + 2) % B].b[2] = I_BOX[t[i].b[2]];
-            q[(i + 1) % B].b[3] = I_BOX[t[i].b[3]];
+            q[i].b[0] = S_BOX[t[ i             ].b[0]];
+            q[i].b[1] = S_BOX[t[(i + B - 1) % B].b[1]];
+            q[i].b[2] = S_BOX[t[(i + B - 2) % B].b[2]];
+            q[i].b[3] = S_BOX[t[(i + B - 3) % B].b[3]];
         });
     }
     static void add_round_key(RijndaelWord *q, RijndaelWord const *k) {

@@ -72,11 +72,12 @@ protected:
         }
         return LUT;
     };
+    static constexpr auto MCT_E = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, IDENT); // LUT for InvMixColumns step only
     static constexpr auto MCT_D = generate_LUT({.b = {0x0e, 0x09, 0x0d, 0x0b}}, IDENT); // LUT for InvMixColumns step only
     static constexpr auto LUT_E = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, S_BOX); // LUT for SubBytes and MixColumns steps
     static constexpr auto LUT_D = generate_LUT({.b = {0x0e, 0x09, 0x0d, 0x0b}}, I_BOX); // LUT for InvSubBytes and InvMixColumns steps
-    static constexpr auto S_EXT = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, S_BOX); // LUT for SubBytes step only
-    static constexpr auto I_EXT = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, I_BOX); // LUT for InvSubBytes step only
+    static constexpr auto SBT_E = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, S_BOX); // LUT for SubBytes step only
+    static constexpr auto SBT_D = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, I_BOX); // LUT for InvSubBytes step only
 };
 template <int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
@@ -134,10 +135,10 @@ public:
             });
             FOR(i, 0, i + 1, i < B, {
                 q[i].w =
-                    LUT_E[0][t[ i         ].b[0]].w ^
-                    LUT_E[1][t[(i + 1) % B].b[1]].w ^
-                    LUT_E[2][t[(i + 2) % B].b[2]].w ^
-                    LUT_E[3][t[(i + 3) % B].b[3]].w ^ rk[r][i].w;
+                    LUT_E[0][t[ i             ].b[0]].w ^
+                    LUT_E[1][t[(i +     1) % B].b[1]].w ^
+                    LUT_E[2][t[(i +     2) % B].b[2]].w ^
+                    LUT_E[3][t[(i +     3) % B].b[3]].w ^ rk[r][i].w;
             });
         }
         FOR(i, 0, i + 1, i < B, {
@@ -145,10 +146,10 @@ public:
         });
         FOR(i, 0, i + 1, i < B, {
             q[i].w =
-                S_EXT[0][t[ i         ].b[0]].w ^
-                S_EXT[1][t[(i + 1) % B].b[1]].w ^
-                S_EXT[2][t[(i + 2) % B].b[2]].w ^
-                S_EXT[3][t[(i + 3) % B].b[3]].w ^ rk[R][i].w;
+                SBT_E[0][t[ i             ].b[0]].w ^
+                SBT_E[1][t[(i +     1) % B].b[1]].w ^
+                SBT_E[2][t[(i +     2) % B].b[2]].w ^
+                SBT_E[3][t[(i +     3) % B].b[3]].w ^ rk[R][i].w;
         });
         memcpy(dst, q, B * 4);
     }
@@ -176,10 +177,10 @@ public:
         });
         FOR(i, 0, i + 1, i < B, {
             q[i].w =
-                I_EXT[0][t[ i             ].b[0]].w ^
-                I_EXT[1][t[(i + B - 1) % B].b[1]].w ^
-                I_EXT[2][t[(i + B - 2) % B].b[2]].w ^
-                I_EXT[3][t[(i + B - 3) % B].b[3]].w ^ ik[R][i].w;
+                SBT_D[0][t[ i             ].b[0]].w ^
+                SBT_D[1][t[(i + B - 1) % B].b[1]].w ^
+                SBT_D[2][t[(i + B - 2) % B].b[2]].w ^
+                SBT_D[3][t[(i + B - 3) % B].b[3]].w ^ ik[R][i].w;
         });
         memcpy(dst, q, B * 4);
     }
