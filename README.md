@@ -12,16 +12,18 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 
 - Block cipher algorithms (ECB, CBC, CFB, OFB and CTR mode) / 块密码算法 (多种工作模式)
   - DES
-  - 3DES
-  - IDEA
+  - DES-EDE
   - Blowfish
   - Twofish
   - Serpent
-  - Rijndael (with variable blocksize and keysize), AES-128, AES-192, AES-256
+  - Rijndael (AES with variable blocksize and keysize)
   - Camellia
+  - SEED
+  - ARIA
   - SM4
   - CAST-128
   - CAST-256
+  - IDEA
 - Stream cipher algorithms / 流密码算法
   - RC4
   - ChaCha
@@ -66,11 +68,11 @@ Supported stream ciphers:
 Supported stream cipher modes:
     Enc, Dec, Gen
 Supported block ciphers:
-    AES128, Camellia128, Serpent128, Twofish128,
-    AES192, Camellia192, Serpent192, Twofish192,
-    AES256, Camellia256, Serpent256, Twofish256,
-    DES, TDES2K, TDES3K, IDEA, CAST128, CAST256,
-    SM4, Blowfish
+    ARIA128, Camellia128, Serpent128, Twofish128,
+    ARIA192, Camellia192, Serpent192, Twofish192,
+    ARIA256, Camellia256, Serpent256, Twofish256,
+    CAST128, DES, TDES2K, TDES3K, SEED, Blowfish,
+    CAST256, SM4, IDES, AES128, AES192, AES256
 Supported block cipher modes:
     ECBEnc, ECBDec, CTREnc, CTRDec, CTRGen,
     CFBEnc, CFBDec, OFBEnc, OFBDec, OFBGen,
