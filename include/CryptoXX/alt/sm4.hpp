@@ -53,7 +53,7 @@ public:
         t[2] = GET_BE<uint32_t>(src +  8);
         t[3] = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i++) {
-            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i + 4];
+            uint32_t a = t[i + 1] ^ t[i + 2] ^ t[i + 3] ^ k[i +  4];
             uint32_t b = S_BOX[a >> 24] << 24 | S_BOX[a >> 16 & 0xff] << 16 | S_BOX[a >> 8 & 0xff] << 8 | S_BOX[a & 0xff];
             t[i + 4] = t[i] ^ b ^ ROTL(b, 2) ^ ROTL(b, 10) ^ ROTL(b, 18) ^ ROTL(b, 24);
         }

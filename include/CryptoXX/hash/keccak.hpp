@@ -1,7 +1,7 @@
 #pragma once
 #include "../utils.hpp"
-#define UNROTLL_5(F) do { F(0); F(1); F(2); F(3); F(4); } while (0)
-#define UNROTLL_X(F) do {                        \
+#define UNROLL_5(F) do { F(0); F(1); F(2); F(3); F(4); } while (0)
+#define UNROLL_X(F) do {                         \
     F(0, 0); F(0, 1); F(0, 2); F(0, 3); F(0, 4); \
     F(1, 0); F(1, 1); F(1, 2); F(1, 3); F(1, 4); \
     F(2, 0); F(2, 1); F(2, 2); F(2, 3); F(2, 4); \
@@ -37,11 +37,11 @@ protected:
             uint64_t C[5];
             uint64_t D[5];
             uint64_t B[5][5];
-            UNROTLL_5(C_A);
-            UNROTLL_5(D_C);
-            UNROTLL_X(A_D);
-            UNROTLL_X(B_A);
-            UNROTLL_X(A_B);
+            UNROLL_5(C_A);
+            UNROLL_5(D_C);
+            UNROLL_X(A_D);
+            UNROLL_X(B_A);
+            UNROLL_X(A_B);
             A[0][0] ^= RC[i];
         }
     }

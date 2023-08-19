@@ -68,10 +68,10 @@ public:
         c = GET_BE<uint32_t>(mk +  8) ^ 0x677d9197;
         d = GET_BE<uint32_t>(mk + 12) ^ 0xb27022dc;
         for (int i = 0; i < 32; i += 4) {
-            rk[i    ] = a ^= K_ROUND(b, c, d, CK[i    ]);
-            rk[i + 1] = b ^= K_ROUND(c, d, a, CK[i + 1]);
-            rk[i + 2] = c ^= K_ROUND(d, a, b, CK[i + 2]);
-            rk[i + 3] = d ^= K_ROUND(a, b, c, CK[i + 3]);
+            rk[i     ] = a ^= K_ROUND(b, c, d, CK[i     ]);
+            rk[i +  1] = b ^= K_ROUND(c, d, a, CK[i +  1]);
+            rk[i +  2] = c ^= K_ROUND(d, a, b, CK[i +  2]);
+            rk[i +  3] = d ^= K_ROUND(a, b, c, CK[i +  3]);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
@@ -81,10 +81,10 @@ public:
         c = GET_BE<uint32_t>(src +  8);
         d = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i += 4) {
-            a ^= C_ROUND(b, c, d, rk[i    ]);
-            b ^= C_ROUND(c, d, a, rk[i + 1]);
-            c ^= C_ROUND(d, a, b, rk[i + 2]);
-            d ^= C_ROUND(a, b, c, rk[i + 3]);
+            a ^= C_ROUND(b, c, d, rk[i     ]);
+            b ^= C_ROUND(c, d, a, rk[i +  1]);
+            c ^= C_ROUND(d, a, b, rk[i +  2]);
+            d ^= C_ROUND(a, b, c, rk[i +  3]);
         }
         PUT_BE(dst     , d);
         PUT_BE(dst +  4, c);

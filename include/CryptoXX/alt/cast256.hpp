@@ -208,13 +208,13 @@ public:
         uint32_t C = GET_BE<uint32_t>(src +  8);
         uint32_t D = GET_BE<uint32_t>(src + 12);
         uint32_t I;
-        for (int i = 0; i <=  5; i++) {
+        for (int i =  0; i <=  5; i++) {
             FFA(C, D, I, Km, Kr, i, 0);
             FFB(B, C, I, Km, Kr, i, 1);
             FFC(A, B, I, Km, Kr, i, 2);
             FFA(D, A, I, Km, Kr, i, 3);
         }
-        for (int i = 6; i <= 11; i++) {
+        for (int i =  6; i <= 11; i++) {
             FFA(D, A, I, Km, Kr, i, 3);
             FFC(A, B, I, Km, Kr, i, 2);
             FFB(B, C, I, Km, Kr, i, 1);
@@ -231,13 +231,13 @@ public:
         uint32_t C = GET_BE<uint32_t>(src +  8);
         uint32_t D = GET_BE<uint32_t>(src + 12);
         uint32_t I;
-        for (int i = 11; i >= 6; i--) {
+        for (int i = 11; i >=  6; i--) {
             FFA(C, D, I, Km, Kr, i, 0);
             FFB(B, C, I, Km, Kr, i, 1);
             FFC(A, B, I, Km, Kr, i, 2);
             FFA(D, A, I, Km, Kr, i, 3);
         }
-        for (int i =  5; i >= 0; i--) {
+        for (int i =  5; i >=  0; i--) {
             FFA(D, A, I, Km, Kr, i, 3);
             FFC(A, B, I, Km, Kr, i, 2);
             FFB(B, C, I, Km, Kr, i, 1);

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <concepts>
+// bits_t is used to represent the number of bits to rotate
 using bits_t = uint8_t;
 template <std::unsigned_integral T>
 constexpr T ROTL(T const x, bits_t const n) {
