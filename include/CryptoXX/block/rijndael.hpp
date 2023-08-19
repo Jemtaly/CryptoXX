@@ -109,6 +109,9 @@ public:
         FOR(i, 0, i + 1, i < B, {
             ik[R][i].w = rk[0][i].w;
         });
+        FOR(i, 0, i + 1, i < B, {
+            ik[0][i].w = rk[R][i].w;
+        });
         for (int r = 1; r < R; ++r) {
             FOR(i, 0, i + 1, i < B, {
                 ik[R - r][i].w =
@@ -118,9 +121,6 @@ public:
                     D_MCT[3][rk[r][i].b[3]].w;
             });
         }
-        FOR(i, 0, i + 1, i < B, {
-            ik[0][i].w = rk[R][i].w;
-        });
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelWord q[B];

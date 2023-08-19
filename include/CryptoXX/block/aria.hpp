@@ -199,11 +199,11 @@ protected:
             E_LUT[12][x[12]] ^ E_LUT[13][x[13]] ^ E_LUT[14][x[14]] ^ E_LUT[15][x[15]];
     }
 };
-template <int L, int K = 9 + 2 * L>
+template <int L, int R = 8 + 2 * L>
     requires (L == 2 || L == 3 || L == 4)
 class ARIATmpl: public ARIABase {
-    ARIAWord ek[K];
-    ARIAWord dk[K];
+    ARIAWord ek[R + 1];
+    ARIAWord dk[R + 1];
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 8 * L;
@@ -236,35 +236,31 @@ public:
             ek[16] = w0 ^ w1.rotl(19);
             if constexpr (L == 4) { break; }
         }
-        dk[0] = ek[K - 1];
-        dk[K - 1] = ek[0];
-        for (int i = 1; i < K - 1; i++) {
-            dk[i] = a(ek[K - 1 - i]);
+        dk[0] = ek[R];
+        dk[R] = ek[0];
+        for (int i = 1; i < R; i++) {
+            dk[i] = a(ek[R - i]);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         ARIAWord a = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)};
-        int i = 0;
-        for (;;) {
-            a = fo(a, ek[i++]);
-            if (i + 2 == K) { break; }
-            a = fe(a, ek[i++]);
+        for (int r = 0;;) {
+            a = fo(a, ek[r++]);
+            if (r == R - 1) { break; }
+            a = fe(a, ek[r++]);
         }
-        a = sl2(a ^ ek[i++]);
-        a =     a ^ ek[i++] ;
+        a = sl2(a ^ ek[R - 1]) ^ ek[R];
         PUT_BE<uint64_t>(dst    , a.hi);
         PUT_BE<uint64_t>(dst + 8, a.lo);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         ARIAWord a = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)};
-        int i = 0;
-        for (;;) {
-            a = fo(a, dk[i++]);
-            if (i + 2 == K) { break; }
-            a = fe(a, dk[i++]);
+        for (int r = 0;;) {
+            a = fo(a, dk[r++]);
+            if (r == R - 1) { break; }
+            a = fe(a, dk[r++]);
         }
-        a = sl2(a ^ dk[i++]);
-        a =     a ^ dk[i++] ;
+        a = sl2(a ^ dk[R - 1]) ^ dk[R];
         PUT_BE<uint64_t>(dst    , a.hi);
         PUT_BE<uint64_t>(dst + 8, a.lo);
     }
