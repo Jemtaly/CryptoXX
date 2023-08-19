@@ -6,6 +6,8 @@
 #include "CryptoXX/block/des.hpp"
 #include "CryptoXX/block/3des.hpp"
 #include "CryptoXX/block/idea.hpp"
+#include "CryptoXX/block/aria.hpp"
+#include "CryptoXX/block/seed.hpp"
 #include "CryptoXX/block/cast128.hpp"
 #include "CryptoXX/block/cast256.hpp"
 #include "CryptoXX/block/twofish.hpp"
@@ -205,6 +207,12 @@ void alg_select() {
         bc_select<Camellia192>(); break;
     case hash("Camellia256"):
         bc_select<Camellia256>(); break;
+    case hash("ARIA128"):
+        bc_select<ARIA128>(); break;
+    case hash("ARIA192"):
+        bc_select<ARIA192>(); break;
+    case hash("ARIA256"):
+        bc_select<ARIA256>(); break;
     case hash("SM4"):
         bc_select<SM4>(); break;
     case hash("CAST128"):
@@ -221,6 +229,8 @@ void alg_select() {
         bc_select<Blowfish>(); break;
     case hash("IDEA"):
         bc_select<IDEA>(); break;
+    case hash("SEED"):
+        bc_select<SEED>(); break;
     case hash("ChaCha20"):
         sc_select<ChaCha20>(); break;
     case hash("Salsa20"):
@@ -248,11 +258,11 @@ int main(int argc, char **argv) {
                 "Supported stream cipher modes:\n"
                 "    Enc, Dec, Gen\n"
                 "Supported block ciphers:\n"
-                "    AES128, Camellia128, Serpent128, Twofish128,\n"
-                "    AES192, Camellia192, Serpent192, Twofish192,\n"
-                "    AES256, Camellia256, Serpent256, Twofish256,\n"
-                "    DES, TDES2K, TDES3K, IDEA, CAST128, CAST256,\n"
-                "    SM4, Blowfish\n"
+                "    ARIA128, Camellia128, Serpent128, Twofish128,\n"
+                "    ARIA192, Camellia192, Serpent192, Twofish192,\n"
+                "    ARIA256, Camellia256, Serpent256, Twofish256,\n"
+                "    CAST128, DES, TDES2K, TDES3K, SEED, Blowfish,\n"
+                "    CAST256, SM4, IDES, AES128, AES192, AES256\n"
                 "Supported block cipher modes:\n"
                 "    ECBEnc, ECBDec, CTREnc, CTRDec, CTRGen,\n"
                 "    CFBEnc, CFBDec, OFBEnc, OFBDec, OFBGen,\n"

@@ -42,7 +42,7 @@ protected:
     static constexpr std::array<uint8_t, 256> D_BOX = []() {
         std::array<uint8_t, 256> D_BOX = {};
         for (int i = 0; i < 256; i++) {
-            D_BOX[i] = A_BOX[(i << 1 | i >> 7) & 255];
+            D_BOX[i] = A_BOX[i << 1 & 0xff | i >> 7];
         }
         return D_BOX;
     }();
