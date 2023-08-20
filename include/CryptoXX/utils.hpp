@@ -188,6 +188,46 @@ constexpr void XORB_BW(uint8_t *arr, T const *a, int n) {
         arr[i] ^= BYTE_BW(a, i);
     }
 }
+template <std::unsigned_integral T>
+constexpr auto TAKE_LO(T a, int i) {
+    return a >> 8 * i & 0xff;
+}
+template <std::unsigned_integral T>
+constexpr auto TAKE_HI(T a, int i) {
+    return a >> 8 * (sizeof(T) - 1 - i) & 0xff;
+}
+constexpr uint16_t MAKE_LO(uint8_t l, uint8_t h) {
+    return
+        (uint16_t)h <<  8 | (uint16_t)l      ;
+}
+constexpr uint16_t MAKE_HI(uint8_t h, uint8_t l) {
+    return
+        (uint16_t)h <<  8 | (uint16_t)l      ;
+}
+constexpr uint32_t MAKE_LO(uint8_t o, uint8_t l, uint8_t i, uint8_t h) {
+    return
+        (uint32_t)h << 24 | (uint32_t)i << 16 |
+        (uint32_t)l <<  8 | (uint32_t)o      ;
+}
+constexpr uint32_t MAKE_HI(uint8_t h, uint8_t i, uint8_t l, uint8_t o) {
+    return
+        (uint32_t)h << 24 | (uint32_t)i << 16 |
+        (uint32_t)l <<  8 | (uint32_t)o      ;
+}
+constexpr uint64_t MAKE_LO(uint8_t o, uint8_t n, uint8_t m, uint8_t l, uint8_t k, uint8_t j, uint8_t i, uint8_t h) {
+    return
+        (uint64_t)h << 56 | (uint64_t)i << 48 |
+        (uint64_t)j << 40 | (uint64_t)k << 32 |
+        (uint64_t)l << 24 | (uint64_t)m << 16 |
+        (uint64_t)n <<  8 | (uint64_t)o      ;
+}
+constexpr uint64_t MAKE_HI(uint8_t h, uint8_t i, uint8_t j, uint8_t k, uint8_t l, uint8_t m, uint8_t n, uint8_t o) {
+    return
+        (uint64_t)h << 56 | (uint64_t)i << 48 |
+        (uint64_t)j << 40 | (uint64_t)k << 32 |
+        (uint64_t)l << 24 | (uint64_t)m << 16 |
+        (uint64_t)n <<  8 | (uint64_t)o      ;
+}
 #if 'ABCD' == 0x41424344 // little endian
 #define GET_LE    GET_FW
 #define GET_BE    GET_BW
@@ -205,6 +245,8 @@ constexpr void XORB_BW(uint8_t *arr, T const *a, int n) {
 #define WRITEB_BE WRITEB_BW
 #define XORB_LE   XORB_FW
 #define XORB_BE   XORB_BW
+#define TAKE_BYTE TAKE_LO
+#define MAKE_WORD MAKE_LO
 #elif 'ABCD' == 0x44434241 // big endian
 #define GET_LE    GET_BW
 #define GET_BE    GET_FW
@@ -222,6 +264,8 @@ constexpr void XORB_BW(uint8_t *arr, T const *a, int n) {
 #define WRITEB_BE WRITEB_FW
 #define XORB_LE   XORB_BW
 #define XORB_BE   XORB_FW
+#define TAKE_BYTE TAKE_HI
+#define MAKE_WORD MAKE_HI
 #endif
 // Loop unrolling
 // template <int Start, int Stop, int Step = 1, bool Eq = false, typename F>
@@ -231,82 +275,82 @@ constexpr void XORB_BW(uint8_t *arr, T const *a, int n) {
 //         FOR<Start + Step, Stop, Step, Eq>(std::forward<F>(f));
 //     }
 // }
-#define FOR(i, Init, Next, Cond, Block) do {                                      \
-    static constexpr auto Arr = []() {                                            \
-        auto i = Init;                                                            \
-        bool b = Cond;                                                            \
-        std::array<std::pair<decltype(i), bool>, 65> Arr;                         \
-        for (int j = 0; j < 64; j++) {                                            \
-            Arr[j] = {i, b};                                                      \
-            i = Next;                                                             \
-            b = b && (Cond);                                                      \
-        }                                                                         \
-        Arr[64] = {i, b};                                                         \
-        return Arr;                                                               \
-    }();                                                                          \
-    if constexpr (static constexpr auto &i = Arr[ 0].first; Arr[ 0].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 1].first; Arr[ 1].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 2].first; Arr[ 2].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 3].first; Arr[ 3].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 4].first; Arr[ 4].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 5].first; Arr[ 5].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 6].first; Arr[ 6].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 7].first; Arr[ 7].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 8].first; Arr[ 8].second) Block \
-    if constexpr (static constexpr auto &i = Arr[ 9].first; Arr[ 9].second) Block \
-    if constexpr (static constexpr auto &i = Arr[10].first; Arr[10].second) Block \
-    if constexpr (static constexpr auto &i = Arr[11].first; Arr[11].second) Block \
-    if constexpr (static constexpr auto &i = Arr[12].first; Arr[12].second) Block \
-    if constexpr (static constexpr auto &i = Arr[13].first; Arr[13].second) Block \
-    if constexpr (static constexpr auto &i = Arr[14].first; Arr[14].second) Block \
-    if constexpr (static constexpr auto &i = Arr[15].first; Arr[15].second) Block \
-    if constexpr (static constexpr auto &i = Arr[16].first; Arr[16].second) Block \
-    if constexpr (static constexpr auto &i = Arr[17].first; Arr[17].second) Block \
-    if constexpr (static constexpr auto &i = Arr[18].first; Arr[18].second) Block \
-    if constexpr (static constexpr auto &i = Arr[19].first; Arr[19].second) Block \
-    if constexpr (static constexpr auto &i = Arr[20].first; Arr[20].second) Block \
-    if constexpr (static constexpr auto &i = Arr[21].first; Arr[21].second) Block \
-    if constexpr (static constexpr auto &i = Arr[22].first; Arr[22].second) Block \
-    if constexpr (static constexpr auto &i = Arr[23].first; Arr[23].second) Block \
-    if constexpr (static constexpr auto &i = Arr[24].first; Arr[24].second) Block \
-    if constexpr (static constexpr auto &i = Arr[25].first; Arr[25].second) Block \
-    if constexpr (static constexpr auto &i = Arr[26].first; Arr[26].second) Block \
-    if constexpr (static constexpr auto &i = Arr[27].first; Arr[27].second) Block \
-    if constexpr (static constexpr auto &i = Arr[28].first; Arr[28].second) Block \
-    if constexpr (static constexpr auto &i = Arr[29].first; Arr[29].second) Block \
-    if constexpr (static constexpr auto &i = Arr[30].first; Arr[30].second) Block \
-    if constexpr (static constexpr auto &i = Arr[31].first; Arr[31].second) Block \
-    if constexpr (static constexpr auto &i = Arr[32].first; Arr[32].second) Block \
-    if constexpr (static constexpr auto &i = Arr[33].first; Arr[33].second) Block \
-    if constexpr (static constexpr auto &i = Arr[34].first; Arr[34].second) Block \
-    if constexpr (static constexpr auto &i = Arr[35].first; Arr[35].second) Block \
-    if constexpr (static constexpr auto &i = Arr[36].first; Arr[36].second) Block \
-    if constexpr (static constexpr auto &i = Arr[37].first; Arr[37].second) Block \
-    if constexpr (static constexpr auto &i = Arr[38].first; Arr[38].second) Block \
-    if constexpr (static constexpr auto &i = Arr[39].first; Arr[39].second) Block \
-    if constexpr (static constexpr auto &i = Arr[40].first; Arr[40].second) Block \
-    if constexpr (static constexpr auto &i = Arr[41].first; Arr[41].second) Block \
-    if constexpr (static constexpr auto &i = Arr[42].first; Arr[42].second) Block \
-    if constexpr (static constexpr auto &i = Arr[43].first; Arr[43].second) Block \
-    if constexpr (static constexpr auto &i = Arr[44].first; Arr[44].second) Block \
-    if constexpr (static constexpr auto &i = Arr[45].first; Arr[45].second) Block \
-    if constexpr (static constexpr auto &i = Arr[46].first; Arr[46].second) Block \
-    if constexpr (static constexpr auto &i = Arr[47].first; Arr[47].second) Block \
-    if constexpr (static constexpr auto &i = Arr[48].first; Arr[48].second) Block \
-    if constexpr (static constexpr auto &i = Arr[49].first; Arr[49].second) Block \
-    if constexpr (static constexpr auto &i = Arr[50].first; Arr[50].second) Block \
-    if constexpr (static constexpr auto &i = Arr[51].first; Arr[51].second) Block \
-    if constexpr (static constexpr auto &i = Arr[52].first; Arr[52].second) Block \
-    if constexpr (static constexpr auto &i = Arr[53].first; Arr[53].second) Block \
-    if constexpr (static constexpr auto &i = Arr[54].first; Arr[54].second) Block \
-    if constexpr (static constexpr auto &i = Arr[55].first; Arr[55].second) Block \
-    if constexpr (static constexpr auto &i = Arr[56].first; Arr[56].second) Block \
-    if constexpr (static constexpr auto &i = Arr[57].first; Arr[57].second) Block \
-    if constexpr (static constexpr auto &i = Arr[58].first; Arr[58].second) Block \
-    if constexpr (static constexpr auto &i = Arr[59].first; Arr[59].second) Block \
-    if constexpr (static constexpr auto &i = Arr[60].first; Arr[60].second) Block \
-    if constexpr (static constexpr auto &i = Arr[61].first; Arr[61].second) Block \
-    if constexpr (static constexpr auto &i = Arr[62].first; Arr[62].second) Block \
-    if constexpr (static constexpr auto &i = Arr[63].first; Arr[63].second) Block \
-    static_assert(Arr[64].second == false, "Too many iterations");                \
+#define FOR(i, Init, Next, Cond, ...) do {                                              \
+    static constexpr auto Arr = []() {                                                  \
+        auto i = Init;                                                                  \
+        bool b = Cond;                                                                  \
+        std::array<std::pair<decltype(i), bool>, 65> Arr;                               \
+        for (int j = 0; j < 64; j++) {                                                  \
+            Arr[j] = {i, b};                                                            \
+            i = Next;                                                                   \
+            b = b && (Cond);                                                            \
+        }                                                                               \
+        Arr[64] = {i, b};                                                               \
+        return Arr;                                                                     \
+    }();                                                                                \
+    if constexpr (static constexpr auto &i = Arr[ 0].first; Arr[ 0].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 1].first; Arr[ 1].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 2].first; Arr[ 2].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 3].first; Arr[ 3].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 4].first; Arr[ 4].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 5].first; Arr[ 5].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 6].first; Arr[ 6].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 7].first; Arr[ 7].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 8].first; Arr[ 8].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[ 9].first; Arr[ 9].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[10].first; Arr[10].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[11].first; Arr[11].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[12].first; Arr[12].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[13].first; Arr[13].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[14].first; Arr[14].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[15].first; Arr[15].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[16].first; Arr[16].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[17].first; Arr[17].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[18].first; Arr[18].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[19].first; Arr[19].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[20].first; Arr[20].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[21].first; Arr[21].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[22].first; Arr[22].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[23].first; Arr[23].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[24].first; Arr[24].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[25].first; Arr[25].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[26].first; Arr[26].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[27].first; Arr[27].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[28].first; Arr[28].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[29].first; Arr[29].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[30].first; Arr[30].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[31].first; Arr[31].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[32].first; Arr[32].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[33].first; Arr[33].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[34].first; Arr[34].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[35].first; Arr[35].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[36].first; Arr[36].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[37].first; Arr[37].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[38].first; Arr[38].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[39].first; Arr[39].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[40].first; Arr[40].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[41].first; Arr[41].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[42].first; Arr[42].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[43].first; Arr[43].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[44].first; Arr[44].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[45].first; Arr[45].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[46].first; Arr[46].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[47].first; Arr[47].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[48].first; Arr[48].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[49].first; Arr[49].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[50].first; Arr[50].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[51].first; Arr[51].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[52].first; Arr[52].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[53].first; Arr[53].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[54].first; Arr[54].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[55].first; Arr[55].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[56].first; Arr[56].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[57].first; Arr[57].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[58].first; Arr[58].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[59].first; Arr[59].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[60].first; Arr[60].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[61].first; Arr[61].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[62].first; Arr[62].second) __VA_ARGS__ \
+    if constexpr (static constexpr auto &i = Arr[63].first; Arr[63].second) __VA_ARGS__ \
+    static_assert(Arr[64].second == false, "Too many iterations");                      \
 } while (false)
