@@ -45,7 +45,7 @@ class SEED {
         0xFC, 0xF3, 0xCF, 0x3F,
     };
     static constexpr auto SSBOX = []() {
-        std::array<std::array<uint32_t, 256>, 4> SSBOX;
+        std::array<std::array<uint32_t, 256>, 4> SSBOX = {};
         for (size_t i = 0; i < 256; ++i) {
             SSBOX[0][i] = (S_BOX[0][i] & M[3]) << 24 | (S_BOX[0][i] & M[2]) << 16 | (S_BOX[0][i] & M[1]) << 8 | S_BOX[0][i] & M[0];
             SSBOX[1][i] = (S_BOX[1][i] & M[0]) << 24 | (S_BOX[1][i] & M[3]) << 16 | (S_BOX[1][i] & M[2]) << 8 | S_BOX[1][i] & M[1];

@@ -1,28 +1,28 @@
 #pragma once
 #include "../utils.hpp"
 #define ROTL28(x, n) ((x) << (n) & 0x0FFFFFFF | (x) >> (28 - (n)))
-// choose the smallest type that can hold the number of bits
-template <int bits>
-using DESUint = typename std::conditional<bits <= 32, uint32_t, uint64_t>::type;
-template <int wi, int wo, int wg = 8, int gi = (wi + wg - 1) / wg>
+// choose the smallest type that can hold the number of WD
+template <int WD>
+using DESUint = typename std::conditional<WD <= 32, uint32_t, uint64_t>::type;
+template <int WI, int WO, int WG = 8, int GI = (WI + WG - 1) / WG>
 struct DESPermutation {
-    static constexpr DESUint<wi> MASK = (1 << wg) - 1;
-    static constexpr DESUint<wo> SIZE = (1 << wg) - 0;
-    std::array<std::array<DESUint<wo>, SIZE>, gi> LUT = {};
+    static constexpr DESUint<WI> MASK = (1 << WG) - 1;
+    static constexpr DESUint<WO> SIZE = (1 << WG) - 0;
+    std::array<std::array<DESUint<WO>, SIZE>, GI> LUT = {};
     // generate lookup table for P-boxes
     constexpr DESPermutation(std::initializer_list<bits_t> A) {
-        for (int o = 0; o < wo; o++) {
+        for (int o = 0; o < WO; o++) {
             int i = A.begin()[o];
-            for (DESUint<wi> x = 0; x < SIZE; x++) {
-                LUT[i / wg][x] |= (DESUint<wo>)(x >> i % wg & 1) << o;
+            for (DESUint<WI> vi = 0; vi < SIZE; vi++) {
+                LUT[i / WG][vi] |= (DESUint<WO>)(vi >> i % WG & 1) << o;
             }
         }
     }
     // permutation function optimized using lookup table
-    DESUint<wo> operator()(DESUint<wi> vi) const {
-        DESUint<wo> vo = 0;
-        FOR(i, 0, i + wg, i < wi, {
-            vo |= LUT[i / wg][vi >> i & MASK];
+    DESUint<WO> operator()(DESUint<WI> vi) const {
+        DESUint<WO> vo = 0;
+        FOR(i, 0, i + WG, i < WI, {
+            vo |= LUT[i / WG][vi >> i & MASK];
         });
         return vo;
     }
@@ -128,10 +128,12 @@ class DES {
         }
         return F_LUT;
     }();
-    static DESUint<32> F(DESUint<32> r, DESUint<48> k) {
+    static DESUint<32> f(DESUint<32> r, DESUint<48> k) {
         DESUint<48> x = E(r) ^ k;
         // Merge the substitution and permutation operations
-        return F_LUT[0][x >>  0 & 0xfff] | F_LUT[1][x >> 12 & 0xfff] | F_LUT[2][x >> 24 & 0xfff] | F_LUT[3][x >> 36 & 0xfff];
+        return
+            F_LUT[0][x >>  0 & 0xfff] | F_LUT[1][x >> 12 & 0xfff] |
+            F_LUT[2][x >> 24 & 0xfff] | F_LUT[3][x >> 36 & 0xfff];
     }
     DESUint<48> rk[16];
 public:
@@ -150,8 +152,8 @@ public:
         DESUint<64> t = IP(GET_BE<DESUint<64>>(src));
         DESUint<32> l = t >> 32, r = t & 0xFFFFFFFF;
         for (int i = 0; i < 16;) {
-            l ^= F(r, rk[i++]);
-            r ^= F(l, rk[i++]);
+            l ^= f(r, rk[i++]);
+            r ^= f(l, rk[i++]);
         }
         PUT_BE(dst, FP((DESUint<64>)r << 32 | l));
     }
@@ -159,8 +161,8 @@ public:
         DESUint<64> t = IP(GET_BE<DESUint<64>>(src));
         DESUint<32> l = t >> 32, r = t & 0xFFFFFFFF;
         for (int i = 16; i > 0;) {
-            l ^= F(r, rk[--i]);
-            r ^= F(l, rk[--i]);
+            l ^= f(r, rk[--i]);
+            r ^= f(l, rk[--i]);
         }
         PUT_BE(dst, FP((DESUint<64>)r << 32 | l));
     }

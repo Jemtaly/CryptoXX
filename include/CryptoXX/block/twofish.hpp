@@ -128,8 +128,8 @@ public:
 template <int L>
     requires (L == 2 || L == 3 || L == 4)
 class TwofishTmpl: public TwofishBase {
-    static uint32_t h_fun(uint8_t b, uint32_t const *key) {
-        uint32_t x = (uint32_t)b * 0x01010101;
+    static uint32_t h(uint8_t b, uint32_t const *key) {
+        uint32_t x = b << 24 | b << 16 | b << 8 | b;
         switch (L) {
         case 4:
             x = (Q[1][x & 0xff] | Q[0][x >> 8 & 0xff] << 8 | Q[0][x >> 16 & 0xff] << 16 | Q[1][x >> 24] << 24) ^ key[6];
@@ -163,15 +163,15 @@ public:
             vec[2 * (L - 1 - i)] = h;
         }
         for (int i = 0; i < 256; i++) {
-            uint32_t t = h_fun(i    , vec    );
+            uint32_t t = h(i    , vec    );
             mks[0][i] = MDS[0][t       & 0xff];
             mks[1][i] = MDS[1][t >>  8 & 0xff];
             mks[2][i] = MDS[2][t >> 16 & 0xff];
             mks[3][i] = MDS[3][t >> 24       ];
         }
         for (int i = 0; i < 40; i += 2) {
-            uint32_t a = h_fun(i    , key    );
-            uint32_t b = h_fun(i + 1, key + 1);
+            uint32_t a = h(i    , key    );
+            uint32_t b = h(i + 1, key + 1);
             a = MDS[0][a & 0xff] ^ MDS[1][a >> 8 & 0xff] ^ MDS[2][a >> 16 & 0xff] ^ MDS[3][a >> 24];
             b = MDS[0][b & 0xff] ^ MDS[1][b >> 8 & 0xff] ^ MDS[2][b >> 16 & 0xff] ^ MDS[3][b >> 24];
             b = ROTL(b, 8), a += b, rnk[i    ] = a;

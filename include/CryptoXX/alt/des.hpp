@@ -1,17 +1,17 @@
 #pragma once
 #include "../utils.hpp"
 #define ROTL28(x, n) ((x) << (n) & 0x0FFFFFFF | (x) >> (28 - (n)))
-// choose the smallest type that can hold the number of bits
-template <int bits>
-using DESUint = typename std::conditional<bits <= 32, uint32_t, uint64_t>::type;
-template <int wi, int wo>
+// choose the smallest type that can hold the number of WD
+template <int WD>
+using DESUint = typename std::conditional<WD <= 32, uint32_t, uint64_t>::type;
+template <int WI, int WO>
 struct DESPermutation {
-    bits_t A[wo];
+    bits_t A[WO];
     // permutation function
-    DESUint<wo> operator()(DESUint<wi> vi) const {
-        DESUint<wo> vo = 0;
-        FOR(o, 0, o + 1, o < wo, {
-            vo |= (DESUint<wo>)(vi >> A[o] & 1) << o;
+    DESUint<WO> operator()(DESUint<WI> vi) const {
+        DESUint<WO> vo = 0;
+        FOR(o, 0, o + 1, o < WO, {
+            vo |= (DESUint<WO>)(vi >> A[o] & 1) << o;
         });
         return vo;
     }
@@ -107,9 +107,9 @@ class DES {
         0x4, 0xf, 0x1, 0xc, 0xe, 0x8, 0x8, 0x2, 0xd, 0x4, 0x6, 0x9, 0x2, 0x1, 0xb, 0x7,
         0xf, 0x5, 0xc, 0xb, 0x9, 0x3, 0x7, 0xe, 0x3, 0xa, 0xa, 0x0, 0x5, 0x6, 0x0, 0xd,
     };
-    static DESUint<32> F(DESUint<32> r, DESUint<48> k) {
+    static DESUint<32> f(DESUint<32> r, DESUint<48> k) {
         DESUint<48> x = E(r) ^ k;
-        DESUint<32> f =
+        DESUint<32> y =
             S_BOX[0][x       & 0x3f]       |
             S_BOX[1][x >>  6 & 0x3f] <<  4 |
             S_BOX[2][x >> 12 & 0x3f] <<  8 |
@@ -118,7 +118,7 @@ class DES {
             S_BOX[5][x >> 30 & 0x3f] << 20 |
             S_BOX[6][x >> 36 & 0x3f] << 24 |
             S_BOX[7][x >> 42       ] << 28;
-        return P(f);
+        return P(y);
     }
     DESUint<48> rk[16];
 public:
@@ -137,8 +137,8 @@ public:
         DESUint<64> t = IP(GET_BE<DESUint<64>>(src));
         DESUint<32> l = t >> 32, r = t & 0xFFFFFFFF;
         for (int i = 0; i < 16;) {
-            l ^= F(r, rk[i++]);
-            r ^= F(l, rk[i++]);
+            l ^= f(r, rk[i++]);
+            r ^= f(l, rk[i++]);
         }
         PUT_BE(dst, FP((DESUint<64>)r << 32 | l));
     }
@@ -146,8 +146,8 @@ public:
         DESUint<64> t = IP(GET_BE<DESUint<64>>(src));
         DESUint<32> l = t >> 32, r = t & 0xFFFFFFFF;
         for (int i = 16; i > 0;) {
-            l ^= F(r, rk[--i]);
-            r ^= F(l, rk[--i]);
+            l ^= f(r, rk[--i]);
+            r ^= f(l, rk[--i]);
         }
         PUT_BE(dst, FP((DESUint<64>)r << 32 | l));
     }

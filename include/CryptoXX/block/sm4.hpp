@@ -29,33 +29,33 @@ class SM4 {
         0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
         0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
     };
-    static constexpr auto K_LUT = []() {
-        std::array<std::array<uint32_t, 256>, 4> K_LUT = {};
+    static constexpr auto G_LUT = []() {
+        std::array<std::array<uint32_t, 256>, 4> G_LUT = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 13 ^ S_BOX[i] << 23;
             for (int j = 0; j < 4; j++) {
-                K_LUT[j][i] = ROTL(b, 8 * j);
+                G_LUT[j][i] = ROTL(b, 8 * j);
             }
         }
-        return K_LUT;
+        return G_LUT;
     }();
-    static constexpr auto C_LUT = []() {
-        std::array<std::array<uint32_t, 256>, 4> C_LUT = {};
+    static constexpr auto F_LUT = []() {
+        std::array<std::array<uint32_t, 256>, 4> F_LUT = {};
         for (int i = 0; i < 256; i++) {
             uint32_t b = S_BOX[i] ^ S_BOX[i] << 2 ^ S_BOX[i] << 10 ^ S_BOX[i] << 18 ^ S_BOX[i] << 24;
             for (int j = 0; j < 4; j++) {
-                C_LUT[j][i] = ROTL(b, 8 * j);
+                F_LUT[j][i] = ROTL(b, 8 * j);
             }
         }
-        return C_LUT;
+        return F_LUT;
     }();
-    static uint32_t K_ROUND(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
+    static uint32_t g(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
         uint32_t x = b ^ c ^ d ^ k;
-        return K_LUT[0][x & 0xff] ^ K_LUT[1][x >> 8 & 0xff] ^ K_LUT[2][x >> 16 & 0xff] ^ K_LUT[3][x >> 24];
+        return G_LUT[0][x & 0xff] ^ G_LUT[1][x >> 8 & 0xff] ^ G_LUT[2][x >> 16 & 0xff] ^ G_LUT[3][x >> 24];
     }
-    static uint32_t C_ROUND(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
+    static uint32_t f(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
         uint32_t x = b ^ c ^ d ^ k;
-        return C_LUT[0][x & 0xff] ^ C_LUT[1][x >> 8 & 0xff] ^ C_LUT[2][x >> 16 & 0xff] ^ C_LUT[3][x >> 24];
+        return F_LUT[0][x & 0xff] ^ F_LUT[1][x >> 8 & 0xff] ^ F_LUT[2][x >> 16 & 0xff] ^ F_LUT[3][x >> 24];
     }
     uint32_t rk[32];
 public:
@@ -68,10 +68,10 @@ public:
         c = GET_BE<uint32_t>(mk +  8) ^ 0x677d9197;
         d = GET_BE<uint32_t>(mk + 12) ^ 0xb27022dc;
         for (int i = 0; i < 32; i += 4) {
-            rk[i     ] = a ^= K_ROUND(b, c, d, CK[i     ]);
-            rk[i +  1] = b ^= K_ROUND(c, d, a, CK[i +  1]);
-            rk[i +  2] = c ^= K_ROUND(d, a, b, CK[i +  2]);
-            rk[i +  3] = d ^= K_ROUND(a, b, c, CK[i +  3]);
+            rk[i     ] = a ^= g(b, c, d, CK[i     ]);
+            rk[i +  1] = b ^= g(c, d, a, CK[i +  1]);
+            rk[i +  2] = c ^= g(d, a, b, CK[i +  2]);
+            rk[i +  3] = d ^= g(a, b, c, CK[i +  3]);
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
@@ -81,10 +81,10 @@ public:
         c = GET_BE<uint32_t>(src +  8);
         d = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i += 4) {
-            a ^= C_ROUND(b, c, d, rk[i     ]);
-            b ^= C_ROUND(c, d, a, rk[i +  1]);
-            c ^= C_ROUND(d, a, b, rk[i +  2]);
-            d ^= C_ROUND(a, b, c, rk[i +  3]);
+            a ^= f(b, c, d, rk[i     ]);
+            b ^= f(c, d, a, rk[i +  1]);
+            c ^= f(d, a, b, rk[i +  2]);
+            d ^= f(a, b, c, rk[i +  3]);
         }
         PUT_BE(dst     , d);
         PUT_BE(dst +  4, c);
@@ -98,10 +98,10 @@ public:
         c = GET_BE<uint32_t>(src +  8);
         d = GET_BE<uint32_t>(src + 12);
         for (int i = 0; i < 32; i += 4) {
-            a ^= C_ROUND(b, c, d, rk[31 - i]);
-            b ^= C_ROUND(c, d, a, rk[30 - i]);
-            c ^= C_ROUND(d, a, b, rk[29 - i]);
-            d ^= C_ROUND(a, b, c, rk[28 - i]);
+            a ^= f(b, c, d, rk[31 - i]);
+            b ^= f(c, d, a, rk[30 - i]);
+            c ^= f(d, a, b, rk[29 - i]);
+            d ^= f(a, b, c, rk[28 - i]);
         }
         PUT_BE(dst     , d);
         PUT_BE(dst +  4, c);
