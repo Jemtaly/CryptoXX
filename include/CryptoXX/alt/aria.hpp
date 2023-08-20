@@ -190,14 +190,16 @@ protected:
             A_LUT[ 8][x[ 8]] ^ A_LUT[ 9][x[ 9]] ^ A_LUT[10][x[10]] ^ A_LUT[11][x[11]] ^
             A_LUT[12][x[12]] ^ A_LUT[13][x[13]] ^ A_LUT[14][x[14]] ^ A_LUT[15][x[15]];
     }
-    static ARIAWord fo(ARIAWord const &x) {
+    static ARIAWord fo(ARIAWord const &d, ARIAWord const &rk) {
+        ARIAWord x = d ^ rk;
         return
             O_LUT[ 0][x[ 0]] ^ O_LUT[ 1][x[ 1]] ^ O_LUT[ 2][x[ 2]] ^ O_LUT[ 3][x[ 3]] ^
             O_LUT[ 4][x[ 4]] ^ O_LUT[ 5][x[ 5]] ^ O_LUT[ 6][x[ 6]] ^ O_LUT[ 7][x[ 7]] ^
             O_LUT[ 8][x[ 8]] ^ O_LUT[ 9][x[ 9]] ^ O_LUT[10][x[10]] ^ O_LUT[11][x[11]] ^
             O_LUT[12][x[12]] ^ O_LUT[13][x[13]] ^ O_LUT[14][x[14]] ^ O_LUT[15][x[15]];
     }
-    static ARIAWord fe(ARIAWord const &x) {
+    static ARIAWord fe(ARIAWord const &d, ARIAWord const &rk) {
+        ARIAWord x = d ^ rk;
         return
             E_LUT[ 0][x[ 0]] ^ E_LUT[ 1][x[ 1]] ^ E_LUT[ 2][x[ 2]] ^ E_LUT[ 3][x[ 3]] ^
             E_LUT[ 4][x[ 4]] ^ E_LUT[ 5][x[ 5]] ^ E_LUT[ 6][x[ 6]] ^ E_LUT[ 7][x[ 7]] ^
@@ -216,10 +218,10 @@ public:
     ARIATmpl(uint8_t const *mk) {
         ARIAWord kl = {L > 0 ? GET_BE<uint64_t>(mk +  0) : 0, L > 1 ? GET_BE<uint64_t>(mk +  8) : 0};
         ARIAWord kr = {L > 2 ? GET_BE<uint64_t>(mk + 16) : 0, L > 3 ? GET_BE<uint64_t>(mk + 24) : 0};
-        ARIAWord w0 =                           kl;
-        ARIAWord w1 = fo(w0 ^ C[(L + 1) % 3]) ^ kr;
-        ARIAWord w2 = fe(w1 ^ C[(L + 2) % 3]) ^ w0;
-        ARIAWord w3 = fo(w2 ^ C[(L + 0) % 3]) ^ w1;
+        ARIAWord w0 =                          kl;
+        ARIAWord w1 = fo(w0, C[(L + 1) % 3]) ^ kr;
+        ARIAWord w2 = fe(w1, C[(L + 2) % 3]) ^ w0;
+        ARIAWord w3 = fo(w2, C[(L + 0) % 3]) ^ w1;
         for (;;) {
             ek[ 0] = w0 ^ w1.rotr(19);
             ek[ 1] = w1 ^ w2.rotr(19);
@@ -249,24 +251,24 @@ public:
         }
     }
     void encrypt(uint8_t const *src, uint8_t *dst) const {
-        ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)} ^ ek[0];
-        for (int r = 1;;) {
-            x = fo(x) ^ ek[r++];
-            if (r == R) { break; }
-            x = fe(x) ^ ek[r++];
+        ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)};
+        for (int r = 0;;) {
+            x = fo(x, ek[r++]);
+            if (r == R - 1) { break; }
+            x = fe(x, ek[r++]);
         }
-        x = sl2(x) ^ ek[R];
+        x = sl2(x ^ ek[R - 1]) ^ ek[R];
         PUT_BE<uint64_t>(dst    , x.hi);
         PUT_BE<uint64_t>(dst + 8, x.lo);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
-        ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)} ^ dk[0];
-        for (int r = 1;;) {
-            x = fo(x) ^ dk[r++];
-            if (r == R) { break; }
-            x = fe(x) ^ dk[r++];
+        ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)};
+        for (int r = 0;;) {
+            x = fo(x, dk[r++]);
+            if (r == R - 1) { break; }
+            x = fe(x, dk[r++]);
         }
-        x = sl2(x) ^ dk[R];
+        x = sl2(x ^ dk[R - 1]) ^ dk[R];
         PUT_BE<uint64_t>(dst    , x.hi);
         PUT_BE<uint64_t>(dst + 8, x.lo);
     }

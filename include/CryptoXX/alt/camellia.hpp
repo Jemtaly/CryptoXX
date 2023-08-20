@@ -37,7 +37,7 @@ protected:
     }();
     static uint64_t f(uint64_t in, uint64_t kx) {
         uint64_t x = in ^ kx;
-        uint8_t t[8], y[8];
+        uint8_t t[8];
         t[0] = SSBOX[0][x >> 56       ];
         t[1] = SSBOX[1][x >> 48 & 0xff];
         t[2] = SSBOX[2][x >> 40 & 0xff];
@@ -46,15 +46,15 @@ protected:
         t[5] = SSBOX[2][x >> 16 & 0xff];
         t[6] = SSBOX[3][x >>  8 & 0xff];
         t[7] = SSBOX[0][x       & 0xff];
-        y[0] = t[0] ^ t[2] ^ t[3] ^ t[5] ^ t[6] ^ t[7];
-        y[1] = t[0] ^ t[1] ^ t[3] ^ t[4] ^ t[6] ^ t[7];
-        y[2] = t[0] ^ t[1] ^ t[2] ^ t[4] ^ t[5] ^ t[7];
-        y[3] = t[1] ^ t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[6];
-        y[4] = t[0] ^ t[1] ^ t[5] ^ t[6] ^ t[7];
-        y[5] = t[1] ^ t[2] ^ t[4] ^ t[6] ^ t[7];
-        y[6] = t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[7];
-        y[7] = t[0] ^ t[3] ^ t[4] ^ t[5] ^ t[6];
-        return GET_BE<uint64_t>(y);
+        return
+            (uint64_t)(t[0] ^ t[2] ^ t[3] ^ t[5] ^ t[6] ^ t[7]) << 56 |
+            (uint64_t)(t[0] ^ t[1] ^ t[3] ^ t[4] ^ t[6] ^ t[7]) << 48 |
+            (uint64_t)(t[0] ^ t[1] ^ t[2] ^ t[4] ^ t[5] ^ t[7]) << 40 |
+            (uint64_t)(t[1] ^ t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[6]) << 32 |
+            (uint64_t)(t[0] ^ t[1] ^ t[5] ^ t[6] ^ t[7]       ) << 24 |
+            (uint64_t)(t[1] ^ t[2] ^ t[4] ^ t[6] ^ t[7]       ) << 16 |
+            (uint64_t)(t[2] ^ t[3] ^ t[4] ^ t[5] ^ t[7]       ) <<  8 |
+            (uint64_t)(t[0] ^ t[3] ^ t[4] ^ t[5] ^ t[6]       )      ;
     }
     static uint64_t fl(uint64_t in, uint64_t kx) {
         uint32_t xh = in >> 32, xl = in & 0xFFFFFFFF;
