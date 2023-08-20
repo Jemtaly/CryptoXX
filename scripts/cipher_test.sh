@@ -63,7 +63,7 @@ for i in ${!algs[@]}; do
     civ=$(head -c ${civs[$i]} /dev/urandom | od -An -tx1 | tr -d ' \n')
     ssl=${ssls[$i]}
     if [[ $ssl != "" ]]; then
-        echo -n "Comparing $alg with openssl... "
+        echo -n "Comparing $alg with openssl ... "
         beg_time=$(date +%s.%N)
         enc_hash=$(
             cat $big_file |
@@ -86,9 +86,20 @@ for i in ${!algs[@]}; do
             echo "FAIL"
             exit 1
         fi
+    else
+        echo -n "Testing $alg (no openssl) ... "
+        beg_time=$(date +%s.%N)
+        enc_hash=$(
+            cat $big_file |
+                "$@" $alg "ECBEnc" $key |
+                md5sum | cut -d' ' -f1
+        )
+        end_time=$(date +%s.%N)
+        enc_time=$(echo "$end_time - $beg_time" | bc)
+        echo "Done ($enc_time)"
     fi
     for mode in ${modes[@]}; do
-        echo -n "Testing $alg $mode... "
+        echo -n "Testing $alg $mode ... "
         if [[ $mode == "ECB" ]]; then
             civ=""
         fi
