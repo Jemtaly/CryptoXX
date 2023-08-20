@@ -15,20 +15,60 @@ constexpr T ROTR(T const x, bits_t const n) {
     return (x >> (n & (sizeof(T) * 8 - 1)) | (x) << (-n & (sizeof(T) * 8 - 1)));
 }
 template <std::unsigned_integral T>
-constexpr T GET_FW(uint8_t const *arr);
+constexpr auto TAKE_LO(T a, int i) {
+    return a >> 8 * i & 0xff;
+}
+template <std::unsigned_integral T>
+constexpr auto TAKE_HI(T a, int i) {
+    return a >> 8 * (sizeof(T) - 1 - i) & 0xff;
+}
+constexpr uint16_t MAKE_LO(uint8_t l, uint8_t h) {
+    return
+        (uint16_t)h <<  8 | (uint16_t)l      ;
+}
+constexpr uint32_t MAKE_LO(uint8_t o, uint8_t l, uint8_t i, uint8_t h) {
+    return
+        (uint32_t)h << 24 | (uint32_t)i << 16 |
+        (uint32_t)l <<  8 | (uint32_t)o      ;
+}
+constexpr uint64_t MAKE_LO(uint8_t o, uint8_t n, uint8_t m, uint8_t l, uint8_t k, uint8_t j, uint8_t i, uint8_t h) {
+    return
+        (uint64_t)h << 56 | (uint64_t)i << 48 |
+        (uint64_t)j << 40 | (uint64_t)k << 32 |
+        (uint64_t)l << 24 | (uint64_t)m << 16 |
+        (uint64_t)n <<  8 | (uint64_t)o      ;
+}
+constexpr uint16_t MAKE_HI(uint8_t h, uint8_t l) {
+    return
+        (uint16_t)h <<  8 | (uint16_t)l      ;
+}
+constexpr uint32_t MAKE_HI(uint8_t h, uint8_t i, uint8_t l, uint8_t o) {
+    return
+        (uint32_t)h << 24 | (uint32_t)i << 16 |
+        (uint32_t)l <<  8 | (uint32_t)o      ;
+}
+constexpr uint64_t MAKE_HI(uint8_t h, uint8_t i, uint8_t j, uint8_t k, uint8_t l, uint8_t m, uint8_t n, uint8_t o) {
+    return
+        (uint64_t)h << 56 | (uint64_t)i << 48 |
+        (uint64_t)j << 40 | (uint64_t)k << 32 |
+        (uint64_t)l << 24 | (uint64_t)m << 16 |
+        (uint64_t)n <<  8 | (uint64_t)o      ;
+}
+template <std::unsigned_integral T>
+constexpr T GET_LE(uint8_t const *arr);
 template <>
-constexpr uint16_t GET_FW(uint8_t const *arr) {
+constexpr uint16_t GET_LE(uint8_t const *arr) {
     return
         (uint16_t)(arr)[0]       | (uint16_t)(arr)[1] <<  8;
 }
 template <>
-constexpr uint32_t GET_FW(uint8_t const *arr) {
+constexpr uint32_t GET_LE(uint8_t const *arr) {
     return
         (uint32_t)(arr)[0]       | (uint32_t)(arr)[1] <<  8 |
         (uint32_t)(arr)[2] << 16 | (uint32_t)(arr)[3] << 24;
 }
 template <>
-constexpr uint64_t GET_FW(uint8_t const *arr) {
+constexpr uint64_t GET_LE(uint8_t const *arr) {
     return
         (uint64_t)(arr)[0]       | (uint64_t)(arr)[1] <<  8 |
         (uint64_t)(arr)[2] << 16 | (uint64_t)(arr)[3] << 24 |
@@ -36,20 +76,20 @@ constexpr uint64_t GET_FW(uint8_t const *arr) {
         (uint64_t)(arr)[6] << 48 | (uint64_t)(arr)[7] << 56;
 }
 template <std::unsigned_integral T>
-constexpr T GET_BW(uint8_t const *arr);
+constexpr T GET_BE(uint8_t const *arr);
 template <>
-constexpr uint16_t GET_BW(uint8_t const *arr) {
+constexpr uint16_t GET_BE(uint8_t const *arr) {
     return
         (uint16_t)(arr)[0] <<  8 | (uint16_t)(arr)[1]      ;
 }
 template <>
-constexpr uint32_t GET_BW(uint8_t const *arr) {
+constexpr uint32_t GET_BE(uint8_t const *arr) {
     return
         (uint32_t)(arr)[0] << 24 | (uint32_t)(arr)[1] << 16 |
         (uint32_t)(arr)[2] <<  8 | (uint32_t)(arr)[3]      ;
 }
 template <>
-constexpr uint64_t GET_BW(uint8_t const *arr) {
+constexpr uint64_t GET_BE(uint8_t const *arr) {
     return
         (uint64_t)(arr)[0] << 56 | (uint64_t)(arr)[1] << 48 |
         (uint64_t)(arr)[2] << 40 | (uint64_t)(arr)[3] << 32 |
@@ -57,21 +97,21 @@ constexpr uint64_t GET_BW(uint8_t const *arr) {
         (uint64_t)(arr)[6] <<  8 | (uint64_t)(arr)[7]      ;
 }
 template <std::unsigned_integral T>
-constexpr void PUT_FW(uint8_t *arr, T w);
+constexpr void PUT_LE(uint8_t *arr, T w);
 template <>
-constexpr void PUT_FW(uint8_t *arr, uint16_t w) {
+constexpr void PUT_LE(uint8_t *arr, uint16_t w) {
     arr[0] = w       & 0xff;
     arr[1] = w >>  8       ;
 }
 template <>
-constexpr void PUT_FW(uint8_t *arr, uint32_t w) {
+constexpr void PUT_LE(uint8_t *arr, uint32_t w) {
     arr[0] = w       & 0xff;
     arr[1] = w >>  8 & 0xff;
     arr[2] = w >> 16 & 0xff;
     arr[3] = w >> 24       ;
 }
 template <>
-constexpr void PUT_FW(uint8_t *arr, uint64_t w) {
+constexpr void PUT_LE(uint8_t *arr, uint64_t w) {
     arr[0] = w       & 0xff;
     arr[1] = w >>  8 & 0xff;
     arr[2] = w >> 16 & 0xff;
@@ -82,21 +122,21 @@ constexpr void PUT_FW(uint8_t *arr, uint64_t w) {
     arr[7] = w >> 56       ;
 }
 template <std::unsigned_integral T>
-constexpr void PUT_BW(uint8_t *arr, T w);
+constexpr void PUT_BE(uint8_t *arr, T w);
 template <>
-constexpr void PUT_BW(uint8_t *arr, uint16_t w) {
+constexpr void PUT_BE(uint8_t *arr, uint16_t w) {
     arr[0] = w >>  8       ;
     arr[1] = w       & 0xff;
 }
 template <>
-constexpr void PUT_BW(uint8_t *arr, uint32_t w) {
+constexpr void PUT_BE(uint8_t *arr, uint32_t w) {
     arr[0] = w >> 24       ;
     arr[1] = w >> 16 & 0xff;
     arr[2] = w >>  8 & 0xff;
     arr[3] = w       & 0xff;
 }
 template <>
-constexpr void PUT_BW(uint8_t *arr, uint64_t w) {
+constexpr void PUT_BE(uint8_t *arr, uint64_t w) {
     arr[0] = w >> 56       ;
     arr[1] = w >> 48 & 0xff;
     arr[2] = w >> 40 & 0xff;
@@ -106,6 +146,21 @@ constexpr void PUT_BW(uint8_t *arr, uint64_t w) {
     arr[6] = w >>  8 & 0xff;
     arr[7] = w       & 0xff;
 }
+#if 'ABCD' == 0x41424344 // little endian
+#define TAKE_BYTE TAKE_LO
+#define MAKE_WORD MAKE_LO
+#define GET_FW    GET_LE
+#define GET_BW    GET_BE
+#define PUT_FW    PUT_LE
+#define PUT_BW    PUT_BE
+#elif 'ABCD' == 0x44434241 // big endian
+#define TAKE_BYTE TAKE_HI
+#define MAKE_WORD MAKE_HI
+#define GET_FW    GET_BE
+#define GET_BW    GET_LE
+#define PUT_FW    PUT_BE
+#define PUT_BW    PUT_LE
+#endif
 template <std::unsigned_integral T>
 constexpr void READ_FW(T *a, uint8_t const *arr, int n) {
     memcpy(a, arr, sizeof(T) * n);
@@ -188,51 +243,7 @@ constexpr void XORB_BW(uint8_t *arr, T const *a, int n) {
         arr[i] ^= BYTE_BW(a, i);
     }
 }
-template <std::unsigned_integral T>
-constexpr auto TAKE_LO(T a, int i) {
-    return a >> 8 * i & 0xff;
-}
-template <std::unsigned_integral T>
-constexpr auto TAKE_HI(T a, int i) {
-    return a >> 8 * (sizeof(T) - 1 - i) & 0xff;
-}
-constexpr uint16_t MAKE_LO(uint8_t l, uint8_t h) {
-    return
-        (uint16_t)h <<  8 | (uint16_t)l      ;
-}
-constexpr uint16_t MAKE_HI(uint8_t h, uint8_t l) {
-    return
-        (uint16_t)h <<  8 | (uint16_t)l      ;
-}
-constexpr uint32_t MAKE_LO(uint8_t o, uint8_t l, uint8_t i, uint8_t h) {
-    return
-        (uint32_t)h << 24 | (uint32_t)i << 16 |
-        (uint32_t)l <<  8 | (uint32_t)o      ;
-}
-constexpr uint32_t MAKE_HI(uint8_t h, uint8_t i, uint8_t l, uint8_t o) {
-    return
-        (uint32_t)h << 24 | (uint32_t)i << 16 |
-        (uint32_t)l <<  8 | (uint32_t)o      ;
-}
-constexpr uint64_t MAKE_LO(uint8_t o, uint8_t n, uint8_t m, uint8_t l, uint8_t k, uint8_t j, uint8_t i, uint8_t h) {
-    return
-        (uint64_t)h << 56 | (uint64_t)i << 48 |
-        (uint64_t)j << 40 | (uint64_t)k << 32 |
-        (uint64_t)l << 24 | (uint64_t)m << 16 |
-        (uint64_t)n <<  8 | (uint64_t)o      ;
-}
-constexpr uint64_t MAKE_HI(uint8_t h, uint8_t i, uint8_t j, uint8_t k, uint8_t l, uint8_t m, uint8_t n, uint8_t o) {
-    return
-        (uint64_t)h << 56 | (uint64_t)i << 48 |
-        (uint64_t)j << 40 | (uint64_t)k << 32 |
-        (uint64_t)l << 24 | (uint64_t)m << 16 |
-        (uint64_t)n <<  8 | (uint64_t)o      ;
-}
 #if 'ABCD' == 0x41424344 // little endian
-#define GET_LE    GET_FW
-#define GET_BE    GET_BW
-#define PUT_LE    PUT_FW
-#define PUT_BE    PUT_BW
 #define READ_LE   READ_FW
 #define READ_BE   READ_BW
 #define WRITE_LE  WRITE_FW
@@ -245,13 +256,7 @@ constexpr uint64_t MAKE_HI(uint8_t h, uint8_t i, uint8_t j, uint8_t k, uint8_t l
 #define WRITEB_BE WRITEB_BW
 #define XORB_LE   XORB_FW
 #define XORB_BE   XORB_BW
-#define TAKE_BYTE TAKE_LO
-#define MAKE_WORD MAKE_LO
 #elif 'ABCD' == 0x44434241 // big endian
-#define GET_LE    GET_BW
-#define GET_BE    GET_FW
-#define PUT_LE    PUT_BW
-#define PUT_BE    PUT_FW
 #define READ_LE   READ_BW
 #define READ_BE   READ_FW
 #define WRITE_LE  WRITE_BW
@@ -264,8 +269,6 @@ constexpr uint64_t MAKE_HI(uint8_t h, uint8_t i, uint8_t j, uint8_t k, uint8_t l
 #define WRITEB_BE WRITEB_FW
 #define XORB_LE   XORB_BW
 #define XORB_BE   XORB_FW
-#define TAKE_BYTE TAKE_HI
-#define MAKE_WORD MAKE_HI
 #endif
 // Loop unrolling
 // template <int Start, int Stop, int Step = 1, bool Eq = false, typename F>
