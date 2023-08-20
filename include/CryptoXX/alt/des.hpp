@@ -1,9 +1,10 @@
 #pragma once
 #include "../utils.hpp"
 #define ROTL28(x, n) ((x) << (n) & 0x0FFFFFFF | (x) >> (28 - (n)))
-// choose the smallest type that can hold the number of WD
+// choose the type of unsigned integer to use based on the bit width
 template <int WD>
 using DESUint = typename std::conditional<WD <= 32, uint32_t, uint64_t>::type;
+// WI: width of input, WO: width of output
 template <int WI, int WO>
 struct DESPermutation {
     bits_t A[WO];
