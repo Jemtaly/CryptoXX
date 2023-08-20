@@ -72,7 +72,7 @@ protected:
         }
         return LUT;
     };
-    static constexpr auto E_MCT = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, IDENT); // LUT for InvMixColumns step only
+    static constexpr auto E_MCT = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, IDENT); // LUT for MixColumns step only
     static constexpr auto D_MCT = generate_LUT({.b = {0x0e, 0x09, 0x0d, 0x0b}}, IDENT); // LUT for InvMixColumns step only
     static constexpr auto E_LUT = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, S_BOX); // LUT for SubBytes and MixColumns steps
     static constexpr auto D_LUT = generate_LUT({.b = {0x0e, 0x09, 0x0d, 0x0b}}, I_BOX); // LUT for InvSubBytes and InvMixColumns steps
