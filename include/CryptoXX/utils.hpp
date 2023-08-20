@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <bit>
 #include <utility> // std::forward
 #include <stdint.h>
 #include <string.h>
@@ -14,104 +15,81 @@ template <std::unsigned_integral T>
 constexpr T ROTR(T const x, bits_t const n) {
     return (x >> (n & (sizeof(T) * 8 - 1)) | (x) << (-n & (sizeof(T) * 8 - 1)));
 }
-template <std::unsigned_integral T>
-constexpr auto TAKE_LO(T a, int i) {
-    return a >> 8 * i & 0xff;
-}
-template <std::unsigned_integral T>
-constexpr auto TAKE_HI(T a, int i) {
-    return a >> 8 * (sizeof(T) - 1 - i) & 0xff;
-}
-constexpr uint16_t MAKE_LO(uint8_t l, uint8_t h) {
-    return
-        (uint16_t)h <<  8 | (uint16_t)l      ;
-}
-constexpr uint32_t MAKE_LO(uint8_t o, uint8_t l, uint8_t i, uint8_t h) {
-    return
-        (uint32_t)h << 24 | (uint32_t)i << 16 |
-        (uint32_t)l <<  8 | (uint32_t)o      ;
-}
-constexpr uint64_t MAKE_LO(uint8_t o, uint8_t n, uint8_t m, uint8_t l, uint8_t k, uint8_t j, uint8_t i, uint8_t h) {
-    return
-        (uint64_t)h << 56 | (uint64_t)i << 48 |
-        (uint64_t)j << 40 | (uint64_t)k << 32 |
-        (uint64_t)l << 24 | (uint64_t)m << 16 |
-        (uint64_t)n <<  8 | (uint64_t)o      ;
-}
-constexpr uint16_t MAKE_HI(uint8_t h, uint8_t l) {
-    return
-        (uint16_t)h <<  8 | (uint16_t)l      ;
-}
-constexpr uint32_t MAKE_HI(uint8_t h, uint8_t i, uint8_t l, uint8_t o) {
-    return
-        (uint32_t)h << 24 | (uint32_t)i << 16 |
-        (uint32_t)l <<  8 | (uint32_t)o      ;
-}
-constexpr uint64_t MAKE_HI(uint8_t h, uint8_t i, uint8_t j, uint8_t k, uint8_t l, uint8_t m, uint8_t n, uint8_t o) {
-    return
-        (uint64_t)h << 56 | (uint64_t)i << 48 |
-        (uint64_t)j << 40 | (uint64_t)k << 32 |
-        (uint64_t)l << 24 | (uint64_t)m << 16 |
-        (uint64_t)n <<  8 | (uint64_t)o      ;
-}
-template <std::unsigned_integral T>
-constexpr T GET_LE(uint8_t const *arr);
-template <>
-constexpr uint16_t GET_LE(uint8_t const *arr) {
+template <std::endian E>
+struct EndianUtils {
+    template <std::unsigned_integral T>
+    static constexpr T GET(uint8_t const *arr);
+    template <std::unsigned_integral T>
+    static constexpr void PUT(uint8_t *arr, T w);
+    template <std::unsigned_integral T>
+    static constexpr void READ(T *a, uint8_t const *arr, int n);
+    template <std::unsigned_integral T>
+    static constexpr void WRITE(uint8_t *arr, T const *a, int n);
+    template <std::unsigned_integral T>
+    static constexpr uint8_t &BYTE(T *a, int i);
+    template <std::unsigned_integral T>
+    static constexpr uint8_t const &BYTE(T const *a, int i);
+    template <std::unsigned_integral T>
+    static constexpr void READB(T *a, uint8_t const *arr, int n);
+    template <std::unsigned_integral T>
+    static constexpr void WRITEB(uint8_t *arr, T const *a, int n);
+    template <std::unsigned_integral T>
+    static constexpr void XORB(T *a, uint8_t const *arr, int n);
+    template <std::unsigned_integral T>
+    static constexpr void XORB(uint8_t *arr, T const *a, int n);
+};
+template <> template <>
+constexpr uint16_t EndianUtils<std::endian::little>::GET(uint8_t const *arr) {
     return
         (uint16_t)(arr)[0]       | (uint16_t)(arr)[1] <<  8;
 }
-template <>
-constexpr uint32_t GET_LE(uint8_t const *arr) {
+template <> template <>
+constexpr uint32_t EndianUtils<std::endian::little>::GET(uint8_t const *arr) {
     return
         (uint32_t)(arr)[0]       | (uint32_t)(arr)[1] <<  8 |
         (uint32_t)(arr)[2] << 16 | (uint32_t)(arr)[3] << 24;
 }
-template <>
-constexpr uint64_t GET_LE(uint8_t const *arr) {
+template <> template <>
+constexpr uint64_t EndianUtils<std::endian::little>::GET(uint8_t const *arr) {
     return
         (uint64_t)(arr)[0]       | (uint64_t)(arr)[1] <<  8 |
         (uint64_t)(arr)[2] << 16 | (uint64_t)(arr)[3] << 24 |
         (uint64_t)(arr)[4] << 32 | (uint64_t)(arr)[5] << 40 |
         (uint64_t)(arr)[6] << 48 | (uint64_t)(arr)[7] << 56;
 }
-template <std::unsigned_integral T>
-constexpr T GET_BE(uint8_t const *arr);
-template <>
-constexpr uint16_t GET_BE(uint8_t const *arr) {
+template <> template <>
+constexpr uint16_t EndianUtils<std::endian::big>::GET(uint8_t const *arr) {
     return
         (uint16_t)(arr)[0] <<  8 | (uint16_t)(arr)[1]      ;
 }
-template <>
-constexpr uint32_t GET_BE(uint8_t const *arr) {
+template <> template <>
+constexpr uint32_t EndianUtils<std::endian::big>::GET(uint8_t const *arr) {
     return
         (uint32_t)(arr)[0] << 24 | (uint32_t)(arr)[1] << 16 |
         (uint32_t)(arr)[2] <<  8 | (uint32_t)(arr)[3]      ;
 }
-template <>
-constexpr uint64_t GET_BE(uint8_t const *arr) {
+template <> template <>
+constexpr uint64_t EndianUtils<std::endian::big>::GET(uint8_t const *arr) {
     return
         (uint64_t)(arr)[0] << 56 | (uint64_t)(arr)[1] << 48 |
         (uint64_t)(arr)[2] << 40 | (uint64_t)(arr)[3] << 32 |
         (uint64_t)(arr)[4] << 24 | (uint64_t)(arr)[5] << 16 |
         (uint64_t)(arr)[6] <<  8 | (uint64_t)(arr)[7]      ;
 }
-template <std::unsigned_integral T>
-constexpr void PUT_LE(uint8_t *arr, T w);
-template <>
-constexpr void PUT_LE(uint8_t *arr, uint16_t w) {
+template <> template <>
+constexpr void EndianUtils<std::endian::little>::PUT(uint8_t *arr, uint16_t w) {
     arr[0] = w       & 0xff;
     arr[1] = w >>  8       ;
 }
-template <>
-constexpr void PUT_LE(uint8_t *arr, uint32_t w) {
+template <> template <>
+constexpr void EndianUtils<std::endian::little>::PUT(uint8_t *arr, uint32_t w) {
     arr[0] = w       & 0xff;
     arr[1] = w >>  8 & 0xff;
     arr[2] = w >> 16 & 0xff;
     arr[3] = w >> 24       ;
 }
-template <>
-constexpr void PUT_LE(uint8_t *arr, uint64_t w) {
+template <> template <>
+constexpr void EndianUtils<std::endian::little>::PUT(uint8_t *arr, uint64_t w) {
     arr[0] = w       & 0xff;
     arr[1] = w >>  8 & 0xff;
     arr[2] = w >> 16 & 0xff;
@@ -121,22 +99,20 @@ constexpr void PUT_LE(uint8_t *arr, uint64_t w) {
     arr[6] = w >> 48 & 0xff;
     arr[7] = w >> 56       ;
 }
-template <std::unsigned_integral T>
-constexpr void PUT_BE(uint8_t *arr, T w);
-template <>
-constexpr void PUT_BE(uint8_t *arr, uint16_t w) {
+template <> template <>
+constexpr void EndianUtils<std::endian::big>::PUT(uint8_t *arr, uint16_t w) {
     arr[0] = w >>  8       ;
     arr[1] = w       & 0xff;
 }
-template <>
-constexpr void PUT_BE(uint8_t *arr, uint32_t w) {
+template <> template <>
+constexpr void EndianUtils<std::endian::big>::PUT(uint8_t *arr, uint32_t w) {
     arr[0] = w >> 24       ;
     arr[1] = w >> 16 & 0xff;
     arr[2] = w >>  8 & 0xff;
     arr[3] = w       & 0xff;
 }
-template <>
-constexpr void PUT_BE(uint8_t *arr, uint64_t w) {
+template <> template <>
+constexpr void EndianUtils<std::endian::big>::PUT(uint8_t *arr, uint64_t w) {
     arr[0] = w >> 56       ;
     arr[1] = w >> 48 & 0xff;
     arr[2] = w >> 40 & 0xff;
@@ -146,138 +122,93 @@ constexpr void PUT_BE(uint8_t *arr, uint64_t w) {
     arr[6] = w >>  8 & 0xff;
     arr[7] = w       & 0xff;
 }
-#if 'ABCD' == 0x41424344 // little endian
-#define TAKE_BYTE TAKE_LO
-#define MAKE_WORD MAKE_LO
-#define GET_FW    GET_LE
-#define GET_BW    GET_BE
-#define PUT_FW    PUT_LE
-#define PUT_BW    PUT_BE
-#elif 'ABCD' == 0x44434241 // big endian
-#define TAKE_BYTE TAKE_HI
-#define MAKE_WORD MAKE_HI
-#define GET_FW    GET_BE
-#define GET_BW    GET_LE
-#define PUT_FW    PUT_BE
-#define PUT_BW    PUT_LE
-#endif
-template <std::unsigned_integral T>
-constexpr void READ_FW(T *a, uint8_t const *arr, int n) {
+template <> template <std::unsigned_integral T>
+constexpr void EndianUtils<std::endian::native>::READ(T *a, uint8_t const *arr, int n) {
     memcpy(a, arr, sizeof(T) * n);
 }
-template <std::unsigned_integral T>
-constexpr void READ_BW(T *a, uint8_t const *arr, int n) {
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::READ(T *a, uint8_t const *arr, int n) {
     for (int i = 0; i < n; i++) {
-        a[i] = GET_BW<T>(arr + sizeof(T) * i);
+        a[i] = EndianUtils<E>::GET<T>(arr + sizeof(T) * i);
     }
 }
-template <std::unsigned_integral T>
-constexpr void WRITE_FW(uint8_t *arr, T const *a, int n) {
+template <> template <std::unsigned_integral T>
+constexpr void EndianUtils<std::endian::native>::WRITE(uint8_t *arr, T const *a, int n) {
     memcpy(arr, a, sizeof(T) * n);
 }
-template <std::unsigned_integral T>
-constexpr void WRITE_BW(uint8_t *arr, T const *a, int n) {
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::WRITE(uint8_t *arr, T const *a, int n) {
     for (int i = 0; i < n; i++) {
-        PUT_BW(arr + sizeof(T) * i, a[i]);
+        EndianUtils<E>::PUT(arr + sizeof(T) * i, a[i]);
     }
 }
-template <std::unsigned_integral T>
-constexpr uint8_t &BYTE_FW(T *a, int i) {
+template <> template <std::unsigned_integral T>
+constexpr uint8_t &EndianUtils<std::endian::native>::BYTE(T *a, int i) {
     return ((uint8_t *)a)[i];
 }
-template <std::unsigned_integral T>
-constexpr uint8_t &BYTE_BW(T *a, int i) {
+template <std::endian E> template <std::unsigned_integral T>
+constexpr uint8_t &EndianUtils<E>::BYTE(T *a, int i) {
     return ((uint8_t (*)[sizeof(T)])a)[i / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
 }
-template <std::unsigned_integral T>
-constexpr uint8_t const &BYTE_FW(T const *a, int i) {
+template <> template <std::unsigned_integral T>
+constexpr uint8_t const &EndianUtils<std::endian::native>::BYTE(T const *a, int i) {
     return ((uint8_t *)a)[i];
 }
-template <std::unsigned_integral T>
-constexpr uint8_t const &BYTE_BW(T const *a, int i) {
+template <std::endian E> template <std::unsigned_integral T>
+constexpr uint8_t const &EndianUtils<E>::BYTE(T const *a, int i) {
     return ((uint8_t (*)[sizeof(T)])a)[i / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
 }
-template <std::unsigned_integral T>
-constexpr void READB_FW(T *a, uint8_t const *arr, int n) {
+template <> template <std::unsigned_integral T>
+constexpr void EndianUtils<std::endian::native>::READB(T *a, uint8_t const *arr, int n) {
     memcpy(a, arr, n);
 }
-template <std::unsigned_integral T>
-constexpr void READB_BW(T *a, uint8_t const *arr, int n) {
-    READ_BW(a, arr, n / sizeof(T));
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::READB(T *a, uint8_t const *arr, int n) {
+    EndianUtils<E>::READ(a, arr, n / sizeof(T));
     for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
         ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)] = arr[i];
     }
 }
-template <std::unsigned_integral T>
-constexpr void WRITEB_FW(uint8_t *arr, T const *a, int n) {
+template <> template <std::unsigned_integral T>
+constexpr void EndianUtils<std::endian::native>::WRITEB(uint8_t *arr, T const *a, int n) {
     memcpy(arr, a, n);
 }
-template <std::unsigned_integral T>
-constexpr void WRITEB_BW(uint8_t *arr, T const *a, int n) {
-    WRITE_BW(arr, a, n / sizeof(T));
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::WRITEB(uint8_t *arr, T const *a, int n) {
+    EndianUtils<E>::WRITE(arr, a, n / sizeof(T));
     for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
         arr[i] = ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
     }
 }
-template <std::unsigned_integral T>
-constexpr void XORB_FW(T *a, uint8_t const *arr, int n) {
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::XORB(T *a, uint8_t const *arr, int n) {
     for (int i = 0; i < n; i++) {
-        BYTE_FW(a, i) ^= arr[i];
+        EndianUtils<E>::BYTE(a, i) ^= arr[i];
     }
 }
-template <std::unsigned_integral T>
-constexpr void XORB_BW(T *a, uint8_t const *arr, int n) {
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::XORB(uint8_t *arr, T const *a, int n) {
     for (int i = 0; i < n; i++) {
-        BYTE_BW(a, i) ^= arr[i];
+        arr[i] ^= EndianUtils<E>::BYTE(a, i);
     }
 }
-template <std::unsigned_integral T>
-constexpr void XORB_FW(uint8_t *arr, T const *a, int n) {
-    for (int i = 0; i < n; i++) {
-        arr[i] ^= BYTE_FW(a, i);
-    }
-}
-template <std::unsigned_integral T>
-constexpr void XORB_BW(uint8_t *arr, T const *a, int n) {
-    for (int i = 0; i < n; i++) {
-        arr[i] ^= BYTE_BW(a, i);
-    }
-}
-#if 'ABCD' == 0x41424344 // little endian
-#define READ_LE   READ_FW
-#define READ_BE   READ_BW
-#define WRITE_LE  WRITE_FW
-#define WRITE_BE  WRITE_BW
-#define BYTE_LE   BYTE_FW
-#define BYTE_BE   BYTE_BW
-#define READB_LE  READB_FW
-#define READB_BE  READB_BW
-#define WRITEB_LE WRITEB_FW
-#define WRITEB_BE WRITEB_BW
-#define XORB_LE   XORB_FW
-#define XORB_BE   XORB_BW
-#elif 'ABCD' == 0x44434241 // big endian
-#define READ_LE   READ_BW
-#define READ_BE   READ_FW
-#define WRITE_LE  WRITE_BW
-#define WRITE_BE  WRITE_FW
-#define BYTE_LE   BYTE_BW
-#define BYTE_BE   BYTE_FW
-#define READB_LE  READB_BW
-#define READB_BE  READB_FW
-#define WRITEB_LE WRITEB_BW
-#define WRITEB_BE WRITEB_FW
-#define XORB_LE   XORB_BW
-#define XORB_BE   XORB_FW
-#endif
+#define GET_BE EndianUtils<std::endian::big>::GET
+#define GET_LE EndianUtils<std::endian::little>::GET
+#define PUT_BE EndianUtils<std::endian::big>::PUT
+#define PUT_LE EndianUtils<std::endian::little>::PUT
+#define READ_BE EndianUtils<std::endian::big>::READ
+#define READ_LE EndianUtils<std::endian::little>::READ
+#define WRITE_BE EndianUtils<std::endian::big>::WRITE
+#define WRITE_LE EndianUtils<std::endian::little>::WRITE
+#define BYTE_BE EndianUtils<std::endian::big>::BYTE
+#define BYTE_LE EndianUtils<std::endian::little>::BYTE
+#define READB_BE EndianUtils<std::endian::big>::READB
+#define READB_LE EndianUtils<std::endian::little>::READB
+#define WRITEB_BE EndianUtils<std::endian::big>::WRITEB
+#define WRITEB_LE EndianUtils<std::endian::little>::WRITEB
+#define XORB_BE EndianUtils<std::endian::big>::XORB
+#define XORB_LE EndianUtils<std::endian::little>::XORB
 // Loop unrolling
-// template <int Start, int Stop, int Step = 1, bool Eq = false, typename F>
-// constexpr void FOR(F &&f) {
-//     if constexpr (Step > 0 && (Start < Stop || Eq && Start == Stop) || Step < 0 && (Start > Stop || Eq && Start == Stop)) {
-//         f(std::integral_constant<int, Start>{});
-//         FOR<Start + Step, Stop, Step, Eq>(std::forward<F>(f));
-//     }
-// }
 #define FOR(i, Init, Next, Cond, ...) do {                                              \
     static constexpr auto Arr = []() {                                                  \
         auto i = Init;                                                                  \

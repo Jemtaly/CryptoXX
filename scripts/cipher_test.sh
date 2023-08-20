@@ -1,5 +1,5 @@
 #!/bin/bash
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <path to cipher binary>"
     exit 1
 fi
@@ -47,6 +47,9 @@ modes=(
     "OFB" "CTR" "CFB"
     "CBC" "PCBC" "ECB"
 )
+big_file=$(mktemp)
+big_size=123456789
+head -c $big_size /dev/urandom >$big_file
 tmp_file=$(mktemp)
 tmp_size=+01234567
 head -c $tmp_size /dev/urandom >$tmp_file
@@ -61,18 +64,24 @@ for i in ${!algs[@]}; do
     ssl=${ssls[$i]}
     if [[ $ssl != "" ]]; then
         echo -n "Comparing $alg with openssl... "
+        beg_time=$(date +%s.%N)
         enc_hash=$(
-            cat $tmp_file |
-                "$1" $alg "ECBEnc" $key |
+            cat $big_file |
+                "$@" $alg "ECBEnc" $key |
                 md5sum | cut -d' ' -f1
         )
+        end_time=$(date +%s.%N)
+        enc_time=$(echo "$end_time - $beg_time" | bc)
+        beg_time=$(date +%s.%N)
         ssl_hash=$(
-            cat $tmp_file |
+            cat $big_file |
                 openssl $ssl-ecb -K $key |
                 md5sum | cut -d' ' -f1
         )
+        end_time=$(date +%s.%N)
+        ssl_time=$(echo "$end_time - $beg_time" | bc)
         if [[ $enc_hash == $ssl_hash ]]; then
-            echo "OK"
+            echo "OK ($enc_time vs $ssl_time)"
         else
             echo "FAIL"
             exit 1
@@ -85,8 +94,8 @@ for i in ${!algs[@]}; do
         fi
         dec_hash=$(
             cat $tmp_file |
-                "$1" $alg $mode"Enc" $key $civ |
-                "$1" $alg $mode"Dec" $key $civ |
+                "$@" $alg $mode"Enc" $key $civ |
+                "$@" $alg $mode"Dec" $key $civ |
                 md5sum | cut -d' ' -f1
         )
         if [[ $dec_hash == $tmp_hash ]]; then

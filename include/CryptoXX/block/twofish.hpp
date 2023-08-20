@@ -2,37 +2,39 @@
 #include "../utils.hpp"
 class TwofishBase {
 protected:
-    static constexpr uint8_t ROR4[16] = {
+    // ROR1[i] = i << 3 & 0xf | i >> 1
+    static constexpr uint8_t ROR1[16] = {
         0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15,
     };
-    static constexpr uint8_t ASHX[16] = {
+    // MUL9[i] = i << 3 & 0xf ^ i
+    static constexpr uint8_t MUL9[16] = {
         0, 9, 2, 11, 4, 13, 6, 15, 8, 1, 10, 3, 12, 5, 14, 7,
     };
-    static constexpr uint8_t QT[4][2][16] = {
+    static constexpr uint8_t T[2][4][16] = {
         8, 1, 7, 13, 6, 15, 3, 2, 0, 11, 5, 9, 14, 12, 10, 4,
-        2, 8, 11, 13, 15, 7, 6, 14, 3, 1, 9, 4, 0, 10, 12, 5,
         14, 12, 11, 8, 1, 2, 3, 5, 15, 4, 10, 6, 7, 0, 9, 13,
-        1, 14, 2, 11, 4, 12, 3, 7, 6, 13, 10, 5, 15, 9, 0, 8,
         11, 10, 5, 14, 6, 13, 9, 0, 12, 8, 15, 3, 2, 4, 7, 1,
-        4, 12, 7, 5, 1, 6, 9, 10, 0, 14, 13, 8, 2, 11, 3, 15,
         13, 7, 15, 4, 1, 2, 6, 14, 9, 11, 3, 0, 8, 5, 12, 10,
+        2, 8, 11, 13, 15, 7, 6, 14, 3, 1, 9, 4, 0, 10, 12, 5,
+        1, 14, 2, 11, 4, 12, 3, 7, 6, 13, 10, 5, 15, 9, 0, 8,
+        4, 12, 7, 5, 1, 6, 9, 10, 0, 14, 13, 8, 2, 11, 3, 15,
         11, 9, 5, 1, 12, 3, 13, 14, 6, 4, 7, 15, 2, 0, 8, 10,
     };
     static constexpr auto Q = []() {
         std::array<std::array<uint32_t, 256>, 2> Q = {};
-        uint8_t ha, hb, hc, hd, he, la, lb, lc, ld, le;
+        uint8_t a0, a1, a2, a3, a4, b0, b1, b2, b3, b4;
         for (int n = 0; n < 2; ++n) {
-            for (ha = 0; ha < 16; ++ha) {
-                for (la = 0; la < 16; ++la) {
-                    hb =      ha  ^      la ;
-                    lb = ROR4[la] ^ ASHX[ha];
-                    hc = QT[0][n][hb];
-                    lc = QT[1][n][lb];
-                    hd =      hc  ^      lc ;
-                    ld = ROR4[lc] ^ ASHX[hc];
-                    he = QT[2][n][hd];
-                    le = QT[3][n][ld];
-                    Q[n][ha << 4 | la] = le << 4 | he;
+            for (a0 = 0; a0 < 16; ++a0) {
+                for (b0 = 0; b0 < 16; ++b0) {
+                    a1 = a0 ^ b0;
+                    b1 = ROR1[b0] ^ MUL9[a0];
+                    a2 = T[n][0][a1];
+                    b2 = T[n][1][b1];
+                    a3 = a2 ^ b2;
+                    b3 = ROR1[b2] ^ MUL9[a2];
+                    a4 = T[n][2][a3];
+                    b4 = T[n][3][b3];
+                    Q[n][a0 << 4 | b0] = b4 << 4 | a4;
                 }
             }
         }
@@ -45,13 +47,13 @@ protected:
             f01 = Q[1][i];
             f5b = f01 ^ (f01 & 0x02 ? 0xb4 : 0x00) ^ f01 >> 2 ^ (f01 & 0x01 ? 0x5a : 0x00)           ;
             fef = f01 ^ (f01 & 0x02 ? 0xb4 : 0x00) ^ f01 >> 2 ^ (f01 & 0x01 ? 0xee : 0x00) ^ f01 >> 1;
-            MDS[0][i] = f01 + (f5b << 8) + (fef << 16) + (fef << 24);
-            MDS[2][i] = f5b + (fef << 8) + (f01 << 16) + (fef << 24);
+            MDS[0][i] = f01 | f5b << 8 | fef << 16 | fef << 24;
+            MDS[2][i] = f5b | fef << 8 | f01 << 16 | fef << 24;
             f01 = Q[0][i];
             f5b = f01 ^ (f01 & 0x02 ? 0xb4 : 0x00) ^ f01 >> 2 ^ (f01 & 0x01 ? 0x5a : 0x00)           ;
             fef = f01 ^ (f01 & 0x02 ? 0xb4 : 0x00) ^ f01 >> 2 ^ (f01 & 0x01 ? 0xee : 0x00) ^ f01 >> 1;
-            MDS[1][i] = fef + (fef << 8) + (f5b << 16) + (f01 << 24);
-            MDS[3][i] = f5b + (f01 << 8) + (fef << 16) + (f5b << 24);
+            MDS[1][i] = fef | fef << 8 | f5b << 16 | f01 << 24;
+            MDS[3][i] = f5b | f01 << 8 | fef << 16 | f5b << 24;
         }
         return MDS;
     }();

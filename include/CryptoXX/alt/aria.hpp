@@ -258,8 +258,8 @@ public:
             x = fe(x, ek[r++]);
         }
         x = sl2(x ^ ek[R - 1]) ^ ek[R];
-        PUT_BE<uint64_t>(dst    , x.hi);
-        PUT_BE<uint64_t>(dst + 8, x.lo);
+        PUT_BE(dst    , x.hi);
+        PUT_BE(dst + 8, x.lo);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)};
@@ -269,8 +269,8 @@ public:
             x = fe(x, dk[r++]);
         }
         x = sl2(x ^ dk[R - 1]) ^ dk[R];
-        PUT_BE<uint64_t>(dst    , x.hi);
-        PUT_BE<uint64_t>(dst + 8, x.lo);
+        PUT_BE(dst    , x.hi);
+        PUT_BE(dst + 8, x.lo);
     }
 };
 using ARIA128 = ARIATmpl<2>;
