@@ -82,10 +82,10 @@ Supported block cipher modes:
 ```
 
 ```sh
-build/cipher AES192 ECBEnc 0123456789abcdeffedcba9876543210 < in.txt > out.enc
+build/cipher AES192 ECBEnc 0123456789abcdeffedcba98765432100123456789abcdef < in.txt > out.enc
 # Encrypt in.txt in ECB mode with the AES-192 algorithm and output to out.enc.
 
-build/cipher AES192 ECBDec 0123456789abcdeffedcba9876543210 < out.enc
+build/cipher AES192 ECBDec 0123456789abcdeffedcba98765432100123456789abcdef < out.enc
 # Decrypt out.enc and output to command line.
 
 build/cipher RC4 Enc 0123456789abcdeffedcba9876543210 > out.enc
