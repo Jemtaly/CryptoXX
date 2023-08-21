@@ -23,9 +23,15 @@ struct EndianUtils {
     template <std::unsigned_integral T>
     static constexpr void PUT(uint8_t *arr, T w);
     template <std::unsigned_integral T>
+    static constexpr void XOR(uint8_t *arr, T w);
+    template <std::unsigned_integral T>
     static constexpr void READ(T *a, uint8_t const *arr, int n);
     template <std::unsigned_integral T>
     static constexpr void WRITE(uint8_t *arr, T const *a, int n);
+    template <std::unsigned_integral T>
+    static constexpr void XOR(T *a, uint8_t const *arr, int n);
+    template <std::unsigned_integral T>
+    static constexpr void XOR(uint8_t *arr, T const *a, int n);
     template <std::unsigned_integral T>
     static constexpr uint8_t &BYTE(T *a, int i);
     template <std::unsigned_integral T>
@@ -123,9 +129,51 @@ constexpr void EndianUtils<std::endian::big>::PUT(uint8_t *arr, uint64_t w) {
     arr[6] = w >>  8 & 0xff;
     arr[7] = w       & 0xff;
 }
-template <> template <std::unsigned_integral T>
-constexpr void EndianUtils<std::endian::native>::READ(T *a, uint8_t const *arr, int n) {
-    memcpy(a, arr, sizeof(T) * n);
+template <> template <>
+constexpr void EndianUtils<std::endian::little>::XOR(uint8_t *arr, uint16_t w) {
+    arr[0] ^= w       & 0xff;
+    arr[1] ^= w >>  8       ;
+}
+template <> template <>
+constexpr void EndianUtils<std::endian::little>::XOR(uint8_t *arr, uint32_t w) {
+    arr[0] ^= w       & 0xff;
+    arr[1] ^= w >>  8 & 0xff;
+    arr[2] ^= w >> 16 & 0xff;
+    arr[3] ^= w >> 24       ;
+}
+template <> template <>
+constexpr void EndianUtils<std::endian::little>::XOR(uint8_t *arr, uint64_t w) {
+    arr[0] ^= w       & 0xff;
+    arr[1] ^= w >>  8 & 0xff;
+    arr[2] ^= w >> 16 & 0xff;
+    arr[3] ^= w >> 24 & 0xff;
+    arr[4] ^= w >> 32 & 0xff;
+    arr[5] ^= w >> 40 & 0xff;
+    arr[6] ^= w >> 48 & 0xff;
+    arr[7] ^= w >> 56       ;
+}
+template <> template <>
+constexpr void EndianUtils<std::endian::big>::XOR(uint8_t *arr, uint16_t w) {
+    arr[0] ^= w >>  8       ;
+    arr[1] ^= w       & 0xff;
+}
+template <> template <>
+constexpr void EndianUtils<std::endian::big>::XOR(uint8_t *arr, uint32_t w) {
+    arr[0] ^= w >> 24       ;
+    arr[1] ^= w >> 16 & 0xff;
+    arr[2] ^= w >>  8 & 0xff;
+    arr[3] ^= w       & 0xff;
+}
+template <> template <>
+constexpr void EndianUtils<std::endian::big>::XOR(uint8_t *arr, uint64_t w) {
+    arr[0] ^= w >> 56       ;
+    arr[1] ^= w >> 48 & 0xff;
+    arr[2] ^= w >> 40 & 0xff;
+    arr[3] ^= w >> 32 & 0xff;
+    arr[4] ^= w >> 24 & 0xff;
+    arr[5] ^= w >> 16 & 0xff;
+    arr[6] ^= w >>  8 & 0xff;
+    arr[7] ^= w       & 0xff;
 }
 template <std::endian E> template <std::unsigned_integral T>
 constexpr void EndianUtils<E>::READ(T *a, uint8_t const *arr, int n) {
@@ -134,8 +182,8 @@ constexpr void EndianUtils<E>::READ(T *a, uint8_t const *arr, int n) {
     }
 }
 template <> template <std::unsigned_integral T>
-constexpr void EndianUtils<std::endian::native>::WRITE(uint8_t *arr, T const *a, int n) {
-    memcpy(arr, a, sizeof(T) * n);
+constexpr void EndianUtils<std::endian::native>::READ(T *a, uint8_t const *arr, int n) {
+    memcpy(a, arr, sizeof(T) * n);
 }
 template <std::endian E> template <std::unsigned_integral T>
 constexpr void EndianUtils<E>::WRITE(uint8_t *arr, T const *a, int n) {
@@ -144,12 +192,28 @@ constexpr void EndianUtils<E>::WRITE(uint8_t *arr, T const *a, int n) {
     }
 }
 template <> template <std::unsigned_integral T>
+constexpr void EndianUtils<std::endian::native>::WRITE(uint8_t *arr, T const *a, int n) {
+    memcpy(arr, a, sizeof(T) * n);
+}
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::XOR(T *a, uint8_t const *arr, int n) {
+    for (int i = 0; i < n; i++) {
+        a[i] ^= EndianUtils<E>::GET<T>(arr + sizeof(T) * i);
+    }
+}
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::XOR(uint8_t *arr, T const *a, int n) {
+    for (int i = 0; i < n; i++) {
+        EndianUtils<E>::XOR(arr + sizeof(T) * i, a[i]);
+    }
+}
+template <> template <std::unsigned_integral T>
 constexpr uint8_t &EndianUtils<std::endian::native>::BYTE(T *a, int i) {
     return ((uint8_t *)a)[i];
 }
 template <std::endian E> template <std::unsigned_integral T>
 constexpr uint8_t &EndianUtils<E>::BYTE(T *a, int i) {
-    return ((uint8_t (*)[sizeof(T)])a)[i / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
+    return ((uint8_t *)a)[i ^ sizeof(T) - 1];
 }
 template <> template <std::unsigned_integral T>
 constexpr uint8_t const &EndianUtils<std::endian::native>::BYTE(T const *a, int i) {
@@ -157,17 +221,24 @@ constexpr uint8_t const &EndianUtils<std::endian::native>::BYTE(T const *a, int 
 }
 template <std::endian E> template <std::unsigned_integral T>
 constexpr uint8_t const &EndianUtils<E>::BYTE(T const *a, int i) {
-    return ((uint8_t (*)[sizeof(T)])a)[i / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
+    return ((uint8_t *)a)[i ^ sizeof(T) - 1];
+}
+template <std::endian E> template <std::unsigned_integral T>
+constexpr void EndianUtils<E>::READB(T *a, uint8_t const *arr, int n) {
+    EndianUtils<E>::READ(a, arr, n / sizeof(T));
+    for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
+        EndianUtils<E>::BYTE(a, i) = arr[i];
+    }
 }
 template <> template <std::unsigned_integral T>
 constexpr void EndianUtils<std::endian::native>::READB(T *a, uint8_t const *arr, int n) {
     memcpy(a, arr, n);
 }
 template <std::endian E> template <std::unsigned_integral T>
-constexpr void EndianUtils<E>::READB(T *a, uint8_t const *arr, int n) {
-    EndianUtils<E>::READ(a, arr, n / sizeof(T));
+constexpr void EndianUtils<E>::WRITEB(uint8_t *arr, T const *a, int n) {
+    EndianUtils<E>::WRITE(arr, a, n / sizeof(T));
     for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
-        ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)] = arr[i];
+        arr[i] = EndianUtils<E>::BYTE(a, i);
     }
 }
 template <> template <std::unsigned_integral T>
@@ -175,21 +246,16 @@ constexpr void EndianUtils<std::endian::native>::WRITEB(uint8_t *arr, T const *a
     memcpy(arr, a, n);
 }
 template <std::endian E> template <std::unsigned_integral T>
-constexpr void EndianUtils<E>::WRITEB(uint8_t *arr, T const *a, int n) {
-    EndianUtils<E>::WRITE(arr, a, n / sizeof(T));
-    for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
-        arr[i] = ((uint8_t (*)[sizeof(T)])a)[n / sizeof(T)][sizeof(T) - 1 - i % sizeof(T)];
-    }
-}
-template <std::endian E> template <std::unsigned_integral T>
 constexpr void EndianUtils<E>::XORB(T *a, uint8_t const *arr, int n) {
-    for (int i = 0; i < n; i++) {
+    EndianUtils<E>::XOR(a, arr, n / sizeof(T));
+    for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
         EndianUtils<E>::BYTE(a, i) ^= arr[i];
     }
 }
 template <std::endian E> template <std::unsigned_integral T>
 constexpr void EndianUtils<E>::XORB(uint8_t *arr, T const *a, int n) {
-    for (int i = 0; i < n; i++) {
+    EndianUtils<E>::XOR(arr, a, n / sizeof(T));
+    for (int i = n / sizeof(T) * sizeof(T); i < n; i++) {
         arr[i] ^= EndianUtils<E>::BYTE(a, i);
     }
 }
@@ -197,6 +263,8 @@ constexpr void EndianUtils<E>::XORB(uint8_t *arr, T const *a, int n) {
 #define GET_LE EndianUtils<std::endian::little>::GET
 #define PUT_BE EndianUtils<std::endian::big>::PUT
 #define PUT_LE EndianUtils<std::endian::little>::PUT
+#define XOR_BE EndianUtils<std::endian::big>::XOR
+#define XOR_LE EndianUtils<std::endian::little>::XOR
 #define READ_BE EndianUtils<std::endian::big>::READ
 #define READ_LE EndianUtils<std::endian::little>::READ
 #define WRITE_BE EndianUtils<std::endian::big>::WRITE

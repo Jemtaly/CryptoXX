@@ -73,6 +73,8 @@ template <size_t BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT ==
 using SHA3   = KeccakTmpl<0x06, (1600 - BIT * 2) / 8, BIT / 8>;
 template <size_t BIT, size_t OUT> requires (BIT == 128 || BIT == 256)
 using SHAKE  = KeccakTmpl<0x1f, (1600 - BIT * 2) / 8, OUT / 8>;
+#undef UNROLL_5
+#undef UNROLL_X
 #undef C_A
 #undef D_C
 #undef A_D
