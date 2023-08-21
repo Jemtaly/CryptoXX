@@ -78,9 +78,9 @@ class ZUC {
         if constexpr (INIT) {
             f = mod_add(f, w >> 1);
         }
-        for (int i = 0; i < 15; ++i) {
+        FOR(i, 0, i + 1, i < 15, {
             lfsr[i] = lfsr[i + 1];
-        }
+        });
         lfsr[15] = f;
     }
 public:
