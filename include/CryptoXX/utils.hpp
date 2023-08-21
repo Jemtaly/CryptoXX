@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <concepts>
+#include <stdexcept>
 // bits_t is used to represent the number of bits to rotate
 using bits_t = uint8_t;
 template <std::unsigned_integral T>
@@ -212,14 +213,16 @@ constexpr void EndianUtils<E>::XORB(uint8_t *arr, T const *a, int n) {
 #define FOR(i, Init, Next, Cond, ...) do {                                              \
     static constexpr auto Arr = []() {                                                  \
         auto i = Init;                                                                  \
-        bool b = Cond;                                                                  \
-        std::array<std::pair<decltype(i), bool>, 65> Arr;                               \
-        for (int j = 0; j < 64; j++) {                                                  \
-            Arr[j] = {i, b};                                                            \
+        bool $ = Cond;                                                                  \
+        std::array<std::pair<decltype(i), bool>, 64> Arr;                               \
+        for (int _ = 0; _ < 64; _++) {                                                  \
+            Arr[_] = {i, $};                                                            \
             i = Next;                                                                   \
-            b = b && (Cond);                                                            \
+            $ = $ && (Cond);                                                            \
         }                                                                               \
-        Arr[64] = {i, b};                                                               \
+        if ($) {                                                                        \
+            throw std::logic_error("Too many iterations");                              \
+        }                                                                               \
         return Arr;                                                                     \
     }();                                                                                \
     if constexpr (static constexpr auto &i = Arr[ 0].first; Arr[ 0].second) __VA_ARGS__ \
@@ -286,5 +289,4 @@ constexpr void EndianUtils<E>::XORB(uint8_t *arr, T const *a, int n) {
     if constexpr (static constexpr auto &i = Arr[61].first; Arr[61].second) __VA_ARGS__ \
     if constexpr (static constexpr auto &i = Arr[62].first; Arr[62].second) __VA_ARGS__ \
     if constexpr (static constexpr auto &i = Arr[63].first; Arr[63].second) __VA_ARGS__ \
-    static_assert(Arr[64].second == false, "Too many iterations");                      \
 } while (false)

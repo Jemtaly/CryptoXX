@@ -1,11 +1,10 @@
 #pragma once
 #include "../utils.hpp"
-#define SB_SC_MR_NRK(t, j) (                                            \
+#define SB_SC_MR_NRK(t, j)                                              \
     H_LUT[0][t[ j         ].b[0]].w ^ H_LUT[1][t[(j + 7) % 8].b[1]].w ^ \
     H_LUT[2][t[(j + 6) % 8].b[2]].w ^ H_LUT[3][t[(j + 5) % 8].b[3]].w ^ \
     H_LUT[4][t[(j + 4) % 8].b[4]].w ^ H_LUT[5][t[(j + 3) % 8].b[5]].w ^ \
-    H_LUT[6][t[(j + 2) % 8].b[6]].w ^ H_LUT[7][t[(j + 1) % 8].b[7]].w   \
-)
+    H_LUT[6][t[(j + 2) % 8].b[6]].w ^ H_LUT[7][t[(j + 1) % 8].b[7]].w
 union WhirlpoolWord {
     uint64_t w;
     uint8_t b[8];

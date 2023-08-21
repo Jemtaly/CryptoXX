@@ -12,18 +12,13 @@
     s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
     a = b + ROTL(s, R[i]);                       \
 } while (0)
-#define HH4(N, a, b, c, d, s, w, K, R, i) do {   \
-    HH1(N, a, b, c, d, s, w, K, R, i     );      \
-    HH1(N, d, a, b, c, s, w, K, R, i +  1);      \
-    HH1(N, c, d, a, b, s, w, K, R, i +  2);      \
-    HH1(N, b, c, d, a, s, w, K, R, i +  3);      \
-} while (0)
-#define HHX(N, a, b, c, d, s, w, K, R, i) do {   \
-    HH4(N, a, b, c, d, s, w, K, R, i     );      \
-    HH4(N, a, b, c, d, s, w, K, R, i +  4);      \
-    HH4(N, a, b, c, d, s, w, K, R, i +  8);      \
-    HH4(N, a, b, c, d, s, w, K, R, i + 12);      \
-} while (0)
+#define HHX(N, a, b, c, d, s, w, K, R, i)        \
+    FOR(j, i, j + 4, j < i + 16, {               \
+        HH1(N, a, b, c, d, s, w, K, R, j    );   \
+        HH1(N, d, a, b, c, s, w, K, R, j + 1);   \
+        HH1(N, c, d, a, b, s, w, K, R, j + 2);   \
+        HH1(N, b, c, d, a, s, w, K, R, j + 3);   \
+    })
 class MD5 {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -108,5 +103,4 @@ public:
 #undef GG2
 #undef GG3
 #undef HH1
-#undef HH4
 #undef HHX

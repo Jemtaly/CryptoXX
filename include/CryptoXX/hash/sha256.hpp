@@ -43,11 +43,12 @@ class SHA256Tmpl: public SHA256Base {
         uint32_t G = h[6];
         uint32_t H = h[7];
         uint32_t s, t, u, v;
-        for (int i = 16; i < 64; i++) {
+        FOR(i, 16, i + 1, i < 64, {
             s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
             t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
             w[i] = w[i - 16] + s + w[i - 7] + t;
-        }
+        });
+        // unrolling the loop below makes it slower on my machine
         for (int i = 0; i < 64; i += 8) {
             FF1(s, t, u, v, A, B, C, D, E, F, G, H, w, K, i    );
             FF1(s, t, u, v, H, A, B, C, D, E, F, G, w, K, i + 1);

@@ -78,7 +78,7 @@ class DES {
         0x15, 0x16, 0x17, 0x18, 0x17, 0x18, 0x19, 0x1a,
         0x1b, 0x1c, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x00,
     };
-    static constexpr DESPermutation<32, 32, 8> P = {
+    static constexpr DESPermutation<32, 32, 4> P = {
         0x07, 0x1c, 0x15, 0x0a, 0x1a, 0x02, 0x13, 0x0d,
         0x17, 0x1d, 0x05, 0x00, 0x12, 0x08, 0x18, 0x1e,
         0x16, 0x01, 0x0e, 0x1b, 0x06, 0x09, 0x11, 0x1f,
@@ -120,12 +120,16 @@ class DES {
         0xf, 0x5, 0xc, 0xb, 0x9, 0x3, 0x7, 0xe, 0x3, 0xa, 0xa, 0x0, 0x5, 0x6, 0x0, 0xd,
     };
     static constexpr auto F_LUT = []() {
-        std::array<std::array<DESUint<32>, 4096>, 4> F_LUT = {};
-        for (int i = 0; i < 4096; i++) {
-            F_LUT[0][i] = P.LUT[0][S_BOX[0][i & 0x3f] | S_BOX[1][i >> 6 & 0x3f] << 4];
-            F_LUT[1][i] = P.LUT[1][S_BOX[2][i & 0x3f] | S_BOX[3][i >> 6 & 0x3f] << 4];
-            F_LUT[2][i] = P.LUT[2][S_BOX[4][i & 0x3f] | S_BOX[5][i >> 6 & 0x3f] << 4];
-            F_LUT[3][i] = P.LUT[3][S_BOX[6][i & 0x3f] | S_BOX[7][i >> 6 & 0x3f] << 4];
+        std::array<std::array<DESUint<32>, 64>, 8> F_LUT = {};
+        for (int i = 0; i < 64; i++) {
+            F_LUT[0][i] = P.LUT[0][S_BOX[0][i]];
+            F_LUT[1][i] = P.LUT[1][S_BOX[1][i]];
+            F_LUT[2][i] = P.LUT[2][S_BOX[2][i]];
+            F_LUT[3][i] = P.LUT[3][S_BOX[3][i]];
+            F_LUT[4][i] = P.LUT[4][S_BOX[4][i]];
+            F_LUT[5][i] = P.LUT[5][S_BOX[5][i]];
+            F_LUT[6][i] = P.LUT[6][S_BOX[6][i]];
+            F_LUT[7][i] = P.LUT[7][S_BOX[7][i]];
         }
         return F_LUT;
     }();
@@ -133,8 +137,10 @@ class DES {
         DESUint<48> x = E(r) ^ k;
         // Merge the substitution and permutation operations
         return
-            F_LUT[0][x >>  0 & 0xfff] | F_LUT[1][x >> 12 & 0xfff] |
-            F_LUT[2][x >> 24 & 0xfff] | F_LUT[3][x >> 36 & 0xfff];
+            F_LUT[0][x >>  0 & 0x3f] | F_LUT[1][x >>  6 & 0x3f] |
+            F_LUT[2][x >> 12 & 0x3f] | F_LUT[3][x >> 18 & 0x3f] |
+            F_LUT[4][x >> 24 & 0x3f] | F_LUT[5][x >> 30 & 0x3f] |
+            F_LUT[6][x >> 36 & 0x3f] | F_LUT[7][x >> 42 & 0x3f];
     }
     DESUint<48> rk[16];
 public:

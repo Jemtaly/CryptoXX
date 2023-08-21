@@ -33,6 +33,7 @@ protected:
         {18,  2, 61, 56, 14},
     };
     void permute() {
+        // unrolling the loop below makes it slower on my machine
         for (int i = 0; i < 24; i++) {
             uint64_t C[5];
             uint64_t D[5];
