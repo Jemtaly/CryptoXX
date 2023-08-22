@@ -1,10 +1,10 @@
 #pragma once
 #include "../utils.hpp"
 #define SB_SC_MR_NRK(t, j)                                              \
-    H_LUT[0][t[ j         ].b[0]].w ^ H_LUT[1][t[(j + 7) % 8].b[1]].w ^ \
-    H_LUT[2][t[(j + 6) % 8].b[2]].w ^ H_LUT[3][t[(j + 5) % 8].b[3]].w ^ \
-    H_LUT[4][t[(j + 4) % 8].b[4]].w ^ H_LUT[5][t[(j + 3) % 8].b[5]].w ^ \
-    H_LUT[6][t[(j + 2) % 8].b[6]].w ^ H_LUT[7][t[(j + 1) % 8].b[7]].w
+    R_LUT[0][t[ j         ].b[0]].w ^ R_LUT[1][t[(j + 7) % 8].b[1]].w ^ \
+    R_LUT[2][t[(j + 6) % 8].b[2]].w ^ R_LUT[3][t[(j + 5) % 8].b[3]].w ^ \
+    R_LUT[4][t[(j + 4) % 8].b[4]].w ^ R_LUT[5][t[(j + 3) % 8].b[5]].w ^ \
+    R_LUT[6][t[(j + 2) % 8].b[6]].w ^ R_LUT[7][t[(j + 1) % 8].b[7]].w
 union WhirlpoolWord {
     uint64_t w;
     uint8_t b[8];
@@ -65,7 +65,7 @@ class Whirlpool {
         }
         return LUT;
     };
-    static constexpr auto H_LUT = generate_LUT({.b = {1, 1, 4, 1, 8, 5, 2, 9}}, S_BOX);
+    static constexpr auto R_LUT = generate_LUT({.b = {1, 1, 4, 1, 8, 5, 2, 9}}, S_BOX);
     void compress(WhirlpoolWord const *b) {
         WhirlpoolWord s[8], k[8], t[8];
         s[0].w = b[0].w ^ (k[0].w = h[0].w);
@@ -125,16 +125,16 @@ public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 64;
     static constexpr bool NOT_ALWAYS_PADDING = false;
-    void input(uint8_t const *data) {
+    void input(uint8_t const *blk) {
         WhirlpoolWord w[8];
-        memcpy(w, data, 64);
+        memcpy(w, blk, 64);
         (ctr[3] += 64 * 8)
             < 64 * 8 && ++ctr[2]
             == 0 && ++ctr[1]
             == 0 && ++ctr[0];
         compress(w);
     }
-    void final(uint8_t const *src, size_t len, uint8_t *hash) {
+    void final(uint8_t const *src, size_t len, uint8_t *dig) {
         WhirlpoolWord w[8];
         memset(w, 0, 64);
         memcpy(w, src, len);
@@ -152,7 +152,7 @@ public:
         PUT_BE(w[6].b, ctr[2]);
         PUT_BE(w[7].b, ctr[3]);
         compress(w);
-        memcpy(hash, h, 64);
+        memcpy(dig, h, 64);
     }
 };
 #undef SB_SC_MR_NRK

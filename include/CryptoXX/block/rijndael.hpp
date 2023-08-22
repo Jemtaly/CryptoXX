@@ -135,10 +135,10 @@ public:
             });
             FOR(i, 0, i + 1, i < B, {
                 q[i].w =
-                    E_LUT[0][t[ i             ].b[0]].w ^
-                    E_LUT[1][t[(i +     1) % B].b[1]].w ^
-                    E_LUT[2][t[(i +     2) % B].b[2]].w ^
-                    E_LUT[3][t[(i +     3) % B].b[3]].w ^ rk[r][i].w;
+                    E_LUT[0][t[(i + 840) % B].b[0]].w ^
+                    E_LUT[1][t[(i + 841) % B].b[1]].w ^
+                    E_LUT[2][t[(i + 842) % B].b[2]].w ^
+                    E_LUT[3][t[(i + 843) % B].b[3]].w ^ rk[r][i].w;
             });
         }
         FOR(i, 0, i + 1, i < B, {
@@ -146,10 +146,10 @@ public:
         });
         FOR(i, 0, i + 1, i < B, {
             q[i].w =
-                E_SBT[0][t[ i             ].b[0]].w ^
-                E_SBT[1][t[(i +     1) % B].b[1]].w ^
-                E_SBT[2][t[(i +     2) % B].b[2]].w ^
-                E_SBT[3][t[(i +     3) % B].b[3]].w ^ rk[R][i].w;
+                E_SBT[0][t[(i + 840) % B].b[0]].w ^
+                E_SBT[1][t[(i + 841) % B].b[1]].w ^
+                E_SBT[2][t[(i + 842) % B].b[2]].w ^
+                E_SBT[3][t[(i + 843) % B].b[3]].w ^ rk[R][i].w;
         });
         memcpy(dst, q, B * 4);
     }
@@ -166,10 +166,10 @@ public:
             });
             FOR(i, 0, i + 1, i < B, {
                 q[i].w =
-                    D_LUT[0][t[ i             ].b[0]].w ^
-                    D_LUT[1][t[(i + B - 1) % B].b[1]].w ^
-                    D_LUT[2][t[(i + B - 2) % B].b[2]].w ^
-                    D_LUT[3][t[(i + B - 3) % B].b[3]].w ^ ik[r][i].w;
+                    D_LUT[0][t[(i + 840) % B].b[0]].w ^
+                    D_LUT[1][t[(i + 839) % B].b[1]].w ^
+                    D_LUT[2][t[(i + 838) % B].b[2]].w ^
+                    D_LUT[3][t[(i + 837) % B].b[3]].w ^ ik[r][i].w;
             });
         }
         FOR(i, 0, i + 1, i < B, {
@@ -177,10 +177,10 @@ public:
         });
         FOR(i, 0, i + 1, i < B, {
             q[i].w =
-                D_SBT[0][t[ i             ].b[0]].w ^
-                D_SBT[1][t[(i + B - 1) % B].b[1]].w ^
-                D_SBT[2][t[(i + B - 2) % B].b[2]].w ^
-                D_SBT[3][t[(i + B - 3) % B].b[3]].w ^ ik[R][i].w;
+                D_SBT[0][t[(i + 840) % B].b[0]].w ^
+                D_SBT[1][t[(i + 839) % B].b[1]].w ^
+                D_SBT[2][t[(i + 838) % B].b[2]].w ^
+                D_SBT[3][t[(i + 837) % B].b[3]].w ^ ik[R][i].w;
         });
         memcpy(dst, q, B * 4);
     }
