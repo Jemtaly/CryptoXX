@@ -89,7 +89,7 @@ public:
         comp.i  = idx ? stack[top] : iv;
         comp.o  = stack[top];
         comp.m  = m;
-        if ((++idx %= 16) == 0) {
+        if (++idx == 16) {
             comp.fl |= CHUNK_END;
             for (uint64_t c = hl; c & 0x1; c >>= 1) {
                 comp.operate();
@@ -104,6 +104,7 @@ public:
             }
             hl++; // increment counter
             top++; // push
+            idx = 0; // reset
         }
         comp.operate();
     }

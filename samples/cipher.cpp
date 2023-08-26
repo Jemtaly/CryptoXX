@@ -44,29 +44,75 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     }
     return hex[len * 2] == '\0';
 }
-void read_key(uint8_t *key, size_t key_size) {
-    if (Argi == Argc) {
-        throw std::runtime_error("No key specified.");
+void print_hex(uint8_t const *bin, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        printf("%02x", bin[i]);
     }
-    if (not hex2bin(key_size, Argv[Argi++], key)) {
-        throw std::runtime_error("Invalid key, should be a " + std::to_string(key_size) + "-byte hex string.");
+    printf("\n");
+}
+void read_arg(std::string const &arg, uint8_t *dst, size_t len) {
+    if (Argi == Argc) {
+        throw std::runtime_error("No " + arg + " specified.");
+    }
+    if (not hex2bin(len, Argv[Argi++], dst)) {
+        throw std::runtime_error("Invalid " + arg + ", should be a " + std::to_string(len) + "-byte hex string.");
     }
 }
-void read_civ(uint8_t *civ, size_t civ_size) {
-    if (Argi == Argc) {
-        throw std::runtime_error("No iv specified.");
+template <typename BlockCipher>
+void bc_enc() {
+    uint8_t key[BlockCipher::KEY_SIZE];
+    read_arg("key", key, BlockCipher::KEY_SIZE);
+    uint8_t msg[BlockCipher::BLOCK_SIZE];
+    read_arg("message", msg, BlockCipher::BLOCK_SIZE);
+    if (Argi < Argc) {
+        throw std::runtime_error("Too many arguments.");
     }
-    if (not hex2bin(civ_size, Argv[Argi++], civ)) {
-        throw std::runtime_error("Invalid iv, should be a " + std::to_string(civ_size) + "-byte hex string.");
+    BlockCipher(key).encrypt(msg, msg);
+    print_hex(msg, BlockCipher::BLOCK_SIZE);
+}
+template <typename BlockCipher>
+void bc_dec() {
+    uint8_t key[BlockCipher::KEY_SIZE];
+    read_arg("key", key, BlockCipher::KEY_SIZE);
+    uint8_t msg[BlockCipher::BLOCK_SIZE];
+    read_arg("message", msg, BlockCipher::BLOCK_SIZE);
+    if (Argi < Argc) {
+        throw std::runtime_error("Too many arguments.");
+    }
+    BlockCipher(key).decrypt(msg, msg);
+    print_hex(msg, BlockCipher::BLOCK_SIZE);
+}
+template <typename BlockCipherCrypter>
+void bc_cry() {
+    uint8_t key[BlockCipherCrypter::KEY_SIZE];
+    read_arg("key", key, BlockCipherCrypter::KEY_SIZE);
+    uint8_t civ[BlockCipherCrypter::CIV_SIZE];
+    if (BlockCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
+        read_arg("iv", civ, BlockCipherCrypter::CIV_SIZE);
+    }
+    if (Argi < Argc) {
+        throw std::runtime_error("Too many arguments.");
+    }
+    BlockCipherCrypter bcc(civ, key);
+    uint8_t src[BUFSIZE], dst[BUFSIZE + BlockCipherCrypter::BLOCK_SIZE];
+    size_t read;
+    while ((read = fread(src, 1, BUFSIZE, stdin)) == BUFSIZE) {
+        fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, stdout);
+    }
+    fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
+    if (uint8_t *end = bcc.fflush(dst); end >= (uint8_t *)dst) {
+        fwrite(dst, 1, end - (uint8_t *)dst, stdout);
+    } else {
+        fprintf(stderr, "Warning: Error occurred while flushing cipher.\n");
     }
 }
 template <typename StreamCipherCrypter>
 void sc_cry() {
     uint8_t key[StreamCipherCrypter::KEY_SIZE];
-    read_key(key, StreamCipherCrypter::KEY_SIZE);
+    read_arg("key", key, StreamCipherCrypter::KEY_SIZE);
     uint8_t civ[StreamCipherCrypter::CIV_SIZE];
     if (StreamCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
-        read_civ(civ, StreamCipherCrypter::CIV_SIZE);
+        read_arg("iv", civ, StreamCipherCrypter::CIV_SIZE);
     }
     if (Argi < Argc) {
         throw std::runtime_error("Too many arguments.");
@@ -82,10 +128,10 @@ void sc_cry() {
 template <typename PseudoRandomGenerator>
 void pr_gen() {
     uint8_t key[PseudoRandomGenerator::KEY_SIZE];
-    read_key(key, PseudoRandomGenerator::KEY_SIZE);
+    read_arg("key", key, PseudoRandomGenerator::KEY_SIZE);
     uint8_t civ[PseudoRandomGenerator::CIV_SIZE];
     if (PseudoRandomGenerator::CIV_SIZE != 0 || Argi < Argc) {
-        read_civ(civ, PseudoRandomGenerator::CIV_SIZE);
+        read_arg("iv", civ, PseudoRandomGenerator::CIV_SIZE);
     }
     if (Argi < Argc) {
         throw std::runtime_error("Too many arguments.");
@@ -95,30 +141,6 @@ void pr_gen() {
     while (true) {
         prg.generate(dst, dst + BUFSIZE);
         fwrite(dst, 1, BUFSIZE, stdout);
-    }
-}
-template <typename BlockCipherCrypter>
-void bc_cry() {
-    uint8_t key[BlockCipherCrypter::KEY_SIZE];
-    read_key(key, BlockCipherCrypter::KEY_SIZE);
-    uint8_t civ[BlockCipherCrypter::CIV_SIZE];
-    if (BlockCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
-        read_civ(civ, BlockCipherCrypter::CIV_SIZE);
-    }
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.");
-    }
-    BlockCipherCrypter bcc(civ, key);
-    uint8_t src[BUFSIZE], dst[BUFSIZE + BlockCipherCrypter::BLOCK_SIZE];
-    size_t read;
-    while ((read = fread(src, 1, BUFSIZE, stdin)) == BUFSIZE) {
-        fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, stdout);
-    }
-    fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
-    if (uint8_t *end = bcc.fflush(dst); end >= (uint8_t *)dst) {
-        fwrite(dst, 1, end - (uint8_t *)dst, stdout);
-    } else {
-        throw std::runtime_error("BlockCipherCrypter::fflush() failed, the input may be corrupted.");
     }
 }
 constexpr uint32_t hash(char const *str) {
@@ -158,6 +180,10 @@ void bc_select() {
         sc_cry<CTRDecrypter<BlockCipher>>(); break;
     case hash("CTRGen"):
         pr_gen<CTRGenerator<BlockCipher>>(); break;
+    case hash("Enc"):
+        bc_enc<BlockCipher>(); break;
+    case hash("Dec"):
+        bc_dec<BlockCipher>(); break;
     default:
         throw std::runtime_error("Invalid mode.");
     }

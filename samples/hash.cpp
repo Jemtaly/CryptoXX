@@ -31,16 +31,22 @@ bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
     }
     return hex[len * 2] == '\0';
 }
-void read_key(uint8_t *key, size_t key_size) {
-    if (Argi == Argc) {
-        throw std::runtime_error("No key specified.");
+void print_hex(uint8_t const *bin, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        printf("%02x", bin[i]);
     }
-    if (not hex2bin(key_size, Argv[Argi++], key)) {
-        throw std::runtime_error("Invalid key, should be a " + std::to_string(key_size) + "-byte hex string.");
+    printf("\n");
+}
+void read_arg(std::string const &arg, uint8_t *dst, size_t len) {
+    if (Argi == Argc) {
+        throw std::runtime_error("No " + arg + " specified.");
+    }
+    if (not hex2bin(len, Argv[Argi++], dst)) {
+        throw std::runtime_error("Invalid " + arg + ", should be a " + std::to_string(len) + "-byte hex string.");
     }
 }
 template <typename HashWrapper, typename ...Args>
-void do_hash(Args &&...args) {
+void h_cksum(Args &&...args) {
     HashWrapper hw(std::forward<Args>(args)...);
     uint8_t buf[BUFSIZE];
     size_t read;
@@ -50,10 +56,7 @@ void do_hash(Args &&...args) {
     hw.update(buf, (uint8_t *)buf + read);
     uint8_t digest[HashWrapper::DIGEST_SIZE];
     hw.digest(digest);
-    for (int i = 0; i < HashWrapper::DIGEST_SIZE; i++) {
-        printf("%02x", digest[i]);
-    }
-    printf("\n");
+    print_hex(digest, HashWrapper::DIGEST_SIZE);
 }
 constexpr uint32_t hash(char const *str) {
     return *str ? *str + hash(str + 1) * 16777619UL : 2166136261UL;
@@ -61,7 +64,7 @@ constexpr uint32_t hash(char const *str) {
 template <typename Hash>
 void h_select() {
     if (Argi == Argc) {
-        do_hash<HashWrapper<Hash>>();
+        h_cksum<HashWrapper<Hash>>();
     } else {
         int len;
         try {
@@ -74,18 +77,18 @@ void h_select() {
         }
         uint8_t bin[len];
         if (len != 0 || Argi < Argc) {
-            read_key(bin, len);
+            read_arg("key", bin, len);
         }
         if (Argi < Argc) {
             throw std::runtime_error("Too many arguments.");
         }
-        do_hash<HMACWrapper<Hash>>((uint8_t *)bin, len);
+        h_cksum<HMACWrapper<Hash>>((uint8_t *)bin, len);
     }
 }
 template <typename Hash>
 void b_select() {
     if (Argi == Argc) {
-        do_hash<HashWrapper<Hash>>();
+        h_cksum<HashWrapper<Hash>>();
     } else {
         int len;
         try {
@@ -98,12 +101,12 @@ void b_select() {
         }
         uint8_t bin[len];
         if (len != 0 || Argi < Argc) {
-            read_key(bin, len);
+            read_arg("key", bin, len);
         }
         if (Argi < Argc) {
             throw std::runtime_error("Too many arguments.");
         }
-        do_hash<HashWrapper<Hash>>((uint8_t *)bin, len);
+        h_cksum<HashWrapper<Hash>>((uint8_t *)bin, len);
     }
 }
 template <typename Hash>
@@ -111,7 +114,7 @@ void c_select() {
     if (Argi < Argc) {
         throw std::runtime_error("Too many arguments, the algorithm does not require a key.");
     }
-    do_hash<HashWrapper<Hash>>();
+    h_cksum<HashWrapper<Hash>>();
 }
 void alg_select() {
     if (Argi == Argc) {
