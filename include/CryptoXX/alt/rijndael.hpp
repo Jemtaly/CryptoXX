@@ -16,9 +16,11 @@ protected:
         return p;
     };
     static constexpr auto RC = []() {
-        std::array<uint8_t, 22> RC = {0, 1};
-        for (int i = 2; i < 22; i++) {
-            RC[i] = multiply(RC[i - 1], 0x02);
+        std::array<uint8_t, 22> RC = {};
+        uint8_t s = 1;
+        for (int i = 1; i < 22; i++) {
+            RC[i] = s;
+            s = multiply(s, 0x02);
         }
         return RC;
     }();
@@ -26,9 +28,9 @@ protected:
         std::array<uint8_t, 256> RECIP = {};
         uint8_t s = 1, c = 1;
         for (int i = 0; i < 255; i++) {
+            RECIP[s] = c;
             s = multiply(s, 0x03);
             c = multiply(c, 0xF6);
-            RECIP[s] = c;
         }
         return RECIP;
     }();
