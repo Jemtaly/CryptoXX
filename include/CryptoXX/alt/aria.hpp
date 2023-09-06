@@ -3,9 +3,6 @@
 struct ARIAWord {
     uint64_t hi = 0;
     uint64_t lo = 0;
-    constexpr uint8_t operator[](int n) const {
-        return n < 8 ? hi >> (56 - (n - 0) * 8) : lo >> (56 - (n - 8) * 8);
-    }
     constexpr ARIAWord rotl(bits_t n) const { // 0 < n < 64
         return {hi << (n & 63) | lo >> (-n & 63), lo << (n & 63) | hi >> (-n & 63)};
     }
@@ -91,26 +88,26 @@ protected:
     };
     static ARIAWord sl1(ARIAWord const &x) {
         return {
-            (uint64_t)S_BOX[0][x[ 0]] << 56 | (uint64_t)S_BOX[1][x[ 1]] << 48 |
-            (uint64_t)S_BOX[2][x[ 2]] << 40 | (uint64_t)S_BOX[3][x[ 3]] << 32 |
-            (uint64_t)S_BOX[0][x[ 4]] << 24 | (uint64_t)S_BOX[1][x[ 5]] << 16 |
-            (uint64_t)S_BOX[2][x[ 6]] <<  8 | (uint64_t)S_BOX[3][x[ 7]]      ,
-            (uint64_t)S_BOX[0][x[ 8]] << 56 | (uint64_t)S_BOX[1][x[ 9]] << 48 |
-            (uint64_t)S_BOX[2][x[10]] << 40 | (uint64_t)S_BOX[3][x[11]] << 32 |
-            (uint64_t)S_BOX[0][x[12]] << 24 | (uint64_t)S_BOX[1][x[13]] << 16 |
-            (uint64_t)S_BOX[2][x[14]] <<  8 | (uint64_t)S_BOX[3][x[15]]      ,
+            (uint64_t)S_BOX[0][x.hi >> 56       ] << 56 | (uint64_t)S_BOX[1][x.hi >> 48 & 0xff] << 48 |
+            (uint64_t)S_BOX[2][x.hi >> 40 & 0xff] << 40 | (uint64_t)S_BOX[3][x.hi >> 32 & 0xff] << 32 |
+            (uint64_t)S_BOX[0][x.hi >> 24 & 0xff] << 24 | (uint64_t)S_BOX[1][x.hi >> 16 & 0xff] << 16 |
+            (uint64_t)S_BOX[2][x.hi >>  8 & 0xff] <<  8 | (uint64_t)S_BOX[3][x.hi       & 0xff]      ,
+            (uint64_t)S_BOX[0][x.lo >> 56       ] << 56 | (uint64_t)S_BOX[1][x.lo >> 48 & 0xff] << 48 |
+            (uint64_t)S_BOX[2][x.lo >> 40 & 0xff] << 40 | (uint64_t)S_BOX[3][x.lo >> 32 & 0xff] << 32 |
+            (uint64_t)S_BOX[0][x.lo >> 24 & 0xff] << 24 | (uint64_t)S_BOX[1][x.lo >> 16 & 0xff] << 16 |
+            (uint64_t)S_BOX[2][x.lo >>  8 & 0xff] <<  8 | (uint64_t)S_BOX[3][x.lo       & 0xff]      ,
         };
     }
     static ARIAWord sl2(ARIAWord const &x) {
         return {
-            (uint64_t)S_BOX[2][x[ 0]] << 56 | (uint64_t)S_BOX[3][x[ 1]] << 48 |
-            (uint64_t)S_BOX[0][x[ 2]] << 40 | (uint64_t)S_BOX[1][x[ 3]] << 32 |
-            (uint64_t)S_BOX[2][x[ 4]] << 24 | (uint64_t)S_BOX[3][x[ 5]] << 16 |
-            (uint64_t)S_BOX[0][x[ 6]] <<  8 | (uint64_t)S_BOX[1][x[ 7]]      ,
-            (uint64_t)S_BOX[2][x[ 8]] << 56 | (uint64_t)S_BOX[3][x[ 9]] << 48 |
-            (uint64_t)S_BOX[0][x[10]] << 40 | (uint64_t)S_BOX[1][x[11]] << 32 |
-            (uint64_t)S_BOX[2][x[12]] << 24 | (uint64_t)S_BOX[3][x[13]] << 16 |
-            (uint64_t)S_BOX[0][x[14]] <<  8 | (uint64_t)S_BOX[1][x[15]]      ,
+            (uint64_t)S_BOX[2][x.hi >> 56       ] << 56 | (uint64_t)S_BOX[3][x.hi >> 48 & 0xff] << 48 |
+            (uint64_t)S_BOX[0][x.hi >> 40 & 0xff] << 40 | (uint64_t)S_BOX[1][x.hi >> 32 & 0xff] << 32 |
+            (uint64_t)S_BOX[2][x.hi >> 24 & 0xff] << 24 | (uint64_t)S_BOX[3][x.hi >> 16 & 0xff] << 16 |
+            (uint64_t)S_BOX[0][x.hi >>  8 & 0xff] <<  8 | (uint64_t)S_BOX[1][x.hi       & 0xff]      ,
+            (uint64_t)S_BOX[2][x.lo >> 56       ] << 56 | (uint64_t)S_BOX[3][x.lo >> 48 & 0xff] << 48 |
+            (uint64_t)S_BOX[0][x.lo >> 40 & 0xff] << 40 | (uint64_t)S_BOX[1][x.lo >> 32 & 0xff] << 32 |
+            (uint64_t)S_BOX[2][x.lo >> 24 & 0xff] << 24 | (uint64_t)S_BOX[3][x.lo >> 16 & 0xff] << 16 |
+            (uint64_t)S_BOX[0][x.lo >>  8 & 0xff] <<  8 | (uint64_t)S_BOX[1][x.lo       & 0xff]      ,
         };
     }
     // static ARIAWord a(ARIAWord const &t) {
@@ -185,26 +182,38 @@ protected:
     }();
     static ARIAWord a(ARIAWord const &x) {
         return
-            A_LUT[ 0][x[ 0]] ^ A_LUT[ 1][x[ 1]] ^ A_LUT[ 2][x[ 2]] ^ A_LUT[ 3][x[ 3]] ^
-            A_LUT[ 4][x[ 4]] ^ A_LUT[ 5][x[ 5]] ^ A_LUT[ 6][x[ 6]] ^ A_LUT[ 7][x[ 7]] ^
-            A_LUT[ 8][x[ 8]] ^ A_LUT[ 9][x[ 9]] ^ A_LUT[10][x[10]] ^ A_LUT[11][x[11]] ^
-            A_LUT[12][x[12]] ^ A_LUT[13][x[13]] ^ A_LUT[14][x[14]] ^ A_LUT[15][x[15]];
+            A_LUT[ 0][x.hi >> 56       ] ^ A_LUT[ 1][x.hi >> 48 & 0xff] ^
+            A_LUT[ 2][x.hi >> 40 & 0xff] ^ A_LUT[ 3][x.hi >> 32 & 0xff] ^
+            A_LUT[ 4][x.hi >> 24 & 0xff] ^ A_LUT[ 5][x.hi >> 16 & 0xff] ^
+            A_LUT[ 6][x.hi >>  8 & 0xff] ^ A_LUT[ 7][x.hi       & 0xff] ^
+            A_LUT[ 8][x.lo >> 56       ] ^ A_LUT[ 9][x.lo >> 48 & 0xff] ^
+            A_LUT[10][x.lo >> 40 & 0xff] ^ A_LUT[11][x.lo >> 32 & 0xff] ^
+            A_LUT[12][x.lo >> 24 & 0xff] ^ A_LUT[13][x.lo >> 16 & 0xff] ^
+            A_LUT[14][x.lo >>  8 & 0xff] ^ A_LUT[15][x.lo       & 0xff];
     }
     static ARIAWord fo(ARIAWord const &d, ARIAWord const &rk) {
         ARIAWord x = d ^ rk;
         return
-            O_LUT[ 0][x[ 0]] ^ O_LUT[ 1][x[ 1]] ^ O_LUT[ 2][x[ 2]] ^ O_LUT[ 3][x[ 3]] ^
-            O_LUT[ 4][x[ 4]] ^ O_LUT[ 5][x[ 5]] ^ O_LUT[ 6][x[ 6]] ^ O_LUT[ 7][x[ 7]] ^
-            O_LUT[ 8][x[ 8]] ^ O_LUT[ 9][x[ 9]] ^ O_LUT[10][x[10]] ^ O_LUT[11][x[11]] ^
-            O_LUT[12][x[12]] ^ O_LUT[13][x[13]] ^ O_LUT[14][x[14]] ^ O_LUT[15][x[15]];
+            O_LUT[ 0][x.hi >> 56       ] ^ O_LUT[ 1][x.hi >> 48 & 0xff] ^
+            O_LUT[ 2][x.hi >> 40 & 0xff] ^ O_LUT[ 3][x.hi >> 32 & 0xff] ^
+            O_LUT[ 4][x.hi >> 24 & 0xff] ^ O_LUT[ 5][x.hi >> 16 & 0xff] ^
+            O_LUT[ 6][x.hi >>  8 & 0xff] ^ O_LUT[ 7][x.hi       & 0xff] ^
+            O_LUT[ 8][x.lo >> 56       ] ^ O_LUT[ 9][x.lo >> 48 & 0xff] ^
+            O_LUT[10][x.lo >> 40 & 0xff] ^ O_LUT[11][x.lo >> 32 & 0xff] ^
+            O_LUT[12][x.lo >> 24 & 0xff] ^ O_LUT[13][x.lo >> 16 & 0xff] ^
+            O_LUT[14][x.lo >>  8 & 0xff] ^ O_LUT[15][x.lo       & 0xff];
     }
     static ARIAWord fe(ARIAWord const &d, ARIAWord const &rk) {
         ARIAWord x = d ^ rk;
         return
-            E_LUT[ 0][x[ 0]] ^ E_LUT[ 1][x[ 1]] ^ E_LUT[ 2][x[ 2]] ^ E_LUT[ 3][x[ 3]] ^
-            E_LUT[ 4][x[ 4]] ^ E_LUT[ 5][x[ 5]] ^ E_LUT[ 6][x[ 6]] ^ E_LUT[ 7][x[ 7]] ^
-            E_LUT[ 8][x[ 8]] ^ E_LUT[ 9][x[ 9]] ^ E_LUT[10][x[10]] ^ E_LUT[11][x[11]] ^
-            E_LUT[12][x[12]] ^ E_LUT[13][x[13]] ^ E_LUT[14][x[14]] ^ E_LUT[15][x[15]];
+            E_LUT[ 0][x.hi >> 56       ] ^ E_LUT[ 1][x.hi >> 48 & 0xff] ^
+            E_LUT[ 2][x.hi >> 40 & 0xff] ^ E_LUT[ 3][x.hi >> 32 & 0xff] ^
+            E_LUT[ 4][x.hi >> 24 & 0xff] ^ E_LUT[ 5][x.hi >> 16 & 0xff] ^
+            E_LUT[ 6][x.hi >>  8 & 0xff] ^ E_LUT[ 7][x.hi       & 0xff] ^
+            E_LUT[ 8][x.lo >> 56       ] ^ E_LUT[ 9][x.lo >> 48 & 0xff] ^
+            E_LUT[10][x.lo >> 40 & 0xff] ^ E_LUT[11][x.lo >> 32 & 0xff] ^
+            E_LUT[12][x.lo >> 24 & 0xff] ^ E_LUT[13][x.lo >> 16 & 0xff] ^
+            E_LUT[14][x.lo >>  8 & 0xff] ^ E_LUT[15][x.lo       & 0xff];
     }
 };
 template <int L, int R = 8 + 2 * L>
