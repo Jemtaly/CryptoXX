@@ -58,6 +58,7 @@ void read_arg(std::string const &arg, uint8_t *dst, size_t len) {
         throw std::runtime_error("Invalid " + arg + ", should be a " + std::to_string(len) + "-byte hex string.");
     }
 }
+// encrypt single block of data from command line arguments, and print the result (in hex format)
 template <typename BlockCipher>
 void bc_enc() {
     uint8_t key[BlockCipher::KEY_SIZE];
@@ -70,6 +71,7 @@ void bc_enc() {
     BlockCipher(key).encrypt(msg, msg);
     print_hex(msg, BlockCipher::BLOCK_SIZE);
 }
+// decrypt single block of data from command line arguments, and print the result (in hex format)
 template <typename BlockCipher>
 void bc_dec() {
     uint8_t key[BlockCipher::KEY_SIZE];
@@ -82,6 +84,7 @@ void bc_dec() {
     BlockCipher(key).decrypt(msg, msg);
     print_hex(msg, BlockCipher::BLOCK_SIZE);
 }
+// encrypt/decrypt data with block cipher mode of operation from stdin to stdout
 template <typename BlockCipherCrypter>
 void bc_cry() {
     uint8_t key[BlockCipherCrypter::KEY_SIZE];
@@ -106,6 +109,7 @@ void bc_cry() {
         fprintf(stderr, "Warning: Error occurred while flushing cipher.\n");
     }
 }
+// encrypt/decrypt data with stream cipher from stdin to stdout
 template <typename StreamCipherCrypter>
 void sc_cry() {
     uint8_t key[StreamCipherCrypter::KEY_SIZE];
@@ -125,6 +129,7 @@ void sc_cry() {
     }
     fwrite(dst, 1, scc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
 }
+// generate pseudo-random data with stream cipher from stdin to stdout
 template <typename PseudoRandomGenerator>
 void pr_gen() {
     uint8_t key[PseudoRandomGenerator::KEY_SIZE];

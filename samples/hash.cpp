@@ -45,6 +45,7 @@ void read_arg(std::string const &arg, uint8_t *dst, size_t len) {
         throw std::runtime_error("Invalid " + arg + ", should be a " + std::to_string(len) + "-byte hex string.");
     }
 }
+// calculate checksum from stdin, output to stdout in hex
 template <typename HashWrapper, typename ...Args>
 void h_cksum(Args &&...args) {
     HashWrapper hw(std::forward<Args>(args)...);

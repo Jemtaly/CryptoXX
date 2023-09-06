@@ -16,9 +16,9 @@ protected:
         return p;
     };
     static constexpr auto RC = []() {
-        std::array<uint8_t, 22> RC = {};
+        std::array<uint8_t, 30> RC = {};
         uint8_t s = 1;
-        for (int i = 1; i < 22; i++) {
+        for (int i = 1; i < 30; i++) {
             RC[i] = s;
             s = multiply(s, 0x02);
         }
