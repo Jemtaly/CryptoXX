@@ -49,13 +49,13 @@ class SM4 {
         }
         return F_LUT;
     }();
-    static uint32_t g(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
-        uint32_t x = b ^ c ^ d ^ k;
-        return G_LUT[0][x & 0xff] ^ G_LUT[1][x >> 8 & 0xff] ^ G_LUT[2][x >> 16 & 0xff] ^ G_LUT[3][x >> 24];
+    static uint32_t g(uint32_t x, uint32_t y, uint32_t z, uint32_t k) {
+        uint32_t t = x ^ y ^ z ^ k;
+        return G_LUT[0][t & 0xff] ^ G_LUT[1][t >> 8 & 0xff] ^ G_LUT[2][t >> 16 & 0xff] ^ G_LUT[3][t >> 24];
     }
-    static uint32_t f(uint32_t b, uint32_t c, uint32_t d, uint32_t k) {
-        uint32_t x = b ^ c ^ d ^ k;
-        return F_LUT[0][x & 0xff] ^ F_LUT[1][x >> 8 & 0xff] ^ F_LUT[2][x >> 16 & 0xff] ^ F_LUT[3][x >> 24];
+    static uint32_t f(uint32_t x, uint32_t y, uint32_t z, uint32_t k) {
+        uint32_t t = x ^ y ^ z ^ k;
+        return F_LUT[0][t & 0xff] ^ F_LUT[1][t >> 8 & 0xff] ^ F_LUT[2][t >> 16 & 0xff] ^ F_LUT[3][t >> 24];
     }
     uint32_t rk[32];
 public:

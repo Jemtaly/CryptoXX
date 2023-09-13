@@ -43,31 +43,31 @@ protected:
         }
         return F_LUT;
     }();
-    static uint64_t f(uint64_t in, uint64_t kx) {
-        uint64_t x = in ^ kx;
+    static uint64_t f(uint64_t qi, uint64_t qk) {
+        uint64_t qx = qi ^ qk;
         return
-            F_LUT[0][x >> 56       ] ^
-            F_LUT[1][x >> 48 & 0xff] ^
-            F_LUT[2][x >> 40 & 0xff] ^
-            F_LUT[3][x >> 32 & 0xff] ^
-            F_LUT[4][x >> 24 & 0xff] ^
-            F_LUT[5][x >> 16 & 0xff] ^
-            F_LUT[6][x >>  8 & 0xff] ^
-            F_LUT[7][x       & 0xff];
+            F_LUT[0][qx >> 56       ] ^
+            F_LUT[1][qx >> 48 & 0xff] ^
+            F_LUT[2][qx >> 40 & 0xff] ^
+            F_LUT[3][qx >> 32 & 0xff] ^
+            F_LUT[4][qx >> 24 & 0xff] ^
+            F_LUT[5][qx >> 16 & 0xff] ^
+            F_LUT[6][qx >>  8 & 0xff] ^
+            F_LUT[7][qx       & 0xff];
     }
-    static uint64_t fl(uint64_t in, uint64_t kx) {
-        uint32_t xh = in >> 32, xl = in & 0xFFFFFFFF;
-        uint32_t kh = kx >> 32, kl = kx & 0xFFFFFFFF;
-        xl ^= ROTL(xh & kh, 1);
-        xh ^=      xl | kl    ;
-        return (uint64_t)xh << 32 | (uint64_t)xl;
+    static uint64_t fl(uint64_t qi, uint64_t qk) {
+        uint32_t hi = qi >> 32, li = qi & 0xFFFFFFFF;
+        uint32_t hk = qk >> 32, lk = qk & 0xFFFFFFFF;
+        li ^= ROTL(hi & hk, 1);
+        hi ^=      li | lk    ;
+        return (uint64_t)hi << 32 | (uint64_t)li;
     }
-    static uint64_t lf(uint64_t in, uint64_t kx) {
-        uint32_t yh = in >> 32, yl = in & 0xFFFFFFFF;
-        uint32_t kh = kx >> 32, kl = kx & 0xFFFFFFFF;
-        yh ^=      yl | kl    ;
-        yl ^= ROTL(yh & kh, 1);
-        return (uint64_t)yh << 32 | (uint64_t)yl;
+    static uint64_t lf(uint64_t qi, uint64_t qk) {
+        uint32_t hi = qi >> 32, li = qi & 0xFFFFFFFF;
+        uint32_t hk = qk >> 32, lk = qk & 0xFFFFFFFF;
+        hi ^=      li | lk    ;
+        li ^= ROTL(hi & hk, 1);
+        return (uint64_t)hi << 32 | (uint64_t)li;
     }
 };
 template <int L, int K = L == 2 ? 26 : 34>
