@@ -124,8 +124,10 @@ void alg_select() {
     switch (hash(Argv[Argi++])) {
     case hash("MD5"):
         h_select<MD5>(); break;
-    case hash("SHA"):
-        h_select<SHA>(); break;
+    case hash("SHA0"):
+        h_select<SHA0>(); break;
+    case hash("SHA1"):
+        h_select<SHA1>(); break;
     case hash("SHA224"):
         h_select<SHA224>(); break;
     case hash("SHA256"):
@@ -185,7 +187,7 @@ int main(int argc, char **argv) {
                 "Available algorithms (Hash and HMAC):\n"
                 "    SHA224, SHA256, SHA3-224, SHA3-256, SHAKE128,\n"
                 "    SHA384, SHA512, SHA3-384, SHA3-512, SHAKE256,\n"
-                "    SM3, MD5, SHA, Whirlpool\n"
+                "    SM3, MD5, SHA0, SHA1, Whirlpool\n"
                 "* Program will read from stdin and output to stdout.\n"
                 "* Key should be a hex string.\n", e.what(), argv[0]);
         return 1;

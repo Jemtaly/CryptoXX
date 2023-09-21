@@ -20,6 +20,7 @@
         GG1(N, c, d, e, a, b, w, j + 3);                 \
         GG1(N, b, c, d, e, a, w, j + 4);                 \
     })
+template <bits_t R>
 class SHA {
     void compress(uint32_t *w) {
         uint32_t a = h[0];
@@ -30,7 +31,7 @@ class SHA {
         uint32_t t;
         FOR(i, 16, i + 1, i < 80, {
             t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
-            w[i] = ROTL(t, 1);
+            w[i] = ROTL(t, R);
         });
         GGX(0, a, b, c, d, e, w,  0);
         GGX(1, a, b, c, d, e, w, 20);
@@ -73,6 +74,8 @@ public:
         WRITEB_BE(dst, h, 20);
     }
 };
+using SHA0 = SHA<0>;
+using SHA1 = SHA<1>;
 #undef FF0
 #undef FF1
 #undef FF2

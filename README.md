@@ -32,7 +32,7 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 - Hashing Algorithms (and the corresponding HMAC algorithms) / 哈希算法（及对应的 HMAC 算法）
   - CRC
   - MD5
-  - SHA-1
+  - SHA-0, SHA-1
   - SHA-2 (SHA-256, SHA-224, SHA-512, SHA-384)
   - SHA-3, Keccak, SHAKE-128, SHAKE-256
   - BLAKE2 (BLAKE2s-256, BLAKE2s-224, BLAKE2b-512, BLAKE2b-384)
@@ -106,7 +106,7 @@ Available algorithms (Hash and MAC):
 Available algorithms (Hash and HMAC):
     SHA224, SHA256, SHA3-224, SHA3-256, SHAKE128,
     SHA384, SHA512, SHA3-384, SHA3-512, SHAKE256,
-    SM3, MD5, SHA, Whirlpool
+    SM3, MD5, SHA0, SHA1, Whirlpool
 * Program will read from stdin and output to stdout.
 * Key should be a hex string.
 ```

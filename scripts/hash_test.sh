@@ -5,7 +5,7 @@ if [[ $# -lt 1 ]]; then
 fi
 algs=(
     "SM3" "MD5"
-    "Whirlpool" "SHA"
+    "Whirlpool" "SHA1" "SHA0"
     "SHA224" "SHA256"
     "SHA384" "SHA512"
     "SHA3-224" "SHA3-256"
@@ -17,7 +17,7 @@ algs=(
 )
 ssls=(
     "sm3" "md5"
-    "whirlpool" "sha1"
+    "whirlpool" "sha1" ""
     "sha224" "sha256"
     "sha384" "sha512"
     "sha3-224" "sha3-256"
