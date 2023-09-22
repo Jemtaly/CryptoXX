@@ -3,10 +3,10 @@
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
-    s = ROTR(a, 2) ^ ROTR(a, 13) ^ ROTR(a, 22);               \
-    t = ROTR(e, 6) ^ ROTR(e, 11) ^ ROTR(e, 25);               \
-    u = t + CHO(e, f, g) + h + K[i] + w[i];                   \
-    v = s + MAJ(a, b, c)                  ;                   \
+    uint32_t s = ROTR(a,  2) ^ ROTR(a, 13) ^ ROTR(a, 22);     \
+    uint32_t t = ROTR(e,  6) ^ ROTR(e, 11) ^ ROTR(e, 25);     \
+    uint32_t u = t + CHO(e, f, g) + h + K[i] + w[i];          \
+    uint32_t v = s + MAJ(a, b, c)                  ;          \
     d = d + u;                                                \
     h = u + v;                                                \
 } while (0)
@@ -42,10 +42,9 @@ class SHA256Tmpl: public SHA256Base {
         uint32_t F = h[5];
         uint32_t G = h[6];
         uint32_t H = h[7];
-        uint32_t s, t, u, v;
         FOR(i, 16, i + 1, i < 64, {
-            s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
-            t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
+            uint32_t s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
+            uint32_t t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
             w[i] = w[i - 16] + s + w[i - 7] + t;
         });
         // unrolling the loop below makes it slower on my machine

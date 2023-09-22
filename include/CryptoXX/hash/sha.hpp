@@ -28,10 +28,8 @@ class SHA {
         uint32_t c = h[2];
         uint32_t d = h[3];
         uint32_t e = h[4];
-        uint32_t t;
         FOR(i, 16, i + 1, i < 80, {
-            t = w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3];
-            w[i] = ROTL(t, R);
+            w[i] = ROTL(w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3], R);
         });
         GGX(0, a, b, c, d, e, w,  0);
         GGX(1, a, b, c, d, e, w, 20);

@@ -8,10 +8,7 @@
 #define GG1(i) (5 * (i) + 1 & 0xf)
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
-#define HH1(N, a, b, c, d, s, w, K, R, i) do {   \
-    s = a + FF##N(b, c, d) + K[i] + w[GG##N(i)]; \
-    a = b + ROTL(s, R[i]);                       \
-} while (0)
+#define HH1(N, a, b, c, d, s, w, K, R, i) a = b + ROTL(a + FF##N(b, c, d) + K[i] + w[GG##N(i)], R[i])
 #define HHX(N, a, b, c, d, s, w, K, R, i)        \
     FOR(j, i, j + 4, j < i + 16, {               \
         HH1(N, a, b, c, d, s, w, K, R, j    );   \
@@ -53,7 +50,6 @@ class MD5 {
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
-        uint32_t s;
         HHX(0, a, b, c, d, s, w, K, R,  0);
         HHX(1, a, b, c, d, s, w, K, R, 16);
         HHX(2, a, b, c, d, s, w, K, R, 32);
