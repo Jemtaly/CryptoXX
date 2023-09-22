@@ -29,7 +29,7 @@
 #include "CryptoXX/stream/chacha.hpp"
 // include stream.hpp, which contains the wrapper classes for stream ciphers
 #include "CryptoXX/stream/stream.hpp"
-#define BUFSIZE 65536
+#define BUFSIZE 8192 // Same with OpenSSL default buffer size
 char **Argv;
 int Argc, Argi;
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {

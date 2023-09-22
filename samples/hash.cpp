@@ -16,7 +16,7 @@
 // include hash.hpp and hmac.hpp, which contains the wrapper classes for hash and hmac
 #include "CryptoXX/hash/hash.hpp"
 #include "CryptoXX/hash/hmac.hpp"
-#define BUFSIZE 65536
+#define BUFSIZE 8192 // Same with OpenSSL default buffer size
 char **Argv;
 int Argc, Argi;
 bool hex2bin(size_t len, char const *hex, uint8_t *bin) {

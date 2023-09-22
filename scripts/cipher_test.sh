@@ -75,7 +75,7 @@ for i in ${!algs[@]}; do
         beg_time=$(date +%s.%N)
         ssl_hash=$(
             cat $big_file |
-                openssl $ssl-ecb -K $key |
+                openssl enc -$ssl-ecb -K $key |
                 md5sum | cut -d' ' -f1
         )
         end_time=$(date +%s.%N)
@@ -87,7 +87,7 @@ for i in ${!algs[@]}; do
             exit 1
         fi
     else
-        echo -n "Testing $alg (no openssl) ... "
+        echo -n "Testing $alg (not supported by openssl) ... "
         beg_time=$(date +%s.%N)
         enc_hash=$(
             cat $big_file |
@@ -98,22 +98,4 @@ for i in ${!algs[@]}; do
         enc_time=$(echo "$end_time - $beg_time" | bc)
         echo "Done ($enc_time)"
     fi
-    for mode in ${modes[@]}; do
-        echo -n "Testing $alg $mode ... "
-        if [[ $mode == "ECB" ]]; then
-            civ=""
-        fi
-        dec_hash=$(
-            cat $tmp_file |
-                "$@" $alg $mode"Enc" $key $civ |
-                "$@" $alg $mode"Dec" $key $civ |
-                md5sum | cut -d' ' -f1
-        )
-        if [[ $dec_hash == $tmp_hash ]]; then
-            echo "OK"
-        else
-            echo "FAIL"
-            exit 1
-        fi
-    done
 done

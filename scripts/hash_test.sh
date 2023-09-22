@@ -56,7 +56,7 @@ for i in ${!algs[@]}; do
             exit 1
         fi
     else
-        echo -n "Testing $alg (no openssl) ... "
+        echo -n "Testing $alg (not supported by openssl) ... "
         beg_time=$(date +%s.%N)
         alg_hash=$(
             cat $big_file |
