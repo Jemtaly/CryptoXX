@@ -12,32 +12,22 @@
     e = ROTL(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
     b = ROTL(b, 30);                                     \
 } while (0)
-#define GGX(N, a, b, c, d, e, w, i)                      \
-    FOR(j, i, j + 5, j < i + 20, {                       \
-        GGR(N, a, b, c, d, e, w, j    );                 \
-        GGR(N, e, a, b, c, d, w, j + 1);                 \
-        GGR(N, d, e, a, b, c, w, j + 2);                 \
-        GGR(N, c, d, e, a, b, w, j + 3);                 \
-        GGR(N, b, c, d, e, a, w, j + 4);                 \
-    })
 template <bits_t R>
 class SHA {
     void compress(uint32_t *w) {
-        uint32_t a = h[0];
-        uint32_t b = h[1];
-        uint32_t c = h[2];
-        uint32_t d = h[3];
-        uint32_t e = h[4];
+        uint32_t x[5] = {
+            h[0], h[1], h[2], h[3], h[4],
+        };
         FOR(i, 16, i + 1, i < 80, { w[i] = ROTL(w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3], R); });
-        GGX(0, a, b, c, d, e, w,  0);
-        GGX(1, a, b, c, d, e, w, 20);
-        GGX(2, a, b, c, d, e, w, 40);
-        GGX(3, a, b, c, d, e, w, 60);
-        h[0] += a;
-        h[1] += b;
-        h[2] += c;
-        h[3] += d;
-        h[4] += e;
+        FOR(j,  0, j + 1, j < 20, { GGR(0, x[(20 - j) % 5], x[(21 - j) % 5], x[(22 - j) % 5], x[(23 - j) % 5], x[(24 - j) % 5], w, j); });
+        FOR(j, 20, j + 1, j < 40, { GGR(1, x[(40 - j) % 5], x[(41 - j) % 5], x[(42 - j) % 5], x[(43 - j) % 5], x[(44 - j) % 5], w, j); });
+        FOR(j, 40, j + 1, j < 60, { GGR(2, x[(60 - j) % 5], x[(61 - j) % 5], x[(62 - j) % 5], x[(63 - j) % 5], x[(64 - j) % 5], w, j); });
+        FOR(j, 60, j + 1, j < 80, { GGR(3, x[(80 - j) % 5], x[(81 - j) % 5], x[(82 - j) % 5], x[(83 - j) % 5], x[(84 - j) % 5], w, j); });
+        h[0] += x[0];
+        h[1] += x[1];
+        h[2] += x[2];
+        h[3] += x[3];
+        h[4] += x[4];
     }
     uint32_t lo = 0;
     uint32_t hi = 0;
@@ -81,4 +71,3 @@ using SHA1 = SHA<1>;
 #undef KK2
 #undef KK3
 #undef GGR
-#undef GGX

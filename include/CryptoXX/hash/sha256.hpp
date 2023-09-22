@@ -2,7 +2,7 @@
 #include "../utils.hpp"
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
-#define FF1(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
+#define FFR(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
     uint32_t s = ROTR(a,  2) ^ ROTR(a, 13) ^ ROTR(a, 22);     \
     uint32_t t = ROTR(e,  6) ^ ROTR(e, 11) ^ ROTR(e, 25);     \
     uint32_t u = t + CHO(e, f, g) + h + K[i] + w[i];          \
@@ -49,14 +49,14 @@ class SHA256Tmpl: public SHA256Base {
         });
         // unrolling the loop below makes it slower on my machine
         for (int i = 0; i < 64; i += 8) {
-            FF1(s, t, u, v, A, B, C, D, E, F, G, H, w, K, i    );
-            FF1(s, t, u, v, H, A, B, C, D, E, F, G, w, K, i + 1);
-            FF1(s, t, u, v, G, H, A, B, C, D, E, F, w, K, i + 2);
-            FF1(s, t, u, v, F, G, H, A, B, C, D, E, w, K, i + 3);
-            FF1(s, t, u, v, E, F, G, H, A, B, C, D, w, K, i + 4);
-            FF1(s, t, u, v, D, E, F, G, H, A, B, C, w, K, i + 5);
-            FF1(s, t, u, v, C, D, E, F, G, H, A, B, w, K, i + 6);
-            FF1(s, t, u, v, B, C, D, E, F, G, H, A, w, K, i + 7);
+            FFR(s, t, u, v, A, B, C, D, E, F, G, H, w, K, i    );
+            FFR(s, t, u, v, H, A, B, C, D, E, F, G, w, K, i + 1);
+            FFR(s, t, u, v, G, H, A, B, C, D, E, F, w, K, i + 2);
+            FFR(s, t, u, v, F, G, H, A, B, C, D, E, w, K, i + 3);
+            FFR(s, t, u, v, E, F, G, H, A, B, C, D, w, K, i + 4);
+            FFR(s, t, u, v, D, E, F, G, H, A, B, C, w, K, i + 5);
+            FFR(s, t, u, v, C, D, E, F, G, H, A, B, w, K, i + 6);
+            FFR(s, t, u, v, B, C, D, E, F, G, H, A, w, K, i + 7);
         }
         h[0] += A;
         h[1] += B;
@@ -107,6 +107,6 @@ using SHA224 = SHA256Tmpl<28, std::array<uint32_t, 8>{
     0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
     0xFFC00B31, 0x68581511, 0x64F98FA7, 0xBEFA4FA4,
 }>;
-#undef FF1
 #undef CHO
 #undef MAJ
+#undef FFR

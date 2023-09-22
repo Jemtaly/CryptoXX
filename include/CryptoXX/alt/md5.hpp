@@ -9,13 +9,6 @@
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
 #define HHR(N, a, b, c, d, s, w, K, R, i) a = b + ROTL(a + FF##N(b, c, d) + K[i] + w[GG##N(i)], R[i])
-#define HHX(N, a, b, c, d, s, w, K, R, i)        \
-    FOR(j, i, j + 4, j < i + 16, {               \
-        HHR(N, a, b, c, d, s, w, K, R, j    );   \
-        HHR(N, d, a, b, c, s, w, K, R, j + 1);   \
-        HHR(N, c, d, a, b, s, w, K, R, j + 2);   \
-        HHR(N, b, c, d, a, s, w, K, R, j + 3);   \
-    })
 class MD5 {
     static constexpr uint32_t K[64] = {
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -46,18 +39,17 @@ class MD5 {
         0x06, 0x0a, 0x0f, 0x15, 0x06, 0x0a, 0x0f, 0x15,
     };
     void compress(uint32_t const *w) {
-        uint32_t a = h[0];
-        uint32_t b = h[1];
-        uint32_t c = h[2];
-        uint32_t d = h[3];
-        HHX(0, a, b, c, d, s, w, K, R,  0);
-        HHX(1, a, b, c, d, s, w, K, R, 16);
-        HHX(2, a, b, c, d, s, w, K, R, 32);
-        HHX(3, a, b, c, d, s, w, K, R, 48);
-        h[0] += a;
-        h[1] += b;
-        h[2] += c;
-        h[3] += d;
+        uint32_t x[4] = {
+            h[0], h[1], h[2], h[3],
+        };
+        FOR(j,  0, j + 1, j < 16, { HHR(0, x[(16 - j) % 4], x[(17 - j) % 4], x[(18 - j) % 4], x[(19 - j) % 4], s, w, K, R, j); });
+        FOR(j, 16, j + 1, j < 32, { HHR(1, x[(32 - j) % 4], x[(33 - j) % 4], x[(34 - j) % 4], x[(35 - j) % 4], s, w, K, R, j); });
+        FOR(j, 32, j + 1, j < 48, { HHR(2, x[(48 - j) % 4], x[(49 - j) % 4], x[(50 - j) % 4], x[(51 - j) % 4], s, w, K, R, j); });
+        FOR(j, 48, j + 1, j < 64, { HHR(3, x[(64 - j) % 4], x[(65 - j) % 4], x[(66 - j) % 4], x[(67 - j) % 4], s, w, K, R, j); });
+        h[0] += x[0];
+        h[1] += x[1];
+        h[2] += x[2];
+        h[3] += x[3];
     }
     uint32_t lo = 0;
     uint32_t hi = 0;
@@ -99,4 +91,3 @@ public:
 #undef GG2
 #undef GG3
 #undef HHR
-#undef HHX

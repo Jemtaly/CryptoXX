@@ -18,40 +18,29 @@
     d =     u ;                                           \
     h = PPE(v);                                           \
 } while (0)
-#define HHX(N, a, b, c, d, e, f, g, h, w, i)              \
-    FOR(j, i, j + 4, j < i + 16, {                        \
-        HHR(N, a, b, c, d, e, f, g, h, w, j    );         \
-        HHR(N, d, a, b, c, h, e, f, g, w, j + 1);         \
-        HHR(N, c, d, a, b, g, h, e, f, w, j + 2);         \
-        HHR(N, b, c, d, a, f, g, h, e, w, j + 3);         \
-    })
 class SM3 {
     void compress(uint32_t *w) {
-        uint32_t A = h[0];
-        uint32_t B = h[1];
-        uint32_t C = h[2];
-        uint32_t D = h[3];
-        uint32_t E = h[4];
-        uint32_t F = h[5];
-        uint32_t G = h[6];
-        uint32_t H = h[7];
+        uint32_t x[4] = {
+            h[0], h[1], h[2], h[3],
+        };
+        uint32_t y[4] = {
+            h[4], h[5], h[6], h[7],
+        };
         uint32_t t, s, u, v;
         FOR(j, 16, j + 1, j < 68, {
             t = w[j - 16] ^ w[j - 9] ^ ROTL(w[j -  3], 15);
             w[j] = PPW(t) ^ w[j - 6] ^ ROTL(w[j - 13],  7);
         });
-        HHX(0, A, B, C, D, E, F, G, H, w,  0);
-        HHX(1, A, B, C, D, E, F, G, H, w, 16);
-        HHX(1, A, B, C, D, E, F, G, H, w, 32);
-        HHX(1, A, B, C, D, E, F, G, H, w, 48);
-        h[0] ^= A;
-        h[1] ^= B;
-        h[2] ^= C;
-        h[3] ^= D;
-        h[4] ^= E;
-        h[5] ^= F;
-        h[6] ^= G;
-        h[7] ^= H;
+        FOR(j,  0, j + 1, j < 16, { HHR(0, x[0 - j & 3], x[1 - j & 3], x[2 - j & 3], x[3 - j & 3], y[0 - j & 3], y[1 - j & 3], y[2 - j & 3], y[3 - j & 3], w, j); });
+        FOR(j, 16, j + 1, j < 64, { HHR(1, x[0 - j & 3], x[1 - j & 3], x[2 - j & 3], x[3 - j & 3], y[0 - j & 3], y[1 - j & 3], y[2 - j & 3], y[3 - j & 3], w, j); });
+        h[0] ^= x[0];
+        h[1] ^= x[1];
+        h[2] ^= x[2];
+        h[3] ^= x[3];
+        h[4] ^= y[0];
+        h[5] ^= y[1];
+        h[6] ^= y[2];
+        h[7] ^= y[3];
     }
     uint32_t lo = 0;
     uint32_t hi = 0;
@@ -94,4 +83,3 @@ public:
 #undef KK0
 #undef KK1
 #undef HHR
-#undef HHX
