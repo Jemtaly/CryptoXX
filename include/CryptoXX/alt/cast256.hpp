@@ -174,7 +174,6 @@ public:
         uint32_t F = GET_BE<uint32_t>(key + 20);
         uint32_t G = GET_BE<uint32_t>(key + 24);
         uint32_t H = GET_BE<uint32_t>(key + 28);
-        uint32_t I;
         for (int i = 0; i <= 11; i++) {
             FFA(G, H, Tm, Tr, 2 * i    , 0);
             FFB(F, G, Tm, Tr, 2 * i    , 1);
