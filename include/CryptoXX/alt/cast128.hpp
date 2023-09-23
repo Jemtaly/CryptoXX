@@ -1,15 +1,15 @@
 #pragma once
 #include "../utils.hpp"
-#define FFA(X, Y, I, Km, Kr, i) do {                                                          \
-    I = ROTL(Km[i] + Y, Kr[i]);                                                               \
+#define FFA(X, Y, Km, Kr, i) do {                                                             \
+    uint32_t I = ROTL(Km[i] + Y, Kr[i]);                                                      \
     X ^= ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF]; \
 } while (0)
-#define FFB(X, Y, I, Km, Kr, i) do {                                                          \
-    I = ROTL(Km[i] ^ Y, Kr[i]);                                                               \
+#define FFB(X, Y, Km, Kr, i) do {                                                             \
+    uint32_t I = ROTL(Km[i] ^ Y, Kr[i]);                                                      \
     X ^= ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF]; \
 } while (0)
-#define FFC(X, Y, I, Km, Kr, i) do {                                                          \
-    I = ROTL(Km[i] - Y, Kr[i]);                                                               \
+#define FFC(X, Y, Km, Kr, i) do {                                                             \
+    uint32_t I = ROTL(Km[i] - Y, Kr[i]);                                                      \
     X ^= ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF]; \
 } while (0)
 class CAST128 {
@@ -351,46 +351,44 @@ public:
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
-        uint32_t I;
-        FFA(L, R, I, Km, Kr,  0);
-        FFB(R, L, I, Km, Kr,  1);
-        FFC(L, R, I, Km, Kr,  2);
-        FFA(R, L, I, Km, Kr,  3);
-        FFB(L, R, I, Km, Kr,  4);
-        FFC(R, L, I, Km, Kr,  5);
-        FFA(L, R, I, Km, Kr,  6);
-        FFB(R, L, I, Km, Kr,  7);
-        FFC(L, R, I, Km, Kr,  8);
-        FFA(R, L, I, Km, Kr,  9);
-        FFB(L, R, I, Km, Kr, 10);
-        FFC(R, L, I, Km, Kr, 11);
-        FFA(L, R, I, Km, Kr, 12);
-        FFB(R, L, I, Km, Kr, 13);
-        FFC(L, R, I, Km, Kr, 14);
-        FFA(R, L, I, Km, Kr, 15);
+        FFA(L, R, Km, Kr,  0);
+        FFB(R, L, Km, Kr,  1);
+        FFC(L, R, Km, Kr,  2);
+        FFA(R, L, Km, Kr,  3);
+        FFB(L, R, Km, Kr,  4);
+        FFC(R, L, Km, Kr,  5);
+        FFA(L, R, Km, Kr,  6);
+        FFB(R, L, Km, Kr,  7);
+        FFC(L, R, Km, Kr,  8);
+        FFA(R, L, Km, Kr,  9);
+        FFB(L, R, Km, Kr, 10);
+        FFC(R, L, Km, Kr, 11);
+        FFA(L, R, Km, Kr, 12);
+        FFB(R, L, Km, Kr, 13);
+        FFC(L, R, Km, Kr, 14);
+        FFA(R, L, Km, Kr, 15);
         PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
-        uint32_t I;
-        FFA(L, R, I, Km, Kr, 15);
-        FFC(R, L, I, Km, Kr, 14);
-        FFB(L, R, I, Km, Kr, 13);
-        FFA(R, L, I, Km, Kr, 12);
-        FFC(L, R, I, Km, Kr, 11);
-        FFB(R, L, I, Km, Kr, 10);
-        FFA(L, R, I, Km, Kr,  9);
-        FFC(R, L, I, Km, Kr,  8);
-        FFB(L, R, I, Km, Kr,  7);
-        FFA(R, L, I, Km, Kr,  6);
-        FFC(L, R, I, Km, Kr,  5);
-        FFB(R, L, I, Km, Kr,  4);
-        FFA(L, R, I, Km, Kr,  3);
-        FFC(R, L, I, Km, Kr,  2);
-        FFB(L, R, I, Km, Kr,  1);
-        FFA(R, L, I, Km, Kr,  0);
+        FFA(L, R, Km, Kr, 15);
+        FFC(R, L, Km, Kr, 14);
+        FFB(L, R, Km, Kr, 13);
+        FFA(R, L, Km, Kr, 12);
+        FFC(L, R, Km, Kr, 11);
+        FFB(R, L, Km, Kr, 10);
+        FFA(L, R, Km, Kr,  9);
+        FFC(R, L, Km, Kr,  8);
+        FFB(L, R, Km, Kr,  7);
+        FFA(R, L, Km, Kr,  6);
+        FFC(L, R, Km, Kr,  5);
+        FFB(R, L, Km, Kr,  4);
+        FFA(L, R, Km, Kr,  3);
+        FFC(R, L, Km, Kr,  2);
+        FFB(L, R, Km, Kr,  1);
+        FFA(R, L, Km, Kr,  0);
         PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }

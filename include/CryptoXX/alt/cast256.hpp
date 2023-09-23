@@ -1,15 +1,15 @@
 #pragma once
 #include "../utils.hpp"
-#define FFA(X, Y, I, Km, Kr, i, j) do {                                                       \
-    I = ROTL(Km[i][j] + Y, Kr[i][j]);                                                         \
+#define FFA(X, Y, Km, Kr, i, j) do {                                                          \
+    uint32_t I = ROTL(Km[i][j] + Y, Kr[i][j]);                                                \
     X ^= ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF]; \
 } while (0)
-#define FFB(X, Y, I, Km, Kr, i, j) do {                                                       \
-    I = ROTL(Km[i][j] ^ Y, Kr[i][j]);                                                         \
+#define FFB(X, Y, Km, Kr, i, j) do {                                                          \
+    uint32_t I = ROTL(Km[i][j] ^ Y, Kr[i][j]);                                                \
     X ^= ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF]; \
 } while (0)
-#define FFC(X, Y, I, Km, Kr, i, j) do {                                                       \
-    I = ROTL(Km[i][j] - Y, Kr[i][j]);                                                         \
+#define FFC(X, Y, Km, Kr, i, j) do {                                                          \
+    uint32_t I = ROTL(Km[i][j] - Y, Kr[i][j]);                                                \
     X ^= ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF]; \
 } while (0)
 class CAST256 {
@@ -176,22 +176,22 @@ public:
         uint32_t H = GET_BE<uint32_t>(key + 28);
         uint32_t I;
         for (int i = 0; i <= 11; i++) {
-            FFA(G, H, I, Tm, Tr, 2 * i    , 0);
-            FFB(F, G, I, Tm, Tr, 2 * i    , 1);
-            FFC(E, F, I, Tm, Tr, 2 * i    , 2);
-            FFA(D, E, I, Tm, Tr, 2 * i    , 3);
-            FFB(C, D, I, Tm, Tr, 2 * i    , 4);
-            FFC(B, C, I, Tm, Tr, 2 * i    , 5);
-            FFA(A, B, I, Tm, Tr, 2 * i    , 6);
-            FFB(H, A, I, Tm, Tr, 2 * i    , 7);
-            FFA(G, H, I, Tm, Tr, 2 * i + 1, 0);
-            FFB(F, G, I, Tm, Tr, 2 * i + 1, 1);
-            FFC(E, F, I, Tm, Tr, 2 * i + 1, 2);
-            FFA(D, E, I, Tm, Tr, 2 * i + 1, 3);
-            FFB(C, D, I, Tm, Tr, 2 * i + 1, 4);
-            FFC(B, C, I, Tm, Tr, 2 * i + 1, 5);
-            FFA(A, B, I, Tm, Tr, 2 * i + 1, 6);
-            FFB(H, A, I, Tm, Tr, 2 * i + 1, 7);
+            FFA(G, H, Tm, Tr, 2 * i    , 0);
+            FFB(F, G, Tm, Tr, 2 * i    , 1);
+            FFC(E, F, Tm, Tr, 2 * i    , 2);
+            FFA(D, E, Tm, Tr, 2 * i    , 3);
+            FFB(C, D, Tm, Tr, 2 * i    , 4);
+            FFC(B, C, Tm, Tr, 2 * i    , 5);
+            FFA(A, B, Tm, Tr, 2 * i    , 6);
+            FFB(H, A, Tm, Tr, 2 * i    , 7);
+            FFA(G, H, Tm, Tr, 2 * i + 1, 0);
+            FFB(F, G, Tm, Tr, 2 * i + 1, 1);
+            FFC(E, F, Tm, Tr, 2 * i + 1, 2);
+            FFA(D, E, Tm, Tr, 2 * i + 1, 3);
+            FFB(C, D, Tm, Tr, 2 * i + 1, 4);
+            FFC(B, C, Tm, Tr, 2 * i + 1, 5);
+            FFA(A, B, Tm, Tr, 2 * i + 1, 6);
+            FFB(H, A, Tm, Tr, 2 * i + 1, 7);
             Kr[i][0] = A;
             Kr[i][1] = C;
             Kr[i][2] = E;
@@ -207,18 +207,17 @@ public:
         uint32_t B = GET_BE<uint32_t>(src +  4);
         uint32_t C = GET_BE<uint32_t>(src +  8);
         uint32_t D = GET_BE<uint32_t>(src + 12);
-        uint32_t I;
         for (int i =  0; i <=  5; i++) {
-            FFA(C, D, I, Km, Kr, i, 0);
-            FFB(B, C, I, Km, Kr, i, 1);
-            FFC(A, B, I, Km, Kr, i, 2);
-            FFA(D, A, I, Km, Kr, i, 3);
+            FFA(C, D, Km, Kr, i, 0);
+            FFB(B, C, Km, Kr, i, 1);
+            FFC(A, B, Km, Kr, i, 2);
+            FFA(D, A, Km, Kr, i, 3);
         }
         for (int i =  6; i <= 11; i++) {
-            FFA(D, A, I, Km, Kr, i, 3);
-            FFC(A, B, I, Km, Kr, i, 2);
-            FFB(B, C, I, Km, Kr, i, 1);
-            FFA(C, D, I, Km, Kr, i, 0);
+            FFA(D, A, Km, Kr, i, 3);
+            FFC(A, B, Km, Kr, i, 2);
+            FFB(B, C, Km, Kr, i, 1);
+            FFA(C, D, Km, Kr, i, 0);
         }
         PUT_BE(dst     , A);
         PUT_BE(dst +  4, B);
@@ -230,18 +229,17 @@ public:
         uint32_t B = GET_BE<uint32_t>(src +  4);
         uint32_t C = GET_BE<uint32_t>(src +  8);
         uint32_t D = GET_BE<uint32_t>(src + 12);
-        uint32_t I;
         for (int i = 11; i >=  6; i--) {
-            FFA(C, D, I, Km, Kr, i, 0);
-            FFB(B, C, I, Km, Kr, i, 1);
-            FFC(A, B, I, Km, Kr, i, 2);
-            FFA(D, A, I, Km, Kr, i, 3);
+            FFA(C, D, Km, Kr, i, 0);
+            FFB(B, C, Km, Kr, i, 1);
+            FFC(A, B, Km, Kr, i, 2);
+            FFA(D, A, Km, Kr, i, 3);
         }
         for (int i =  5; i >=  0; i--) {
-            FFA(D, A, I, Km, Kr, i, 3);
-            FFC(A, B, I, Km, Kr, i, 2);
-            FFB(B, C, I, Km, Kr, i, 1);
-            FFA(C, D, I, Km, Kr, i, 0);
+            FFA(D, A, Km, Kr, i, 3);
+            FFC(A, B, Km, Kr, i, 2);
+            FFB(B, C, Km, Kr, i, 1);
+            FFA(C, D, Km, Kr, i, 0);
         }
         PUT_BE(dst     , A);
         PUT_BE(dst +  4, B);
