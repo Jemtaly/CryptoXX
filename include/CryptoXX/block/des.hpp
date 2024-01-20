@@ -10,16 +10,16 @@ struct DESPermutation {
     static constexpr DESUint<WI> MASK = (1 << WG) - 1; // mask for each group
     static constexpr DESUint<WI> SIZE = (1 << WG) * 1; // number of elements in each group
     std::array<std::array<DESUint<WO>, SIZE>, GN> LUT = {};
-    // generate lookup table for Permutation function
+    // generate lookup table for permutation function
     // |<--------------------WI-------------------->|
     // |<--WG-->|<--WG-->| ...... |<--WG-->|<--WG-->|
     // |  GN-1  |  GN-2  | ...... |   G1   |   G0   |
-    // |  1  0  |  1  1  |  0  1  |  0  0  |  1  1  |
+    // |  x  y  |  -  -  |  -  -  |  -  -  |  -  -  |
     // |  |  |                                      |
     // |  |  +-----------------------------+        |
     // |  + -------------------+           |        |
     // |                       |           |        |
-    // | LUT[GN-1][10] = |  0  1  0  0  0  0  0  0  |
+    // | LUT[GN-1][xy] = |  0  x  0  0  0  y  0  0  |
     // |                 |<-----------WO----------->|
     constexpr DESPermutation(std::initializer_list<bits_t> A) {
         for (int o = 0; o < WO; o++) {
