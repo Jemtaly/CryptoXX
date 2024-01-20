@@ -43,7 +43,7 @@ struct BLAKE3Compressor {
             i [0], i [1], i [2], i [3], i [4], i [5], i [6], i [7],
             IV[0], IV[1], IV[2], IV[3], lo   , hi   , ln   , fl   ,
         };
-        FOR(i, 0, i + 1, i < 7, {
+        FOR_(i, 0, i + 1, i < 7, {
             QROUND(v, m, SIGMA[i],  0,  4,  8, 12,  0,  1);
             QROUND(v, m, SIGMA[i],  1,  5,  9, 13,  2,  3);
             QROUND(v, m, SIGMA[i],  2,  6, 10, 14,  4,  5);

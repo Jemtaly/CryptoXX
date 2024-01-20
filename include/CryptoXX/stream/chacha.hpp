@@ -39,7 +39,7 @@ public:
             input[0x8], input[0x9], input[0xa], input[0xb],
             input[0xc], input[0xd], input[0xe], input[0xf],
         };
-        FOR(i, 0, i + 1, i < RND / 2, {
+        FOR_(i, 0, i + 1, i < RND / 2, {
             QROUND(state,  0,  4,  8, 12);
             QROUND(state,  1,  5,  9, 13);
             QROUND(state,  2,  6, 10, 14);
@@ -49,7 +49,7 @@ public:
             QROUND(state,  2,  7,  8, 13);
             QROUND(state,  3,  4,  9, 14);
         });
-        FOR(i, 0, i + 1, i < 16, {
+        FOR_(i, 0, i + 1, i < 16, {
             state[i] += input[i];
         });
         WRITE_LE(buf, state, 16);

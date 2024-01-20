@@ -9,8 +9,8 @@
 #define GG2(i) (3 * (i) + 5 & 0xf)
 #define GG3(i) (7 * (i)     & 0xf)
 #define HHR(N, a, b, c, d, s, w, K, R, i) a = b + ROTL(a + FF##N(b, c, d) + K[i] + w[GG##N(i)], R[i])
-#define HHX(N, a, b, c, d, s, w, K, R, i)        \
-    FOR(j, i, j + 4, j < i + 16, {               \
+#define HHS(N, a, b, c, d, s, w, K, R, i)        \
+    FOR_(j, i, j + 4, j < i + 16, {              \
         HHR(N, a, b, c, d, s, w, K, R, j    );   \
         HHR(N, d, a, b, c, s, w, K, R, j + 1);   \
         HHR(N, c, d, a, b, s, w, K, R, j + 2);   \
@@ -50,10 +50,10 @@ class MD5 {
         uint32_t b = h[1];
         uint32_t c = h[2];
         uint32_t d = h[3];
-        HHX(0, a, b, c, d, s, w, K, R,  0);
-        HHX(1, a, b, c, d, s, w, K, R, 16);
-        HHX(2, a, b, c, d, s, w, K, R, 32);
-        HHX(3, a, b, c, d, s, w, K, R, 48);
+        HHS(0, a, b, c, d, s, w, K, R,  0);
+        HHS(1, a, b, c, d, s, w, K, R, 16);
+        HHS(2, a, b, c, d, s, w, K, R, 32);
+        HHS(3, a, b, c, d, s, w, K, R, 48);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -99,4 +99,4 @@ public:
 #undef GG2
 #undef GG3
 #undef HHR
-#undef HHX
+#undef HHS

@@ -42,7 +42,7 @@ class SHA256Tmpl: public SHA256Base {
         uint32_t F = h[5];
         uint32_t G = h[6];
         uint32_t H = h[7];
-        FOR(i, 16, i + 1, i < 64, {
+        FOR_(i, 16, i + 1, i < 64, {
             uint32_t s = ROTR(w[i - 15],  7) ^ ROTR(w[i - 15], 18) ^ (w[i - 15] >>  3);
             uint32_t t = ROTR(w[i -  2], 17) ^ ROTR(w[i -  2], 19) ^ (w[i -  2] >> 10);
             w[i] = w[i - 16] + s + w[i - 7] + t;

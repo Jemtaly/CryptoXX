@@ -11,7 +11,7 @@ struct DESPermutation {
     // permutation function
     DESUint<WO> operator()(DESUint<WI> vi) const {
         DESUint<WO> vo = 0;
-        FOR(o, 0, o + 1, o < WO, {
+        FOR_(o, 0, o + 1, o < WO, {
             vo |= (DESUint<WO>)(vi >> A[o] & 1) << o;
         });
         return vo;

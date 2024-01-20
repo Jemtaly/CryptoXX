@@ -4,13 +4,23 @@
 // choose the type of unsigned integer to use based on the bit width
 template <int WD>
 using DESUint = typename std::conditional<WD <= 32, uint32_t, uint64_t>::type;
-// WI: width of input, WO: width of output, WG: width of each group, GI: number of groups in input
-template <int WI, int WO, int WG = 8, int GI = (WI + WG - 1) / WG>
+// WI: width of input, WO: width of output, WG: width of each group, GN: number of groups in input
+template <int WI, int WO, int WG = 8, int GN = (WI + WG - 1) / WG>
 struct DESPermutation {
-    static constexpr DESUint<WI> MASK = (1 << WG) - 1;
-    static constexpr DESUint<WO> SIZE = (1 << WG) - 0;
-    std::array<std::array<DESUint<WO>, SIZE>, GI> LUT = {};
-    // generate lookup table for P-boxes
+    static constexpr DESUint<WI> MASK = (1 << WG) - 1; // mask for each group
+    static constexpr DESUint<WI> SIZE = (1 << WG) * 1; // number of elements in each group
+    std::array<std::array<DESUint<WO>, SIZE>, GN> LUT = {};
+    // generate lookup table for Permutation function
+    // |<--------------------WI-------------------->|
+    // |<--WG-->|<--WG-->| ...... |<--WG-->|<--WG-->|
+    // |  GN-1  |  GN-2  | ...... |   G1   |   G0   |
+    // |  1  0  |  1  1  |  0  1  |  0  0  |  1  1  |
+    // |  |  |                                      |
+    // |  |  +-----------------------------+        |
+    // |  + -------------------+           |        |
+    // |                       |           |        |
+    // | LUT[GN-1][10] = |  0  1  0  0  0  0  0  0  |
+    // |                 |<-----------WO----------->|
     constexpr DESPermutation(std::initializer_list<bits_t> A) {
         for (int o = 0; o < WO; o++) {
             int i = A.begin()[o];
@@ -19,10 +29,9 @@ struct DESPermutation {
             }
         }
     }
-    // permutation function optimized using lookup table
     DESUint<WO> operator()(DESUint<WI> vi) const {
         DESUint<WO> vo = 0;
-        FOR(i, 0, i + WG, i < WI, {
+        FOR_(i, 0, i + WG, i < WI, {
             vo |= LUT[i / WG][vi >> i & MASK];
         });
         return vo;

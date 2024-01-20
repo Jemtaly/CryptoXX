@@ -74,7 +74,7 @@ template <int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
 class RijndaelTmpl: public RijndaelBase {
     static void mix_clmns_enc(RijndaelWord *q) {
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w =
                 E_MCT[0][q[i].b[0]].w ^
                 E_MCT[1][q[i].b[1]].w ^
@@ -83,7 +83,7 @@ class RijndaelTmpl: public RijndaelBase {
         });
     }
     static void mix_clmns_dec(RijndaelWord *q) {
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w =
                 D_MCT[0][q[i].b[0]].w ^
                 D_MCT[1][q[i].b[1]].w ^
@@ -93,10 +93,10 @@ class RijndaelTmpl: public RijndaelBase {
     }
     static void sub_shift_enc(RijndaelWord *q) {
         RijndaelWord t[B];
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             t[i].w = q[i].w;
         });
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].b[0] = S_BOX[t[(i + 840) % B].b[0]];
             q[i].b[1] = S_BOX[t[(i + 841) % B].b[1]];
             q[i].b[2] = S_BOX[t[(i + 842) % B].b[2]];
@@ -105,10 +105,10 @@ class RijndaelTmpl: public RijndaelBase {
     }
     static void sub_shift_dec(RijndaelWord *q) {
         RijndaelWord t[B];
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             t[i].w = q[i].w;
         });
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].b[0] = S_BOX[t[(i + 840) % B].b[0]];
             q[i].b[1] = S_BOX[t[(i + 839) % B].b[1]];
             q[i].b[2] = S_BOX[t[(i + 838) % B].b[2]];
@@ -116,7 +116,7 @@ class RijndaelTmpl: public RijndaelBase {
         });
     }
     static void add_round_key(RijndaelWord *q, RijndaelWord const *k) {
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w ^= k[i].w;
         });
     }

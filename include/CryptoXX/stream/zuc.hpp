@@ -78,7 +78,7 @@ class ZUC {
         if constexpr (INIT) {
             f = mod_add(f, w >> 1);
         }
-        FOR(i, 0, i + 1, i < 15, {
+        FOR_(i, 0, i + 1, i < 15, {
             lfsr[i] = lfsr[i + 1];
         });
         lfsr[15] = f;

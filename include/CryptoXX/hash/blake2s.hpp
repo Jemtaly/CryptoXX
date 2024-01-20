@@ -34,7 +34,7 @@ class BLAKE2sTmpl: public BLAKE2sBase {
         v[12] ^= lo;
         v[13] ^= hi;
         v[14] = fin ? ~v[14] : v[14];
-        FOR(i, 0, i + 1, i < 10, {
+        FOR_(i, 0, i + 1, i < 10, {
             QROUND(v, m, SIGMA[i],  0,  4,  8, 12,  0,  1);
             QROUND(v, m, SIGMA[i],  1,  5,  9, 13,  2,  3);
             QROUND(v, m, SIGMA[i],  2,  6, 10, 14,  4,  5);

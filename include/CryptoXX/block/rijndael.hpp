@@ -108,14 +108,14 @@ public:
             ((RijndaelWord *)rk)[i].w = ((RijndaelWord *)rk)[i - K].w ^ t.w;
         }
         // Generate decryption round key from encryption round key
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             ik[R][i].w = rk[0][i].w;
         });
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             ik[0][i].w = rk[R][i].w;
         });
         for (int r = 1; r < R; ++r) {
-            FOR(i, 0, i + 1, i < B, {
+            FOR_(i, 0, i + 1, i < B, {
                 ik[R - r][i].w =
                     D_MCT[0][rk[r][i].b[0]].w ^
                     D_MCT[1][rk[r][i].b[1]].w ^
@@ -128,14 +128,14 @@ public:
         RijndaelWord q[B];
         RijndaelWord t[B];
         memcpy(q, src, B * 4);
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w ^= rk[0][i].w;
         });
         for (int r = 1; r < R; ++r) {
-            FOR(i, 0, i + 1, i < B, {
+            FOR_(i, 0, i + 1, i < B, {
                 t[i].w = q[i].w;
             });
-            FOR(i, 0, i + 1, i < B, {
+            FOR_(i, 0, i + 1, i < B, {
                 q[i].w =
                     E_LUT[0][t[(i + 840) % B].b[0]].w ^
                     E_LUT[1][t[(i + 841) % B].b[1]].w ^
@@ -143,10 +143,10 @@ public:
                     E_LUT[3][t[(i + 843) % B].b[3]].w ^ rk[r][i].w;
             });
         }
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             t[i].w = q[i].w;
         });
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w =
                 E_SBT[0][t[(i + 840) % B].b[0]].w ^
                 E_SBT[1][t[(i + 841) % B].b[1]].w ^
@@ -159,14 +159,14 @@ public:
         RijndaelWord q[B];
         RijndaelWord t[B];
         memcpy(q, src, B * 4);
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w ^= ik[0][i].w;
         });
         for (int r = 1; r < R; ++r) {
-            FOR(i, 0, i + 1, i < B, {
+            FOR_(i, 0, i + 1, i < B, {
                 t[i].w = q[i].w;
             });
-            FOR(i, 0, i + 1, i < B, {
+            FOR_(i, 0, i + 1, i < B, {
                 q[i].w =
                     D_LUT[0][t[(i + 840) % B].b[0]].w ^
                     D_LUT[1][t[(i + 839) % B].b[1]].w ^
@@ -174,10 +174,10 @@ public:
                     D_LUT[3][t[(i + 837) % B].b[3]].w ^ ik[r][i].w;
             });
         }
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             t[i].w = q[i].w;
         });
-        FOR(i, 0, i + 1, i < B, {
+        FOR_(i, 0, i + 1, i < B, {
             q[i].w =
                 D_SBT[0][t[(i + 840) % B].b[0]].w ^
                 D_SBT[1][t[(i + 839) % B].b[1]].w ^

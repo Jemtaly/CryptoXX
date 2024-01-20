@@ -18,8 +18,8 @@
     d =     u ;                                           \
     h = PPE(v);                                           \
 } while (0)
-#define HHX(N, a, b, c, d, e, f, g, h, w, i)              \
-    FOR(j, i, j + 4, j < i + 16, {                        \
+#define HHS(N, a, b, c, d, e, f, g, h, w, i)              \
+    FOR_(j, i, j + 4, j < i + 16, {                       \
         HHR(N, a, b, c, d, e, f, g, h, w, j    );         \
         HHR(N, d, a, b, c, h, e, f, g, w, j + 1);         \
         HHR(N, c, d, a, b, g, h, e, f, w, j + 2);         \
@@ -36,14 +36,14 @@ class SM3 {
         uint32_t G = h[6];
         uint32_t H = h[7];
         uint32_t t, s, u, v;
-        FOR(j, 16, j + 1, j < 68, {
+        FOR_(j, 16, j + 1, j < 68, {
             t = w[j - 16] ^ w[j - 9] ^ ROTL(w[j -  3], 15);
             w[j] = PPW(t) ^ w[j - 6] ^ ROTL(w[j - 13],  7);
         });
-        HHX(0, A, B, C, D, E, F, G, H, w,  0);
-        HHX(1, A, B, C, D, E, F, G, H, w, 16);
-        HHX(1, A, B, C, D, E, F, G, H, w, 32);
-        HHX(1, A, B, C, D, E, F, G, H, w, 48);
+        HHS(0, A, B, C, D, E, F, G, H, w,  0);
+        HHS(1, A, B, C, D, E, F, G, H, w, 16);
+        HHS(1, A, B, C, D, E, F, G, H, w, 32);
+        HHS(1, A, B, C, D, E, F, G, H, w, 48);
         h[0] ^= A;
         h[1] ^= B;
         h[2] ^= C;
@@ -94,4 +94,4 @@ public:
 #undef KK0
 #undef KK1
 #undef HHR
-#undef HHX
+#undef HHS

@@ -12,8 +12,8 @@
     e = ROTL(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
     b = ROTL(b, 30);                                     \
 } while (0)
-#define GGX(N, a, b, c, d, e, w, i)                      \
-    FOR(j, i, j + 5, j < i + 20, {                       \
+#define GGS(N, a, b, c, d, e, w, i)                      \
+    FOR_(j, i, j + 5, j < i + 20, {                      \
         GGR(N, a, b, c, d, e, w, j    );                 \
         GGR(N, e, a, b, c, d, w, j + 1);                 \
         GGR(N, d, e, a, b, c, w, j + 2);                 \
@@ -28,11 +28,11 @@ class SHA {
         uint32_t c = h[2];
         uint32_t d = h[3];
         uint32_t e = h[4];
-        FOR(i, 16, i + 1, i < 80, { w[i] = ROTL(w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3], R); });
-        GGX(0, a, b, c, d, e, w,  0);
-        GGX(1, a, b, c, d, e, w, 20);
-        GGX(2, a, b, c, d, e, w, 40);
-        GGX(3, a, b, c, d, e, w, 60);
+        FOR_(i, 16, i + 1, i < 80, { w[i] = ROTL(w[i - 16] ^ w[i - 14] ^ w[i - 8] ^ w[i - 3], R); });
+        GGS(0, a, b, c, d, e, w,  0);
+        GGS(1, a, b, c, d, e, w, 20);
+        GGS(2, a, b, c, d, e, w, 40);
+        GGS(3, a, b, c, d, e, w, 60);
         h[0] += a;
         h[1] += b;
         h[2] += c;
@@ -81,4 +81,4 @@ using SHA1 = SHA<1>;
 #undef KK2
 #undef KK3
 #undef GGR
-#undef GGX
+#undef GGS

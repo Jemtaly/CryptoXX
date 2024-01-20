@@ -278,7 +278,7 @@ constexpr void EndianUtils<E>::XORB(uint8_t *arr, T const *a, int n) {
 #define XORB_BE EndianUtils<std::endian::big>::XORB
 #define XORB_LE EndianUtils<std::endian::little>::XORB
 // Loop unrolling
-#define FOR(i, Init, Next, Cond, ...) do {                                              \
+#define FOR_(i, Init, Next, Cond, ...) do {                                             \
     static constexpr auto Arr = []() {                                                  \
         auto i = Init;                                                                  \
         bool $ = Cond;                                                                  \

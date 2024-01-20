@@ -46,7 +46,7 @@ class SHA512Tmpl: public SHA512Base {
         uint64_t F = h[5];
         uint64_t G = h[6];
         uint64_t H = h[7];
-        FOR(i, 16, i + 1, i < 80, {
+        FOR_(i, 16, i + 1, i < 80, {
             uint64_t s = ROTR(w[i - 15],  1) ^ ROTR(w[i - 15],  8) ^ (w[i - 15] >> 7);
             uint64_t t = ROTR(w[i -  2], 19) ^ ROTR(w[i -  2], 61) ^ (w[i -  2] >> 6);
             w[i] = w[i - 16] + s + w[i - 7] + t;
