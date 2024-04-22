@@ -55,10 +55,10 @@ public:
         return dst;
     }
 };
+#undef SEC
+#undef KEY
+#undef CIV
 template <class StreamCipher>
 using StreamCipherEncrypter = StreamCipherCrypter<StreamCipher>;
 template <class StreamCipher>
 using StreamCipherDecrypter = StreamCipherCrypter<StreamCipher>;
-#undef SEC
-#undef KEY
-#undef CIV

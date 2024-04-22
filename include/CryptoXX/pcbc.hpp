@@ -50,7 +50,7 @@ public:
 };
 #undef BLK
 #undef KEY
-#include "block.hpp"
+#include "CryptoXX/block.hpp"
 template <class BlockCipher>
 using PCBCEncrypter = BlockCipherEncrypter<PCBCEnc<BlockCipher>>;
 template <class BlockCipher>

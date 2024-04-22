@@ -45,6 +45,6 @@ public:
 };
 #undef BLK
 #undef DIG
-#include "hash.hpp"
+#include "CryptoXX/hash.hpp"
 template <class Hash>
 using HMACWrapper = HashWrapper<HMAC<Hash>>;

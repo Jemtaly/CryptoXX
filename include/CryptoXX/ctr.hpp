@@ -22,7 +22,7 @@ public:
 };
 #undef BLK
 #undef KEY
-#include "stream.hpp"
+#include "CryptoXX/stream.hpp"
 template <class BlockCipher>
 using CTRCrypter = StreamCipherCrypter<CTRGen<BlockCipher>>;
 template <class BlockCipher>

@@ -32,7 +32,7 @@ public:
 };
 #undef BLK
 #undef KEY
-#include "block.hpp"
+#include "CryptoXX/block.hpp"
 template <class BlockCipher>
 using ECBEncrypter = BlockCipherEncrypter<ECBEnc<BlockCipher>>;
 template <class BlockCipher>

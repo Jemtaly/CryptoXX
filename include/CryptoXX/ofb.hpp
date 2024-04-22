@@ -22,7 +22,7 @@ public:
 };
 #undef BLK
 #undef KEY
-#include "stream.hpp"
+#include "CryptoXX/stream.hpp"
 template <class BlockCipher>
 using OFBCrypter = StreamCipherCrypter<OFBGen<BlockCipher>>;
 template <class BlockCipher>

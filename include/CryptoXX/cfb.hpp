@@ -18,7 +18,7 @@ public:
 };
 #undef BLK
 #undef KEY
-#include "ctak.hpp"
+#include "CryptoXX/ctak.hpp"
 template <class BlockCipher>
 using CFBEncrypter = CTAKCipherEncrypter<CFBGen<BlockCipher>>;
 template <class BlockCipher>

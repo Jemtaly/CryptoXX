@@ -46,7 +46,7 @@ public:
 };
 #undef BLK
 #undef KEY
-#include "block.hpp"
+#include "CryptoXX/block.hpp"
 template <class BlockCipher>
 using CBCEncrypter = BlockCipherEncrypter<CBCEnc<BlockCipher>>;
 template <class BlockCipher>
