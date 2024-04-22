@@ -4,7 +4,6 @@
 // include all block cipher algorithms we need
 #include "CryptoXX/block/sm4.hpp"
 #include "CryptoXX/block/des.hpp"
-#include "CryptoXX/block/3des.hpp"
 #include "CryptoXX/block/idea.hpp"
 #include "CryptoXX/block/aria.hpp"
 #include "CryptoXX/block/seed.hpp"
