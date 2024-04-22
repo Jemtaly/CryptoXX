@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define SB_SC_MR_NRK(t, j)                                              \
     R_LUT[0][t[ j         ].b[0]].w ^ R_LUT[1][t[(j + 7) % 8].b[1]].w ^ \
     R_LUT[2][t[(j + 6) % 8].b[2]].w ^ R_LUT[3][t[(j + 5) % 8].b[3]].w ^ \
@@ -124,7 +124,7 @@ class Whirlpool {
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 64;
-    static constexpr bool NOT_ALWAYS_PADDING = false;
+    static constexpr bool LAZY = false;
     void input(uint8_t const *blk) {
         WhirlpoolWord w[8];
         memcpy(w, blk, 64);

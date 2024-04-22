@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define UNROLL_5(F) do { F(0); F(1); F(2); F(3); F(4); } while (0)
 #define UNROLL_X(F) do {                         \
     F(0, 0); F(0, 1); F(0, 2); F(0, 3); F(0, 4); \
@@ -54,7 +54,7 @@ class KeccakTmpl: public KeccakBase {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr bool NOT_ALWAYS_PADDING = false;
+    static constexpr bool LAZY = false;
     void input(uint8_t const *blk) {
         XORB_LE((uint64_t *)A, blk, BLK);
         permute();

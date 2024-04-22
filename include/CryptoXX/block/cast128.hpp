@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 struct CAST128Key {
     uint32_t m;
     bits_t r;

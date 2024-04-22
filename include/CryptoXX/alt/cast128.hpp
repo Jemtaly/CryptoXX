@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define FFA(X, Y, Km, Kr, i) do {                                                             \
     uint32_t I = ROTL(Km[i] + Y, Kr[i]);                                                      \
     X ^= ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF]; \

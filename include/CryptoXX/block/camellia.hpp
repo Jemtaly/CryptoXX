@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 class CamelliaBase {
 protected:
     static constexpr uint64_t SIGMA[6] = {

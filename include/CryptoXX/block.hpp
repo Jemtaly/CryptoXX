@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define BLK BlockCipherMode::BLOCK_SIZE
 #define KEY BlockCipherMode::KEY_SIZE
 #define CIV BlockCipherMode::CIV_SIZE

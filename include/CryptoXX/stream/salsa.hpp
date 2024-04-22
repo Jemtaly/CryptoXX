@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define QROUND(s, a, b, c, d) do { \
     s[b] ^= ROTL(s[a] + s[d],  7); \
     s[c] ^= ROTL(s[b] + s[a],  9); \

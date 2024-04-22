@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define CHUNK_START 0x01
 #define CHUNK_END   0x02
 #define PARENT      0x04
@@ -77,7 +77,7 @@ class BLAKE3 {
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 32;
-    static constexpr bool NOT_ALWAYS_PADDING = true;
+    static constexpr bool LAZY = true;
     void input(uint8_t const *blk) {
         uint32_t m[16] = {};
         READB_LE(m, blk, 64);

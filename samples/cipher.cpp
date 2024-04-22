@@ -15,20 +15,19 @@
 #include "CryptoXX/block/blowfish.hpp"
 #include "CryptoXX/block/rijndael.hpp"
 #include "CryptoXX/block/camellia.hpp"
-// the following headers contain the wrapper classes for block cipher modes of operation
-#include "CryptoXX/block/cbc.hpp"
-#include "CryptoXX/block/ecb.hpp"
-#include "CryptoXX/block/pcbc.hpp"
-#include "CryptoXX/ctak/cfb.hpp"
-#include "CryptoXX/stream/ctr.hpp"
-#include "CryptoXX/stream/ofb.hpp"
 // include all stream cipher algorithms we need
 #include "CryptoXX/stream/rc4.hpp"
 #include "CryptoXX/stream/zuc.hpp"
 #include "CryptoXX/stream/salsa.hpp"
 #include "CryptoXX/stream/chacha.hpp"
-// include stream.hpp, which contains the wrapper classes for stream ciphers
-#include "CryptoXX/stream/stream.hpp"
+// the following includes are wrappers for block ciphers in different modes of operation and stream ciphers
+#include "CryptoXX/stream.hpp"
+#include "CryptoXX/cbc.hpp"
+#include "CryptoXX/ecb.hpp"
+#include "CryptoXX/pcbc.hpp"
+#include "CryptoXX/cfb.hpp"
+#include "CryptoXX/ctr.hpp"
+#include "CryptoXX/ofb.hpp"
 #define BUFSIZE 8192 // Same with OpenSSL default buffer size
 char **Argv;
 int Argc, Argi;

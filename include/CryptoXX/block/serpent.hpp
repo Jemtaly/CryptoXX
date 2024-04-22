@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define LTROTL(x) do {                        \
     x[0] = ROTL(x[0]                   , 13); \
     x[2] = ROTL(x[2]                   ,  3); \

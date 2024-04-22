@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 class RC4 {
     uint8_t x, y, m[256];
 public:

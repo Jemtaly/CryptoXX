@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define ROTL31(x, n) ((x) << (n) & 0x7FFFFFFF | (x) >> (31 - (n)))
 class ZUC {
     static constexpr uint8_t S0[256] = {

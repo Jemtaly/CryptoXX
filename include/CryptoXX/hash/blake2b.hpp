@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define QROUND(v, m, S, a, b, c, d, x, y) do {                   \
     v[a] += v[b] + m[S[x]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 32); \
     v[c] += v[d]          ; v[b] ^= v[c]; v[b] = ROTR(v[b], 24); \
@@ -64,7 +64,7 @@ class BLAKE2bTmpl: public BLAKE2bBase {
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN;
-    static constexpr bool NOT_ALWAYS_PADDING = true;
+    static constexpr bool LAZY = true;
     BLAKE2bTmpl(uint8_t const *key, size_t len) {
         h[0] ^= 0x01010000 ^ len << 8 ^ DN;
         if (len > 0) {

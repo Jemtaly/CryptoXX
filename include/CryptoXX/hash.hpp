@@ -1,9 +1,8 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
-#define NAP Hash::NOT_ALWAYS_PADDING // Messages whose length is a positive integer multiple of the block size do not need to be padded.
-template <class Hash, bool = NAP>
+template <class Hash, bool = Hash::LAZY>
 class HashWrapper;
 template <class Hash>
 class HashWrapper<Hash, false> {
@@ -65,4 +64,3 @@ public:
 };
 #undef BLK
 #undef DIG
-#undef NAP

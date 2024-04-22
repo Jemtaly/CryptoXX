@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 class SEED {
     static constexpr uint32_t KC[16] = {
         0x9e3779b9, 0x3c6ef373, 0x78dde6e6, 0xf1bbcdcc,

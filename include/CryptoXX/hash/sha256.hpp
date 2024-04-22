@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define FFR(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
@@ -76,7 +76,7 @@ class SHA256Tmpl: public SHA256Base {
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DN;
-    static constexpr bool NOT_ALWAYS_PADDING = false;
+    static constexpr bool LAZY = false;
     void input(uint8_t const *blk) {
         uint32_t w[64];
         READB_BE(w, blk, 64);

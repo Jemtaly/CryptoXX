@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define FF1(x, y, z) ((z) & ((x) ^ (y)) ^ (y))
 #define FF2(x, y, z) ((x) ^ (y) ^ (z))
@@ -67,7 +67,7 @@ class MD5 {
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 16;
-    static constexpr bool NOT_ALWAYS_PADDING = false;
+    static constexpr bool LAZY = false;
     void input(uint8_t const *blk) {
         uint32_t w[16];
         READB_LE(w, blk, 64);

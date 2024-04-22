@@ -1,9 +1,9 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 #define KEY BlockCipher::KEY_SIZE
 template <class BlockCipher>
-class CBCEnc {
+class PCBCEnc {
     BlockCipher const bc;
     uint8_t rec[BLK];
 public:
@@ -11,7 +11,7 @@ public:
     static constexpr size_t KEY_SIZE = KEY;
     static constexpr size_t CIV_SIZE = BLK;
     template <class... vals_t>
-    CBCEnc(uint8_t const *civ, vals_t &&...vals):
+    PCBCEnc(uint8_t const *civ, vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {
         memcpy(rec, civ, BLK);
     }
@@ -20,11 +20,13 @@ public:
             dst[i] = src[i] ^ rec[i];
         }
         bc.encrypt(dst, dst);
-        memcpy(rec, dst, BLK);
+        for (size_t i = 0; i < BLK; i++) {
+            rec[i] = dst[i] ^ src[i];
+        }
     }
 };
 template <class BlockCipher>
-class CBCDec {
+class PCBCDec {
     BlockCipher const bc;
     uint8_t rec[BLK];
 public:
@@ -32,7 +34,7 @@ public:
     static constexpr size_t KEY_SIZE = KEY;
     static constexpr size_t CIV_SIZE = BLK;
     template <class... vals_t>
-    CBCDec(uint8_t const *civ, vals_t &&...vals):
+    PCBCDec(uint8_t const *civ, vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {
         memcpy(rec, civ, BLK);
     }
@@ -41,13 +43,15 @@ public:
         for (size_t i = 0; i < BLK; i++) {
             dst[i] = dst[i] ^ rec[i];
         }
-        memcpy(rec, src, BLK);
+        for (size_t i = 0; i < BLK; i++) {
+            rec[i] = dst[i] ^ src[i];
+        }
     }
 };
 #undef BLK
 #undef KEY
 #include "block.hpp"
 template <class BlockCipher>
-using CBCEncrypter = BlockCipherEncrypter<CBCEnc<BlockCipher>>;
+using PCBCEncrypter = BlockCipherEncrypter<PCBCEnc<BlockCipher>>;
 template <class BlockCipher>
-using CBCDecrypter = BlockCipherDecrypter<CBCDec<BlockCipher>>;
+using PCBCDecrypter = BlockCipherDecrypter<PCBCDec<BlockCipher>>;

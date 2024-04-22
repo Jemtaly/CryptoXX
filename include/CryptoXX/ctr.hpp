@@ -1,33 +1,33 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define BLK BlockCipher::BLOCK_SIZE
 #define KEY BlockCipher::KEY_SIZE
 template <class BlockCipher>
-class OFBGen {
+class CTRGen {
     BlockCipher const bc;
-    uint8_t ofb[BLK];
+    uint8_t ctr[BLK];
 public:
     static constexpr size_t SECTION_SIZE = BLK;
     static constexpr size_t KEY_SIZE = KEY;
     static constexpr size_t CIV_SIZE = BLK;
     template <class... vals_t>
-    OFBGen(uint8_t const *civ, vals_t &&...vals):
+    CTRGen(uint8_t const *civ, vals_t &&...vals):
         bc(std::forward<vals_t>(vals)...) {
-        memcpy(ofb, civ, BLK);
+        memcpy(ctr, civ, BLK);
     }
     void generate(uint8_t *buf) {
-        bc.encrypt(ofb, buf);
-        memcpy(ofb, buf, BLK);
+        bc.encrypt(ctr, buf);
+        for (size_t i = BLK - 1; i < BLK && ++ctr[i] == 0; i--) {}
     }
 };
 #undef BLK
 #undef KEY
 #include "stream.hpp"
 template <class BlockCipher>
-using OFBCrypter = StreamCipherCrypter<OFBGen<BlockCipher>>;
+using CTRCrypter = StreamCipherCrypter<CTRGen<BlockCipher>>;
 template <class BlockCipher>
-using OFBEncrypter = StreamCipherEncrypter<OFBGen<BlockCipher>>;
+using CTREncrypter = StreamCipherEncrypter<CTRGen<BlockCipher>>;
 template <class BlockCipher>
-using OFBDecrypter = StreamCipherDecrypter<OFBGen<BlockCipher>>;
+using CTRDecrypter = StreamCipherDecrypter<CTRGen<BlockCipher>>;
 template <class BlockCipher>
-using OFBGenerator = PseudoRandomGenerator<OFBGen<BlockCipher>>;
+using CTRGenerator = PseudoRandomGenerator<CTRGen<BlockCipher>>;

@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 struct ARIAWord {
     uint64_t hi = 0;
     uint64_t lo = 0;

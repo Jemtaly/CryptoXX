@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define SEC StreamCipher::SECTION_SIZE
 #define KEY StreamCipher::KEY_SIZE
 #define CIV StreamCipher::CIV_SIZE

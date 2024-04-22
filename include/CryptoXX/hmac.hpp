@@ -1,8 +1,7 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define BLK Hash::BLOCK_SIZE
 #define DIG Hash::DIGEST_SIZE
-#define NAP Hash::NOT_ALWAYS_PADDING
 template <class Hash>
     requires (DIG <= BLK)
 class HMAC {
@@ -11,7 +10,7 @@ class HMAC {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr bool NOT_ALWAYS_PADDING = NAP;
+    static constexpr bool LAZY = Hash::LAZY;
     HMAC(uint8_t const *key, size_t len) {
         uint8_t buf[BLK] = {};
         if (len > BLK) {
@@ -36,7 +35,7 @@ public:
     void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint8_t buf[DIG];
         inner.final(src, len, buf);
-        if constexpr (DIG == BLK && not NAP) {
+        if constexpr (DIG == BLK && not LAZY) {
             outer.input(buf);
             outer.final(NULL,  0, dst);
         } else {
@@ -46,7 +45,6 @@ public:
 };
 #undef BLK
 #undef DIG
-#undef NAP
 #include "hash.hpp"
 template <class Hash>
 using HMACWrapper = HashWrapper<HMAC<Hash>>;

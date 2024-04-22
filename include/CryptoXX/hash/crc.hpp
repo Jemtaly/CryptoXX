@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define DIG sizeof(digest_t)
 template <std::unsigned_integral digest_t, digest_t EXP, digest_t CIV, digest_t CXV>
 class CRC {
@@ -18,7 +18,7 @@ class CRC {
 public:
     static constexpr size_t BLOCK_SIZE = 1;
     static constexpr size_t DIGEST_SIZE = DIG;
-    static constexpr bool NOT_ALWAYS_PADDING = false;
+    static constexpr bool LAZY = false;
     void input(uint8_t const *blk) {
         sta = sta >> 8 ^ LUT[sta & 0xff ^ *blk];
     }

@@ -14,8 +14,8 @@
 #include "CryptoXX/hash/blake3.hpp"
 #include "CryptoXX/hash/whirlpool.hpp"
 // include hash.hpp and hmac.hpp, which contains the wrapper classes for hash and hmac
-#include "CryptoXX/hash/hash.hpp"
-#include "CryptoXX/hash/hmac.hpp"
+#include "CryptoXX/hash.hpp"
+#include "CryptoXX/hmac.hpp"
 #define BUFSIZE 8192 // Same with OpenSSL default buffer size
 char **Argv;
 int Argc, Argi;

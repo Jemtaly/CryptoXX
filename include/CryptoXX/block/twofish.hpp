@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 class TwofishBase {
 protected:
     // ROR1[i] = i << 3 & 0xf | i >> 1

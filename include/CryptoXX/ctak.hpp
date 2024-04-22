@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils.hpp"
+#include "CryptoXX/utils.hpp"
 #define CFB CTAKCipher::FEEDBACK_SIZE
 #define SEC CTAKCipher::SECTION_SIZE
 #define KEY CTAKCipher::KEY_SIZE
