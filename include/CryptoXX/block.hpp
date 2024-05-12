@@ -72,10 +72,21 @@ public:
         return dst;
     }
     uint8_t *fflush(uint8_t *dst) {
-        if (use != BLK) { return nullptr; }
+        if (use != BLK) {
+            return nullptr;
+        }
         bcd.crypt(buf, dst);
+        uint8_t pad = dst[BLK - 1];
+        if (pad > BLK || pad == 0) {
+            return nullptr;
+        }
+        for (size_t i = BLK - pad; i < BLK; ++i) {
+            if (dst[i] != pad) {
+                return nullptr;
+            }
+        }
         use -= use;
-        dst += BLK - dst[BLK - 1];
+        dst += BLK - pad;
         return dst;
     }
 };
