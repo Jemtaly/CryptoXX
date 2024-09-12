@@ -1,12 +1,16 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define QROUND(v, m, S, a, b, c, d, x, y) do {                   \
     v[a] += v[b] + m[S[x]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 32); \
     v[c] += v[d]          ; v[b] ^= v[c]; v[b] = ROTR(v[b], 24); \
     v[a] += v[b] + m[S[y]]; v[d] ^= v[a]; v[d] = ROTR(v[d], 16); \
     v[c] += v[d]          ; v[b] ^= v[c]; v[b] = ROTR(v[b], 63); \
 } while (0)
+
 typedef uint8_t index_t;
+
 class BLAKE2bBase {
 protected:
     static constexpr index_t SIGMA[12][16] = {
@@ -24,8 +28,9 @@ protected:
         {14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3},
     };
 };
-template <size_t DN, std::array<uint64_t, 8> IV>
-class BLAKE2bTmpl: public BLAKE2bBase {
+
+template<size_t DN, std::array<uint64_t, 8> IV>
+class BLAKE2bTmpl : public BLAKE2bBase {
     void compress(uint64_t const *m, bool fin) {
         uint64_t v[16] = {
             h [0], h [1], h [2], h [3],
@@ -55,16 +60,19 @@ class BLAKE2bTmpl: public BLAKE2bBase {
         h[6] ^= v[6] ^ v[14];
         h[7] ^= v[7] ^ v[15];
     }
+
     uint64_t hi = 0;
     uint64_t lo = 0;
     uint64_t h[8] = {
         IV[0], IV[1], IV[2], IV[3],
         IV[4], IV[5], IV[6], IV[7],
     };
+
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool LAZY = true;
+
     BLAKE2bTmpl(uint8_t const *key, size_t len) {
         h[0] ^= 0x01010000 ^ len << 8 ^ DN;
         if (len > 0) {
@@ -74,13 +82,15 @@ public:
             compress(m, 0);
         }
     }
-    BLAKE2bTmpl(): BLAKE2bTmpl(nullptr, 0) {}
+
+    BLAKE2bTmpl() : BLAKE2bTmpl(nullptr, 0) {}
     void input(uint8_t const *blk) {
         uint64_t m[16] = {};
         READB_LE(m, blk, 128);
         (lo += 128) < 128 && ++hi;
         compress(m, 0);
     }
+
     void final(uint8_t const *src, size_t len, uint8_t *dig) {
         uint64_t m[16] = {};
         READB_LE(m, src, len);
@@ -89,6 +99,7 @@ public:
         WRITEB_LE(dig, h, DN);
     }
 };
+
 using BLAKE2b512 = BLAKE2bTmpl<64, std::array<uint64_t, 8>{
     0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
     0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -101,4 +112,5 @@ using BLAKE2b384 = BLAKE2bTmpl<48, std::array<uint64_t, 8>{
     0x67332667ffc00b31, 0x8eb44a8768581511,
     0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
 }>;
+
 #undef QROUND

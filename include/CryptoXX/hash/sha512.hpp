@@ -1,7 +1,10 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
+
 #define FFR(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
     uint64_t s = ROTR(a, 28) ^ ROTR(a, 34) ^ ROTR(a, 39);     \
     uint64_t t = ROTR(e, 14) ^ ROTR(e, 18) ^ ROTR(e, 41);     \
@@ -10,6 +13,7 @@
     d = d + u;                                                \
     h = u + v;                                                \
 } while (0)
+
 class SHA512Base {
 protected:
     static constexpr uint64_t K[80] = {
@@ -35,8 +39,9 @@ protected:
         0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817,
     };
 };
-template <int DN, std::array<uint64_t, 8> IV>
-class SHA512Tmpl: public SHA512Base {
+
+template<int DN, std::array<uint64_t, 8> IV>
+class SHA512Tmpl : public SHA512Base {
     void compress(uint64_t *w) {
         uint64_t A = h[0];
         uint64_t B = h[1];
@@ -71,22 +76,26 @@ class SHA512Tmpl: public SHA512Base {
         h[6] += G;
         h[7] += H;
     }
+
     uint64_t lo = 0;
     uint64_t hi = 0;
     uint64_t h[8] = {
         IV[0], IV[1], IV[2], IV[3],
         IV[4], IV[5], IV[6], IV[7],
     };
+
 public:
     static constexpr size_t BLOCK_SIZE = 128;
     static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool LAZY = false;
+
     void input(uint8_t const *blk) {
         uint64_t w[80];
         READB_BE(w, blk, 128);
         (lo += 128 * 8) < 128 * 8 && ++hi;
         compress(w);
     }
+
     void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint64_t w[80];
         memset(w, 0, 128);
@@ -103,6 +112,7 @@ public:
         WRITEB_BE(dst, h, DN);
     }
 };
+
 using SHA512 = SHA512Tmpl<64, std::array<uint64_t, 8>{
     0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
     0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -115,6 +125,7 @@ using SHA384 = SHA512Tmpl<48, std::array<uint64_t, 8>{
     0x67332667ffc00b31, 0x8eb44a8768581511,
     0xdb0c2e0d64f98fa7, 0x47b5481dbefa4fa4,
 }>;
+
 #undef CHO
 #undef MAJ
 #undef FFR

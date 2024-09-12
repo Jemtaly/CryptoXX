@@ -1,8 +1,10 @@
-#!/bin/bash
+#!/usr/bin/bash
+
 if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <path to hash binary>"
     exit 1
 fi
+
 algs=(
     "SM3" "MD5"
     "Whirlpool" "SHA1" "SHA0"
@@ -27,9 +29,11 @@ ssls=(
     "blake2s256" ""
     "" "" ""
 )
+
 big_file=$(mktemp)
 big_size=123456789
 head -c $big_size /dev/urandom >$big_file
+
 for i in ${!algs[@]}; do
     alg=${algs[$i]}
     ssl=${ssls[$i]}

@@ -1,12 +1,16 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 class IDEA {
     static uint16_t add(uint16_t a, uint16_t b) {
         return a + b;
     }
+
     static uint16_t neg(uint16_t a) {
         return 0 - a;
     }
+
     static uint16_t mul(uint16_t a, uint16_t b) {
         if (a == 0) {
             return 1 - b;
@@ -19,6 +23,7 @@ class IDEA {
         uint16_t l = c;
         return l - h + (l < h);
     }
+
     static uint16_t inv(uint16_t a) {
         if (a <= 1) {
             return a;
@@ -40,11 +45,14 @@ class IDEA {
             }
         }
     }
+
     uint16_t e[52];
     uint16_t d[52];
+
 public:
     static constexpr size_t BLOCK_SIZE = 8;
     static constexpr size_t KEY_SIZE = 16;
+
     IDEA(uint8_t const *key) {
         READ_BE(e, key, 8);
         for (int i = 8; i < 52; i++) {
@@ -66,6 +74,7 @@ public:
             d[i + 5] = e[47 - i];
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint16_t x[4], y[4], t[6];
         READ_BE(x, src, 4);
@@ -91,6 +100,7 @@ public:
         y[3] = mul(x[3], e[51]);
         WRITE_BE(dst, y, 4);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint16_t x[4], y[4], t[6];
         READ_BE(x, src, 4);

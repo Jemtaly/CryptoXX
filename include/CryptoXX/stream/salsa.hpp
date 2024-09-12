@@ -1,19 +1,24 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define QROUND(s, a, b, c, d) do { \
     s[b] ^= ROTL(s[a] + s[d],  7); \
     s[c] ^= ROTL(s[b] + s[a],  9); \
     s[d] ^= ROTL(s[c] + s[b], 13); \
     s[a] ^= ROTL(s[d] + s[c], 18); \
 } while (0)
-template <int RND>
+
+template<int RND>
     requires (RND == 8 || RND == 12 || RND == 20)
 class Salsa {
     uint32_t input[16];
+
 public:
     static constexpr size_t SECTION_SIZE = 64;
     static constexpr size_t KEY_SIZE = 32;
     static constexpr size_t CIV_SIZE = 8;
+
     Salsa(uint8_t const *civ, uint8_t const *key) {
         input[0x0] = 0x61707865;
         input[0x5] = 0x3320646e;
@@ -32,6 +37,7 @@ public:
         input[0x6] = GET_LE<uint32_t>(civ +  0);
         input[0x7] = GET_LE<uint32_t>(civ +  4);
     }
+
     void generate(uint8_t *buf) {
         uint32_t state[16] = {
             input[0x0], input[0x1], input[0x2], input[0x3],
@@ -56,7 +62,9 @@ public:
         ++input[ 8] == 0 && ++input[ 9];
     }
 };
+
 using Salsa8 = Salsa<8>;
 using Salsa12 = Salsa<12>;
 using Salsa20 = Salsa<20>;
+
 #undef QROUND

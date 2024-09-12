@@ -1,13 +1,18 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define PPE(x) ((x) ^ ROTL(x,  9) ^ ROTL(x, 17))
 #define PPW(x) ((x) ^ ROTL(x, 15) ^ ROTL(x, 23))
+
 #define FF0(x, y, z) ((x) ^ (y) ^ (z))
 #define FF1(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define GG0(x, y, z) ((x) ^ (y) ^ (z))
 #define GG1(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
+
 #define KK0 0x79CC4519U
 #define KK1 0x7A879D8AU
+
 #define HHR(N, a, b, c, d, e, f, g, h, w, j) do {         \
     s = ROTL(a, 12);                                      \
     t = ROTL(s + e + ROTL(KK##N, j), 7);                  \
@@ -18,6 +23,7 @@
     d =     u ;                                           \
     h = PPE(v);                                           \
 } while (0)
+
 class SM3 {
     void compress(uint32_t *w) {
         uint32_t x[4] = {
@@ -42,22 +48,26 @@ class SM3 {
         h[6] ^= y[2];
         h[7] ^= y[3];
     }
+
     uint32_t lo = 0;
     uint32_t hi = 0;
     uint32_t h[8] = {
         0x7380166F, 0x4914B2B9, 0x172442D7, 0xDA8A0600,
         0xA96F30BC, 0x163138AA, 0xE38DEE4D, 0xB0FB0E4E,
     };
+
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 32;
     static constexpr bool LAZY = false;
+
     void input(uint8_t const *blk) {
         uint32_t w[68];
         READB_BE(w, blk, 64);
         (lo += 64 * 8) < 64 * 8 && ++hi;
         compress(w);
     }
+
     void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint32_t w[68];
         memset(w, 0, 64);
@@ -74,6 +84,7 @@ public:
         WRITEB_BE(dst, h, 32);
     }
 };
+
 #undef PPE
 #undef PPW
 #undef FF0

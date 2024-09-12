@@ -1,18 +1,24 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 struct ARIAWord {
     uint64_t hi = 0;
     uint64_t lo = 0;
+
     constexpr ARIAWord rotl(bits_t n) const { // 0 < n < 64
         return {hi << (n & 63) | lo >> (-n & 63), lo << (n & 63) | hi >> (-n & 63)};
     }
+
     constexpr ARIAWord rotr(bits_t n) const { // 0 < n < 64
         return {hi >> (n & 63) | lo << (-n & 63), lo >> (n & 63) | hi << (-n & 63)};
     }
+
     friend constexpr ARIAWord operator^(const ARIAWord& a, const ARIAWord& b) {
         return {a.hi ^ b.hi, a.lo ^ b.lo};
     }
 };
+
 class ARIABase {
 protected:
     static constexpr ARIAWord C[3] = {
@@ -20,6 +26,7 @@ protected:
         0x6db14acc9e21c820, 0xff28b1d5ef5de2b0,
         0xdb92371d2126e970, 0x0324977504e8c90e,
     };
+
     static constexpr uint8_t S_BOX[4][256] = {
         0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
         0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -86,6 +93,7 @@ protected:
         0xf2, 0xb1, 0x00, 0x94, 0x37, 0x9f, 0xd0, 0x2e, 0x9c, 0x6e, 0x28, 0x3f, 0x80, 0xf0, 0x3d, 0xd3,
         0x25, 0x8a, 0xb5, 0xe7, 0x42, 0xb3, 0xc7, 0xea, 0xf7, 0x4c, 0x11, 0x33, 0x03, 0xa2, 0xac, 0x60,
     };
+
     static ARIAWord sl1(ARIAWord const &x) {
         return {
             (uint64_t)S_BOX[0][x.hi >> 56       ] << 56 | (uint64_t)S_BOX[1][x.hi >> 48 & 0xff] << 48 |
@@ -98,6 +106,7 @@ protected:
             (uint64_t)S_BOX[2][x.lo >>  8 & 0xff] <<  8 | (uint64_t)S_BOX[3][x.lo       & 0xff]      ,
         };
     }
+
     static ARIAWord sl2(ARIAWord const &x) {
         return {
             (uint64_t)S_BOX[2][x.hi >> 56       ] << 56 | (uint64_t)S_BOX[3][x.hi >> 48 & 0xff] << 48 |
@@ -110,6 +119,7 @@ protected:
             (uint64_t)S_BOX[0][x.lo >>  8 & 0xff] <<  8 | (uint64_t)S_BOX[1][x.lo       & 0xff]      ,
         };
     }
+
     // static ARIAWord a(ARIAWord const &t) {
     //     uint8_t y[16];
     //     y[ 0] = t[ 3] ^ t[ 4] ^ t[ 6] ^ t[ 8] ^ t[ 9] ^ t[13] ^ t[14];
@@ -130,6 +140,7 @@ protected:
     //     y[15] = t[ 1] ^ t[ 2] ^ t[ 4] ^ t[ 5] ^ t[ 8] ^ t[10] ^ t[15];
     //     return {GET_BE<uint64_t>(y), GET_BE<uint64_t>(y + 8)};
     // }
+
     static constexpr auto A_LUT = []() {
         std::array<std::array<ARIAWord, 256>, 16> A_LUT = {};
         for (int j = 0; j < 256; j++) {
@@ -152,6 +163,7 @@ protected:
         }
         return A_LUT;
     }();
+
     static constexpr auto O_LUT = []() {
         std::array<std::array<ARIAWord, 256>, 16> O_LUT = {};
         for (int j = 0; j < 256; j++) {
@@ -166,6 +178,7 @@ protected:
         }
         return O_LUT;
     }();
+
     static constexpr auto E_LUT = []() {
         std::array<std::array<ARIAWord, 256>, 16> E_LUT = {};
         for (int j = 0; j < 256; j++) {
@@ -180,6 +193,7 @@ protected:
         }
         return E_LUT;
     }();
+
     static ARIAWord a(ARIAWord const &x) {
         return
             A_LUT[ 0][x.hi >> 56       ] ^ A_LUT[ 1][x.hi >> 48 & 0xff] ^
@@ -191,6 +205,7 @@ protected:
             A_LUT[12][x.lo >> 24 & 0xff] ^ A_LUT[13][x.lo >> 16 & 0xff] ^
             A_LUT[14][x.lo >>  8 & 0xff] ^ A_LUT[15][x.lo       & 0xff];
     }
+
     static ARIAWord fo(ARIAWord const &x) {
         return
             O_LUT[ 0][x.hi >> 56       ] ^ O_LUT[ 1][x.hi >> 48 & 0xff] ^
@@ -202,6 +217,7 @@ protected:
             O_LUT[12][x.lo >> 24 & 0xff] ^ O_LUT[13][x.lo >> 16 & 0xff] ^
             O_LUT[14][x.lo >>  8 & 0xff] ^ O_LUT[15][x.lo       & 0xff];
     }
+
     static ARIAWord fe(ARIAWord const &x) {
         return
             E_LUT[ 0][x.hi >> 56       ] ^ E_LUT[ 1][x.hi >> 48 & 0xff] ^
@@ -214,14 +230,17 @@ protected:
             E_LUT[14][x.lo >>  8 & 0xff] ^ E_LUT[15][x.lo       & 0xff];
     }
 };
-template <int L, int R = 8 + 2 * L>
+
+template<int L, int R = 8 + 2 * L>
     requires (L == 2 || L == 3 || L == 4)
-class ARIATmpl: public ARIABase {
+class ARIATmpl : public ARIABase {
     ARIAWord ek[R + 1];
     ARIAWord dk[R + 1];
+
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 8 * L;
+
     ARIATmpl(uint8_t const *mk) {
         ARIAWord kl = {L > 0 ? GET_BE<uint64_t>(mk +  0) : 0, L > 1 ? GET_BE<uint64_t>(mk +  8) : 0};
         ARIAWord kr = {L > 2 ? GET_BE<uint64_t>(mk + 16) : 0, L > 3 ? GET_BE<uint64_t>(mk + 24) : 0};
@@ -257,6 +276,7 @@ public:
             dk[i] = a(ek[R - i]);
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)} ^ ek[0];
         for (int r = 1;;) {
@@ -268,6 +288,7 @@ public:
         PUT_BE(dst    , x.hi);
         PUT_BE(dst + 8, x.lo);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         ARIAWord x = ARIAWord{GET_BE<uint64_t>(src), GET_BE<uint64_t>(src + 8)} ^ dk[0];
         for (int r = 1;;) {
@@ -280,6 +301,7 @@ public:
         PUT_BE(dst + 8, x.lo);
     }
 };
+
 using ARIA128 = ARIATmpl<2>;
 using ARIA192 = ARIATmpl<3>;
 using ARIA256 = ARIATmpl<4>;

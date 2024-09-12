@@ -1,9 +1,12 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 union RijndaelWord {
     uint32_t w;
     uint8_t b[4];
 };
+
 class RijndaelBase {
 protected:
     // Rijndael's Galois Field multiplication
@@ -15,6 +18,7 @@ protected:
         }
         return p;
     };
+
     static constexpr auto RC = []() {
         std::array<uint8_t, 30> RC = {};
         uint8_t s = 1;
@@ -24,6 +28,7 @@ protected:
         }
         return RC;
     }();
+
     static constexpr auto RECIP = []() {
         std::array<uint8_t, 256> RECIP = {};
         uint8_t s = 1, c = 1;
@@ -34,6 +39,7 @@ protected:
         }
         return RECIP;
     }();
+
     static constexpr auto S_BOX = []() {
         std::array<uint8_t, 256> S_BOX = {};
         for (int i = 0; i < 256; i++) {
@@ -44,6 +50,7 @@ protected:
         }
         return S_BOX;
     }();
+
     static constexpr auto I_BOX = []() {
         std::array<uint8_t, 256> I_BOX = {};
         for (int i = 0; i < 256; i++) {
@@ -54,6 +61,7 @@ protected:
         }
         return I_BOX;
     }();
+
     static constexpr auto IDENT = []() {
         std::array<uint8_t, 256> IDENT = {};
         for (int i = 0; i < 256; i++) {
@@ -61,6 +69,7 @@ protected:
         }
         return IDENT;
     }();
+
     // Generate LUT for SubBytes and MixColumns steps
     static constexpr auto generate_LUT = [](RijndaelWord poly, std::array<uint8_t, 256> const &BOX) {
         std::array<std::array<RijndaelWord, 256>, 4> LUT = {};
@@ -74,6 +83,7 @@ protected:
         }
         return LUT;
     };
+
     static constexpr auto E_MCT = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, IDENT); // LUT for MixColumns step only
     static constexpr auto D_MCT = generate_LUT({.b = {0x0e, 0x09, 0x0d, 0x0b}}, IDENT); // LUT for InvMixColumns step only
     static constexpr auto E_LUT = generate_LUT({.b = {0x02, 0x01, 0x01, 0x03}}, S_BOX); // LUT for SubBytes and MixColumns steps
@@ -81,14 +91,17 @@ protected:
     static constexpr auto E_SBT = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, S_BOX); // LUT for SubBytes step only
     static constexpr auto D_SBT = generate_LUT({.b = {0x01, 0x00, 0x00, 0x00}}, I_BOX); // LUT for InvSubBytes step only
 };
-template <int K, int B, int R = std::max(K, B) + 6>
+
+template<int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
-class RijndaelTmpl: public RijndaelBase {
+class RijndaelTmpl : public RijndaelBase {
     RijndaelWord rk[R + 1][B];
     RijndaelWord ik[R + 1][B];
+
 public:
     static constexpr size_t BLOCK_SIZE = B * 4;
     static constexpr size_t KEY_SIZE = K * 4;
+
     RijndaelTmpl(const uint8_t *mk) {
         memcpy((RijndaelWord *)rk, mk, K * 4);
         for (int i = K; i < (R + 1) * B; ++i) {
@@ -124,6 +137,7 @@ public:
             });
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelWord q[B];
         RijndaelWord t[B];
@@ -155,6 +169,7 @@ public:
         });
         memcpy(dst, q, B * 4);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelWord q[B];
         RijndaelWord t[B];
@@ -187,6 +202,7 @@ public:
         memcpy(dst, q, B * 4);
     }
 };
+
 using AES128 = RijndaelTmpl<4, 4>;
 using AES192 = RijndaelTmpl<6, 4>;
 using AES256 = RijndaelTmpl<8, 4>;

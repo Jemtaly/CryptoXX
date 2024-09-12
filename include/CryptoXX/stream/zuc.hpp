@@ -1,6 +1,9 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define ROTL31(x, n) ((x) << (n) & 0x7FFFFFFF | (x) >> (31 - (n)))
+
 class ZUC {
     static constexpr uint8_t S0[256] = {
         0x3e, 0x72, 0x5b, 0x47, 0xca, 0xe0, 0x00, 0x33, 0x04, 0xd1, 0x54, 0x98, 0x09, 0xb9, 0x6d, 0xcb,
@@ -38,19 +41,23 @@ class ZUC {
         0x88, 0xb1, 0x98, 0x7c, 0xf3, 0x3d, 0x60, 0x6c, 0x7b, 0xca, 0xd3, 0x1f, 0x32, 0x65, 0x04, 0x28,
         0x64, 0xbe, 0x85, 0x9b, 0x2f, 0x59, 0x8a, 0xd7, 0xb0, 0x25, 0xac, 0xaf, 0x12, 0x03, 0xe2, 0xf2,
     };
+
     static constexpr uint16_t EK[16] = {
         0x44D7, 0x26BC, 0x626B, 0x135E,
         0x5789, 0x35E2, 0x7135, 0x09AF,
         0x4D78, 0x2F13, 0x6BC4, 0x1AF1,
         0x5E26, 0x3C4D, 0x789A, 0x47AC,
     };
+
     static uint32_t mod_add(uint32_t a, uint32_t b) {
         uint32_t c = a + b;
         return (c & 0x7FFFFFFF) + (c >> 31);
     }
+
     uint32_t lfsr[16];
     uint32_t r1, r2, x0, x1, x2, x3, w;
-    template <bool INIT>
+
+    template<bool INIT>
     void permute() {
         // The bit-reorganization
         x0 = lfsr[15] <<  1 & 0xffff0000 | lfsr[14]       & 0x0000ffff;
@@ -83,11 +90,13 @@ class ZUC {
         });
         lfsr[15] = f;
     }
+
 public:
     static constexpr size_t SECTION_SIZE = 4;
     static constexpr size_t KEY_SIZE = 16;
     static constexpr size_t CIV_SIZE = 16;
-    ZUC(uint8_t const *iv, uint8_t const *k): r1(0), r2(0) {
+
+    ZUC(uint8_t const *iv, uint8_t const *k) : r1(0), r2(0) {
         for (int i = 0; i < 16; ++i) {
             lfsr[i] = k[i] << 23 | EK[i] << 8 | iv[i];
         }
@@ -96,6 +105,7 @@ public:
         }
         permute<0>();
     }
+
     void generate(uint8_t *buf) {
         permute<0>();
         PUT_BE(buf, w ^ x3);

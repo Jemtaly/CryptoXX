@@ -1,6 +1,9 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define UNROLL_5(F) do { F(0); F(1); F(2); F(3); F(4); } while (0)
+
 #define UNROLL_X(F) do {                         \
     F(0, 0); F(0, 1); F(0, 2); F(0, 3); F(0, 4); \
     F(1, 0); F(1, 1); F(1, 2); F(1, 3); F(1, 4); \
@@ -8,11 +11,13 @@
     F(3, 0); F(3, 1); F(3, 2); F(3, 3); F(3, 4); \
     F(4, 0); F(4, 1); F(4, 2); F(4, 3); F(4, 4); \
 } while (0)
+
 #define C_A(   x) C[x] = A[0][x] ^ A[1][x] ^ A[2][x] ^ A[3][x] ^ A[4][x]
 #define D_C(   x) D[x] = C[(x + 4) % 5] ^ ROTL(C[(x + 1) % 5], 1)
 #define A_D(y, x) A[y][x] ^= D[x]
 #define B_A(y, x) B[(2 * x + 3 * y) % 5][y] = ROTL(A[y][x], R[y][x])
 #define A_B(y, x) A[y][x] = ~B[y][(x + 1) % 5] & B[y][(x + 2) % 5] ^ B[y][x]
+
 class KeccakBase {
 protected:
     static constexpr uint64_t RC[24] = {
@@ -25,6 +30,7 @@ protected:
         0x000000000000800A, 0x800000008000000A, 0x8000000080008081,
         0x8000000000008080, 0x0000000080000001, 0x8000000080008008,
     };
+
     static constexpr bits_t R[5][5] = {
         { 0,  1, 62, 28, 27},
         {36, 44,  6, 55, 20},
@@ -32,6 +38,7 @@ protected:
         {41, 45, 15, 21,  8},
         {18,  2, 61, 56, 14},
     };
+
     void permute() {
         // unrolling the loop below makes it slower on my machine
         for (int i = 0; i < 24; i++) {
@@ -46,19 +53,23 @@ protected:
             A[0][0] ^= RC[i];
         }
     }
+
     uint64_t A[5][5] = {};
 };
-template <uint8_t PAD_BYTE, size_t BLK, size_t DIG>
+
+template<uint8_t PAD_BYTE, size_t BLK, size_t DIG>
     requires (DIG <= BLK && BLK <= 200)
-class KeccakTmpl: public KeccakBase {
+class KeccakTmpl : public KeccakBase {
 public:
     static constexpr size_t BLOCK_SIZE = BLK;
     static constexpr size_t DIGEST_SIZE = DIG;
     static constexpr bool LAZY = false;
+
     void input(uint8_t const *blk) {
         XORB_LE((uint64_t *)A, blk, BLK);
         permute();
     }
+
     void final(uint8_t const *src, size_t len, uint8_t *out) {
         XORB_LE((uint64_t *)A, src, len);
         BYTE_LE((uint64_t *)A, len) ^= PAD_BYTE;
@@ -67,12 +78,14 @@ public:
         WRITEB_LE(out, (uint64_t *)A, DIG);
     }
 };
-template <size_t BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
+
+template<size_t BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
 using Keccak = KeccakTmpl<0x01, (1600 - BIT * 2) / 8, BIT / 8>;
-template <size_t BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
+template<size_t BIT> requires (BIT == 224 || BIT == 256 || BIT == 384 || BIT == 512)
 using SHA3   = KeccakTmpl<0x06, (1600 - BIT * 2) / 8, BIT / 8>;
-template <size_t BIT, size_t OUT> requires (BIT == 128 || BIT == 256)
+template<size_t BIT, size_t OUT> requires (BIT == 128 || BIT == 256)
 using SHAKE  = KeccakTmpl<0x1f, (1600 - BIT * 2) / 8, OUT / 8>;
+
 #undef UNROLL_5
 #undef UNROLL_X
 #undef C_A

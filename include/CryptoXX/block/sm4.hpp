@@ -1,5 +1,7 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 class SM4 {
     static constexpr uint32_t CK[32] = {
         0x00070e15, 0x1c232a31, 0x383f464d, 0x545b6269,
@@ -11,6 +13,7 @@ class SM4 {
         0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209,
         0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279,
     };
+
     static constexpr uint8_t S_BOX[256] = {
         0xd6, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7, 0x16, 0xb6, 0x14, 0xc2, 0x28, 0xfb, 0x2c, 0x05,
         0x2b, 0x67, 0x9a, 0x76, 0x2a, 0xbe, 0x04, 0xc3, 0xaa, 0x44, 0x13, 0x26, 0x49, 0x86, 0x06, 0x99,
@@ -29,6 +32,7 @@ class SM4 {
         0x89, 0x69, 0x97, 0x4a, 0x0c, 0x96, 0x77, 0x7e, 0x65, 0xb9, 0xf1, 0x09, 0xc5, 0x6e, 0xc6, 0x84,
         0x18, 0xf0, 0x7d, 0xec, 0x3a, 0xdc, 0x4d, 0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48,
     };
+
     static constexpr auto G_LUT = []() {
         std::array<std::array<uint32_t, 256>, 4> G_LUT = {};
         for (int i = 0; i < 256; i++) {
@@ -39,6 +43,7 @@ class SM4 {
         }
         return G_LUT;
     }();
+
     static constexpr auto F_LUT = []() {
         std::array<std::array<uint32_t, 256>, 4> F_LUT = {};
         for (int i = 0; i < 256; i++) {
@@ -49,18 +54,23 @@ class SM4 {
         }
         return F_LUT;
     }();
+
     static uint32_t g(uint32_t x, uint32_t y, uint32_t z, uint32_t k) {
         uint32_t t = x ^ y ^ z ^ k;
         return G_LUT[0][t & 0xff] ^ G_LUT[1][t >> 8 & 0xff] ^ G_LUT[2][t >> 16 & 0xff] ^ G_LUT[3][t >> 24];
     }
+
     static uint32_t f(uint32_t x, uint32_t y, uint32_t z, uint32_t k) {
         uint32_t t = x ^ y ^ z ^ k;
         return F_LUT[0][t & 0xff] ^ F_LUT[1][t >> 8 & 0xff] ^ F_LUT[2][t >> 16 & 0xff] ^ F_LUT[3][t >> 24];
     }
+
     uint32_t rk[32];
+
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 16;
+
     SM4(uint8_t const *mk) {
         uint32_t a, b, c, d;
         a = GET_BE<uint32_t>(mk     ) ^ 0xa3b1bac6;
@@ -74,6 +84,7 @@ public:
             rk[i +  3] = d ^= g(a, b, c, CK[i +  3]);
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t a, b, c, d;
         a = GET_BE<uint32_t>(src     );
@@ -91,6 +102,7 @@ public:
         PUT_BE(dst +  8, b);
         PUT_BE(dst + 12, a);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t a, b, c, d;
         a = GET_BE<uint32_t>(src     );

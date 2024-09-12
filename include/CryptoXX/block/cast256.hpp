@@ -1,9 +1,12 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 struct CAST256Key {
     uint32_t m;
     bits_t r;
 };
+
 class CAST256 {
 private:
     static constexpr uint32_t S[4][256] = {
@@ -136,6 +139,7 @@ private:
         0x8644213e, 0xb7dc59d0, 0x7965291f, 0xccd6fd43, 0x41823979, 0x932bcdf6, 0xb657c34d, 0x4edfd282,
         0x7ae5290c, 0x3cb9536b, 0x851e20fe, 0x9833557e, 0x13ecf0b0, 0xd3ffb372, 0x3f85c5c1, 0x0aef7ed2,
     };
+
     static constexpr auto T = []() {
         CAST256Key C = {.m = 0x5a827999, .r = 19};
         CAST256Key M = {.m = 0x6ed9eba1, .r = 17};
@@ -149,22 +153,28 @@ private:
         }
         return T;
     }();
+
     static uint32_t FFA(uint32_t Y, CAST256Key const &K) {
         uint32_t I = ROTL(K.m + Y, K.r);
         return ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF];
     }
+
     static uint32_t FFB(uint32_t Y, CAST256Key const &K) {
         uint32_t I = ROTL(K.m ^ Y, K.r);
         return ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF];
     }
+
     static uint32_t FFC(uint32_t Y, CAST256Key const &K) {
         uint32_t I = ROTL(K.m - Y, K.r);
         return ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF];
     }
+
     CAST256Key K[12][4];
+
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 32;
+
     CAST256(uint8_t const *key) {
         uint32_t A = GET_BE<uint32_t>(key     );
         uint32_t B = GET_BE<uint32_t>(key +  4);
@@ -201,6 +211,7 @@ public:
             K[i][3].m = B;
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t A = GET_BE<uint32_t>(src     );
         uint32_t B = GET_BE<uint32_t>(src +  4);
@@ -223,6 +234,7 @@ public:
         PUT_BE(dst +  8, C);
         PUT_BE(dst + 12, D);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t A = GET_BE<uint32_t>(src     );
         uint32_t B = GET_BE<uint32_t>(src +  4);

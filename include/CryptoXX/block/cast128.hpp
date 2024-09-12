@@ -1,9 +1,12 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 struct CAST128Key {
     uint32_t m;
     bits_t r;
 };
+
 class CAST128 {
 private:
     static constexpr uint32_t S[8][256] = {
@@ -264,22 +267,28 @@ private:
         0xe97625a5, 0x0614d1b7, 0x0e25244b, 0x0c768347, 0x589e8d82, 0x0d2059d1, 0xa466bb1e, 0xf8da0a82,
         0x04f19130, 0xba6e4ec0, 0x99265164, 0x1ee7230d, 0x50b2ad80, 0xeaee6801, 0x8db2a283, 0xea8bf59e,
     };
+
     static uint32_t FFA(uint32_t Y, CAST128Key const &K) {
         uint32_t I = ROTL(K.m + Y, K.r);
         return ((S[0][I >> 24] ^ S[1][(I >> 16) & 0xFF]) - S[2][(I >> 8) & 0xFF]) + S[3][I & 0xFF];
     }
+
     static uint32_t FFB(uint32_t Y, CAST128Key const &K) {
         uint32_t I = ROTL(K.m ^ Y, K.r);
         return ((S[0][I >> 24] - S[1][(I >> 16) & 0xFF]) + S[2][(I >> 8) & 0xFF]) ^ S[3][I & 0xFF];
     }
+
     static uint32_t FFC(uint32_t Y, CAST128Key const &K) {
         uint32_t I = ROTL(K.m - Y, K.r);
         return ((S[0][I >> 24] + S[1][(I >> 16) & 0xFF]) ^ S[2][(I >> 8) & 0xFF]) - S[3][I & 0xFF];
     }
+
     CAST128Key K[16];
+
 public:
     static constexpr size_t BLOCK_SIZE = 8;
     static constexpr size_t KEY_SIZE = 16;
+
     CAST128(uint8_t const *key) {
         uint32_t x[4], z[4];
         x[0] = GET_BE<uint32_t>(key     );
@@ -351,6 +360,7 @@ public:
         K[14].r     = S[4][BYTE_BE(x, 0xC)] ^ S[5][BYTE_BE(x, 0xD)] ^ S[6][BYTE_BE(x, 0x3)] ^ S[7][BYTE_BE(x, 0x2)] ^ S[6][BYTE_BE(x, 0x8)];
         K[15].r     = S[4][BYTE_BE(x, 0xE)] ^ S[5][BYTE_BE(x, 0xF)] ^ S[6][BYTE_BE(x, 0x1)] ^ S[7][BYTE_BE(x, 0x0)] ^ S[7][BYTE_BE(x, 0xD)];
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
@@ -373,6 +383,7 @@ public:
         PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);

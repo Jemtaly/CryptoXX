@@ -1,5 +1,7 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 class TwofishBase {
 protected:
     // ROR1[i] = i << 3 & 0xf | i >> 1
@@ -10,6 +12,7 @@ protected:
     static constexpr uint8_t MUL9[16] = {
         0, 9, 2, 11, 4, 13, 6, 15, 8, 1, 10, 3, 12, 5, 14, 7,
     };
+
     static constexpr uint8_t T[2][4][16] = {
         8, 1, 7, 13, 6, 15, 3, 2, 0, 11, 5, 9, 14, 12, 10, 4,
         14, 12, 11, 8, 1, 2, 3, 5, 15, 4, 10, 6, 7, 0, 9, 13,
@@ -20,6 +23,7 @@ protected:
         4, 12, 7, 5, 1, 6, 9, 10, 0, 14, 13, 8, 2, 11, 3, 15,
         11, 9, 5, 1, 12, 3, 13, 14, 6, 4, 7, 15, 2, 0, 8, 10,
     };
+
     static constexpr auto Q = []() {
         std::array<std::array<uint32_t, 256>, 2> Q = {};
         uint8_t a0, a1, a2, a3, a4, b0, b1, b2, b3, b4;
@@ -40,6 +44,7 @@ protected:
         }
         return Q;
     }();
+
     static constexpr auto MDS = []() {
         std::array<std::array<uint32_t, 256>, 4> MDS = {};
         uint8_t f01, f5b, fef;
@@ -57,8 +62,10 @@ protected:
         }
         return MDS;
     }();
+
     uint32_t rnk[40];
     uint32_t mks[4][256];
+
 public:
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t a, b, c, d, x, y;
@@ -93,6 +100,7 @@ public:
         PUT_LE(dst +  8, a);
         PUT_LE(dst + 12, b);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t c, d, a, b, x, y;
         a = GET_LE<uint32_t>(src     );
@@ -127,9 +135,10 @@ public:
         PUT_LE(dst + 12, b);
     }
 };
-template <int L>
+
+template<int L>
     requires (L == 2 || L == 3 || L == 4)
-class TwofishTmpl: public TwofishBase {
+class TwofishTmpl : public TwofishBase {
     static uint32_t h(uint8_t b, uint32_t const *key) {
         uint32_t x = b << 24 | b << 16 | b << 8 | b;
         switch (L) {
@@ -143,9 +152,11 @@ class TwofishTmpl: public TwofishBase {
         }
         return x;
     }
+
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 8 * L;
+
     TwofishTmpl(uint8_t const *kin) {
         uint32_t key[2 * L];
         uint32_t vec[2 * L];
@@ -181,6 +192,7 @@ public:
         }
     }
 };
+
 using Twofish128 = TwofishTmpl<2>;
 using Twofish192 = TwofishTmpl<3>;
 using Twofish256 = TwofishTmpl<4>;

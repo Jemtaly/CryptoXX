@@ -1,5 +1,7 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define LTROTL(x) do {                        \
     x[0] = ROTL(x[0]                   , 13); \
     x[2] = ROTL(x[2]                   ,  3); \
@@ -8,6 +10,7 @@
     x[0] = ROTL(x[0] ^ x[1] ^ x[3]     ,  5); \
     x[2] = ROTL(x[2] ^ x[3] ^ x[1] << 7, 22); \
 } while (0)
+
 #define LTROTR(x) do {                        \
     x[2] = ROTR(x[2], 22) ^ x[3] ^ x[1] << 7; \
     x[0] = ROTR(x[0],  5) ^ x[1] ^ x[3]     ; \
@@ -16,24 +19,28 @@
     x[2] = ROTR(x[2],  3)                   ; \
     x[0] = ROTR(x[0], 13)                   ; \
 } while (0)
+
 #define XK(r, x) do {       \
     x[0] ^= rk[4 * r +  8]; \
     x[1] ^= rk[4 * r +  9]; \
     x[2] ^= rk[4 * r + 10]; \
     x[3] ^= rk[4 * r + 11]; \
 } while (0)
+
 #define LK(r, x) do {       \
     x[0]  = rk[4 * r +  8]; \
     x[1]  = rk[4 * r +  9]; \
     x[2]  = rk[4 * r + 10]; \
     x[3]  = rk[4 * r + 11]; \
 } while (0)
+
 #define SK(r, x) do {       \
     rk[4 * r +  8]  = x[0]; \
     rk[4 * r +  9]  = x[1]; \
     rk[4 * r + 10]  = x[2]; \
     rk[4 * r + 11]  = x[3]; \
 } while (0)
+
 #define SB0(R) do { \
     R[3] ^= R[0];   \
     R[4] =  R[1];   \
@@ -57,6 +64,7 @@
     R[0] =  R[1];   \
     R[1] =  R[4];   \
 } while (0)
+
 #define IB0(R) do { \
     R[2] = ~R[2];   \
     R[4] =  R[1];   \
@@ -80,6 +88,7 @@
     R[2] =  R[1];   \
     R[1] =  R[4];   \
 } while (0)
+
 #define SB1(R) do { \
     R[0] = ~R[0];   \
     R[2] = ~R[2];   \
@@ -104,6 +113,7 @@
     R[3] =  R[1];   \
     R[1] =  R[4];   \
 } while (0)
+
 #define IB1(R) do { \
     R[4] =  R[1];   \
     R[1] ^= R[3];   \
@@ -130,6 +140,7 @@
     R[2] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
+
 #define SB2(R) do { \
     R[4] =  R[0];   \
     R[0] &= R[2];   \
@@ -151,6 +162,7 @@
     R[1] =  R[3];   \
     R[3] = ~R[4];   \
 } while (0)
+
 #define IB2(R) do { \
     R[2] ^= R[3];   \
     R[3] ^= R[0];   \
@@ -174,6 +186,7 @@
     R[0] =  R[1];   \
     R[1] =  R[4];   \
 } while (0)
+
 #define SB3(R) do { \
     R[4] =  R[0];   \
     R[0] |= R[3];   \
@@ -198,6 +211,7 @@
     R[2] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
+
 #define IB3(R) do { \
     R[4] =  R[2];   \
     R[2] ^= R[1];   \
@@ -222,6 +236,7 @@
     R[2] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
+
 #define SB4(R) do { \
     R[1] ^= R[3];   \
     R[3] = ~R[3];   \
@@ -247,6 +262,7 @@
     R[0] =  R[1];   \
     R[1] =  R[4];   \
 } while (0)
+
 #define IB4(R) do { \
     R[4] =  R[2];   \
     R[2] &= R[3];   \
@@ -271,6 +287,7 @@
     R[1] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
+
 #define SB5(R) do { \
     R[0] ^= R[1];   \
     R[1] ^= R[3];   \
@@ -296,6 +313,7 @@
     R[1] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
+
 #define IB5(R) do { \
     R[1] = ~R[1];   \
     R[4] =  R[3];   \
@@ -322,6 +340,7 @@
     R[3] =  R[2];   \
     R[2] =  R[4];   \
 } while (0)
+
 #define SB6(R) do { \
     R[2] = ~R[2];   \
     R[4] =  R[3];   \
@@ -343,6 +362,7 @@
     R[3] ^= R[2];   \
     R[2] =  R[4];   \
 } while (0)
+
 #define IB6(R) do { \
     R[0] ^= R[2];   \
     R[4] =  R[2];   \
@@ -365,6 +385,7 @@
     R[1] =  R[2];   \
     R[2] =  R[4];   \
 } while (0)
+
 #define SB7(R) do { \
     R[4] =  R[1];   \
     R[1] |= R[2];   \
@@ -391,6 +412,7 @@
     R[3] =  R[0];   \
     R[0] =  R[4];   \
 } while (0)
+
 #define IB7(R) do { \
     R[4] =  R[2];   \
     R[2] ^= R[0];   \
@@ -416,9 +438,11 @@
     R[0] =  R[3];   \
     R[3] =  R[4];   \
 } while (0)
+
 class SerpentBase {
 protected:
     uint32_t rk[140] = {};
+
 public:
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t x[5]; // 5th element is used as a temporary
@@ -457,6 +481,7 @@ public:
         XK(31, x); SB7(x); XK(32, x);
         WRITE_LE(dst, x, 4);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t x[5]; // 5th element is used as a temporary
         READ_LE(x, src, 4);
@@ -495,12 +520,14 @@ public:
         WRITE_LE(dst, x, 4);
     }
 };
-template <int L>
+
+template<int L>
     requires (L == 4 || L == 6 || L == 8)
-class SerpentTmpl: public SerpentBase {
+class SerpentTmpl : public SerpentBase {
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 4 * L;
+
     SerpentTmpl(uint8_t const *kin) {
         uint32_t x[5]; // 5th element is used as a temporary
         READ_LE(rk, kin, L);
@@ -545,14 +572,18 @@ public:
         LK(32, x); SB3(x); SK(32, x);
     }
 };
+
 using Serpent128 = SerpentTmpl<4>;
 using Serpent192 = SerpentTmpl<6>;
 using Serpent256 = SerpentTmpl<8>;
+
 #undef LK
 #undef SK
 #undef XK
+
 #undef LTROTR
 #undef LTROTL
+
 #undef SB0
 #undef SB1
 #undef SB2
@@ -561,6 +592,7 @@ using Serpent256 = SerpentTmpl<8>;
 #undef SB5
 #undef SB6
 #undef SB7
+
 #undef IB0
 #undef IB1
 #undef IB2

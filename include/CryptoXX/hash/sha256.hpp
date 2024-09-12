@@ -1,7 +1,10 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define CHO(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define MAJ(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
+
 #define FFR(s, t, u, v, a, b, c, d, e, f, g, h, w, K, i) do { \
     uint32_t s = ROTR(a,  2) ^ ROTR(a, 13) ^ ROTR(a, 22);     \
     uint32_t t = ROTR(e,  6) ^ ROTR(e, 11) ^ ROTR(e, 25);     \
@@ -10,6 +13,7 @@
     d = d + u;                                                \
     h = u + v;                                                \
 } while (0)
+
 class SHA256Base {
 protected:
     static constexpr uint32_t K[64] = {
@@ -31,8 +35,9 @@ protected:
         0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
     };
 };
-template <int DN, std::array<uint32_t, 8> IV>
-class SHA256Tmpl: public SHA256Base {
+
+template<int DN, std::array<uint32_t, 8> IV>
+class SHA256Tmpl : public SHA256Base {
     void compress(uint32_t *w) {
         uint32_t A = h[0];
         uint32_t B = h[1];
@@ -67,22 +72,26 @@ class SHA256Tmpl: public SHA256Base {
         h[6] += G;
         h[7] += H;
     }
+
     uint32_t hi = 0;
     uint32_t lo = 0;
     uint32_t h[8] = {
         IV[0], IV[1], IV[2], IV[3],
         IV[4], IV[5], IV[6], IV[7],
     };
+
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = DN;
     static constexpr bool LAZY = false;
+
     void input(uint8_t const *blk) {
         uint32_t w[64];
         READB_BE(w, blk, 64);
         (lo += 64 * 8) < 64 * 8 && ++hi;
         compress(w);
     }
+
     void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint32_t w[64];
         memset(w, 0, 64);
@@ -99,6 +108,7 @@ public:
         WRITEB_BE(dst, h, DN);
     }
 };
+
 using SHA256 = SHA256Tmpl<32, std::array<uint32_t, 8>{
     0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
     0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19,
@@ -107,6 +117,7 @@ using SHA224 = SHA256Tmpl<28, std::array<uint32_t, 8>{
     0xC1059ED8, 0x367CD507, 0x3070DD17, 0xF70E5939,
     0xFFC00B31, 0x68581511, 0x64F98FA7, 0xBEFA4FA4,
 }>;
+
 #undef CHO
 #undef MAJ
 #undef FFR

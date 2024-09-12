@@ -1,19 +1,24 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define QROUND(s, a, b, c, d) do {                     \
     s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d], 16); \
     s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b], 12); \
     s[a] += s[b], s[d] ^= s[a], s[d] = ROTL(s[d],  8); \
     s[c] += s[d], s[b] ^= s[c], s[b] = ROTL(s[b],  7); \
 } while (0)
-template <int RND>
+
+template<int RND>
     requires (RND == 8 || RND == 12 || RND == 20)
 class ChaCha {
     uint32_t input[16];
+
 public:
     static constexpr size_t SECTION_SIZE = 64;
     static constexpr size_t KEY_SIZE = 32;
     static constexpr size_t CIV_SIZE = 8;
+
     ChaCha(uint8_t const *civ, uint8_t const *key) {
         input[0x0] = 0x61707865;
         input[0x1] = 0x3320646e;
@@ -32,6 +37,7 @@ public:
         input[0xe] = GET_LE<uint32_t>(civ +  0);
         input[0xf] = GET_LE<uint32_t>(civ +  4);
     }
+
     void generate(uint8_t *buf) {
         uint32_t state[16] = {
             input[0x0], input[0x1], input[0x2], input[0x3],
@@ -56,7 +62,9 @@ public:
         ++input[12] == 0 && ++input[13];
     }
 };
+
 using ChaCha8 = ChaCha<8>;
 using ChaCha12 = ChaCha<12>;
 using ChaCha20 = ChaCha<20>;
+
 #undef QROUND

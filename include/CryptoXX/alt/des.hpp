@@ -1,13 +1,18 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define ROTL28(x, n) ((x) << (n) & 0x0FFFFFFF | (x) >> (28 - (n)))
+
 // choose the type of unsigned integer to use based on the bit width
-template <int WD>
+template<int WD>
 using DESUint = typename std::conditional<WD <= 32, uint32_t, uint64_t>::type;
+
 // WI: width of input, WO: width of output
-template <int WI, int WO>
+template<int WI, int WO>
 struct DESPermutation {
     bits_t A[WO];
+
     // permutation function
     DESUint<WO> operator()(DESUint<WI> vi) const {
         DESUint<WO> vo = 0;
@@ -17,10 +22,12 @@ struct DESPermutation {
         return vo;
     }
 };
+
 class DES {
     static constexpr bits_t SHIFT[16] = {
         1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
     };
+
     // all permutations are modified, so that the LSB is represented by 0 in both input and output
     static constexpr DESPermutation<64, 56> PC1 = {
         0x3c, 0x34, 0x2c, 0x24, 0x3b, 0x33, 0x2b, 0x23,
@@ -73,6 +80,7 @@ class DES {
         0x16, 0x01, 0x0e, 0x1b, 0x06, 0x09, 0x11, 0x1f,
         0x0f, 0x04, 0x14, 0x03, 0x0b, 0x0c, 0x19, 0x10,
     };
+
     // each S-box is expanded into a 1D array, the original order of rows and columns are adjusted to avoid bit shifts
     static constexpr uint8_t S_BOX[8][64] = {
         0xd, 0x1, 0x2, 0xf, 0x8, 0xd, 0x4, 0x8, 0x6, 0xa, 0xf, 0x3, 0xb, 0x7, 0x1, 0x4,
@@ -108,6 +116,7 @@ class DES {
         0x4, 0xf, 0x1, 0xc, 0xe, 0x8, 0x8, 0x2, 0xd, 0x4, 0x6, 0x9, 0x2, 0x1, 0xb, 0x7,
         0xf, 0x5, 0xc, 0xb, 0x9, 0x3, 0x7, 0xe, 0x3, 0xa, 0xa, 0x0, 0x5, 0x6, 0x0, 0xd,
     };
+
     static DESUint<32> f(DESUint<32> r, DESUint<48> k) {
         DESUint<48> x = E(r) ^ k;
         DESUint<32> y =
@@ -121,10 +130,13 @@ class DES {
             S_BOX[7][x >> 42       ] << 28;
         return P(y);
     }
+
     DESUint<48> rk[16];
+
 public:
     static constexpr size_t BLOCK_SIZE = 8;
     static constexpr size_t KEY_SIZE = 8;
+
     DES(uint8_t const *mk) {
         DESUint<56> t = PC1(GET_BE<DESUint<64>>(mk));
         DESUint<28> l = t >> 28, r = t & 0x0FFFFFFF;
@@ -134,6 +146,7 @@ public:
             rk[i] = PC2((DESUint<56>)l << 28 | r);
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         DESUint<64> t = IP(GET_BE<DESUint<64>>(src));
         DESUint<32> l = t >> 32, r = t & 0xFFFFFFFF;
@@ -143,6 +156,7 @@ public:
         }
         PUT_BE(dst, FP((DESUint<64>)r << 32 | l));
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         DESUint<64> t = IP(GET_BE<DESUint<64>>(src));
         DESUint<32> l = t >> 32, r = t & 0xFFFFFFFF;
@@ -153,43 +167,53 @@ public:
         PUT_BE(dst, FP((DESUint<64>)r << 32 | l));
     }
 };
+
 class TDES2K {
     DES des[2];
+
 public:
     static constexpr size_t BLOCK_SIZE = DES::BLOCK_SIZE;
     static constexpr size_t KEY_SIZE = DES::KEY_SIZE * 2;
-    TDES2K(uint8_t const *mk):
-        des{
-            mk + DES::KEY_SIZE * 0,
-            mk + DES::KEY_SIZE * 1,
-        } {}
+
+    TDES2K(uint8_t const *mk)
+        : des{
+              mk + DES::KEY_SIZE * 0,
+              mk + DES::KEY_SIZE * 1,
+          } {}
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         des[0].encrypt(src, dst);
         des[1].decrypt(dst, dst);
         des[0].encrypt(dst, dst);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         des[0].decrypt(src, dst);
         des[1].encrypt(dst, dst);
         des[0].decrypt(dst, dst);
     }
 };
+
 class TDES3K {
     DES des[3];
+
 public:
     static constexpr size_t BLOCK_SIZE = DES::BLOCK_SIZE;
     static constexpr size_t KEY_SIZE = DES::KEY_SIZE * 3;
-    TDES3K(uint8_t const *mk):
-        des{
-            mk + DES::KEY_SIZE * 0,
-            mk + DES::KEY_SIZE * 1,
-            mk + DES::KEY_SIZE * 2,
-        } {}
+
+    TDES3K(uint8_t const *mk)
+        : des{
+              mk + DES::KEY_SIZE * 0,
+              mk + DES::KEY_SIZE * 1,
+              mk + DES::KEY_SIZE * 2,
+          } {}
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         des[0].encrypt(src, dst);
         des[1].decrypt(dst, dst);
         des[2].encrypt(dst, dst);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         des[2].decrypt(src, dst);
         des[1].encrypt(dst, dst);

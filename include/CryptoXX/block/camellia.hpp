@@ -1,5 +1,7 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 class CamelliaBase {
 protected:
     static constexpr uint64_t SIGMA[6] = {
@@ -7,6 +9,7 @@ protected:
         0xC6EF372FE94F82BE, 0x54FF53A5F1D36F1C,
         0x10E527FADE682D1D, 0xB05688C2B3E6C1FD,
     };
+
     static constexpr uint8_t S_BOX[256] = {
         0x70, 0x82, 0x2c, 0xec, 0xb3, 0x27, 0xc0, 0xe5, 0xe4, 0x85, 0x57, 0x35, 0xea, 0x0c, 0xae, 0x41,
         0x23, 0xef, 0x6b, 0x93, 0x45, 0x19, 0xa5, 0x21, 0xed, 0x0e, 0x4f, 0x4e, 0x1d, 0x65, 0x92, 0xbd,
@@ -25,6 +28,7 @@ protected:
         0x72, 0x07, 0xb9, 0x55, 0xf8, 0xee, 0xac, 0x0a, 0x36, 0x49, 0x2a, 0x68, 0x3c, 0x38, 0xf1, 0xa4,
         0x40, 0x28, 0xd3, 0x7b, 0xbb, 0xc9, 0x43, 0xc1, 0x15, 0xe3, 0xad, 0xf4, 0x77, 0xc7, 0x80, 0x9e,
     };
+
     static constexpr auto F_LUT = []() {
         std::array<std::array<uint64_t, 256>, 8> F_LUT = {};
         for (int j = 0; j < 256; j++) {
@@ -43,6 +47,7 @@ protected:
         }
         return F_LUT;
     }();
+
     static uint64_t f(uint64_t qi, uint64_t qk) {
         uint64_t qx = qi ^ qk;
         return
@@ -55,6 +60,7 @@ protected:
             F_LUT[6][qx >>  8 & 0xff] ^
             F_LUT[7][qx       & 0xff];
     }
+
     static uint64_t fl(uint64_t qi, uint64_t qk) {
         uint32_t hi = qi >> 32, li = qi & 0xFFFFFFFF;
         uint32_t hk = qk >> 32, lk = qk & 0xFFFFFFFF;
@@ -62,6 +68,7 @@ protected:
         hi ^=      li | lk    ;
         return (uint64_t)hi << 32 | (uint64_t)li;
     }
+
     static uint64_t lf(uint64_t qi, uint64_t qk) {
         uint32_t hi = qi >> 32, li = qi & 0xFFFFFFFF;
         uint32_t hk = qk >> 32, lk = qk & 0xFFFFFFFF;
@@ -70,13 +77,16 @@ protected:
         return (uint64_t)hi << 32 | (uint64_t)li;
     }
 };
-template <int L, int K = L == 2 ? 26 : 34>
+
+template<int L, int K = L == 2 ? 26 : 34>
     requires (L == 2 || L == 3 || L == 4)
-class CamelliaTmpl: public CamelliaBase {
+class CamelliaTmpl : public CamelliaBase {
     uint64_t kx[K];
+
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 8 * L;
+
     CamelliaTmpl(uint8_t const *kxy) {
         uint64_t lh, ll;
         uint64_t rh, rl;
@@ -145,6 +155,7 @@ public:
             kx[32] = bh >> 17 | bl << (64 - 17); kx[33] = bl >> 17 | bh << (64 - 17);
         }
     }
+
     void encrypt(const uint8_t *src, uint8_t *dst) const {
         uint64_t d2, d1;
         d1 = GET_BE<uint64_t>(src    );
@@ -168,6 +179,7 @@ public:
         PUT_BE(dst    , d2);
         PUT_BE(dst + 8, d1);
     }
+
     void decrypt(const uint8_t *src, uint8_t *dst) const {
         uint64_t d1, d2;
         d2 = GET_BE<uint64_t>(src    );
@@ -192,6 +204,7 @@ public:
         PUT_BE(dst + 8, d2);
     }
 };
+
 using Camellia128 = CamelliaTmpl<2>;
 using Camellia192 = CamelliaTmpl<3>;
 using Camellia256 = CamelliaTmpl<4>;

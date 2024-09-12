@@ -1,5 +1,7 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 class SEED {
     static constexpr uint32_t KC[16] = {
         0x9e3779b9, 0x3c6ef373, 0x78dde6e6, 0xf1bbcdcc,
@@ -7,6 +9,7 @@ class SEED {
         0x3779b99e, 0x6ef3733c, 0xdde6e678, 0xbbcdccf1,
         0x779b99e3, 0xef3733c6, 0xde6e678d, 0xbcdccf1b,
     };
+
     static constexpr uint8_t S_BOX[2][256] = {
         0xA9, 0x85, 0xD6, 0xD3, 0x54, 0x1D, 0xAC, 0x25, 0x5D, 0x43, 0x18, 0x1E, 0x51, 0xFC, 0xCA, 0x63, 0x28,
         0x44, 0x20, 0x9D, 0xE0, 0xE2, 0xC8, 0x17, 0xA5, 0x8F, 0x03, 0x7B, 0xBB, 0x13, 0xD2, 0xEE, 0x70, 0x8C,
@@ -41,9 +44,11 @@ class SEED {
         0x69, 0x93, 0x37, 0xE7, 0x24, 0xA4, 0xCB, 0x53, 0x0A, 0x87, 0xD9, 0x4C, 0x83, 0x8F, 0xCE, 0x3B, 0x4A,
         0xB7,
     };
+
     static constexpr uint8_t M[4] = {
         0xFC, 0xF3, 0xCF, 0x3F,
     };
+
     static constexpr auto SSBOX = []() {
         std::array<std::array<uint32_t, 256>, 4> SSBOX = {};
         for (size_t i = 0; i < 256; ++i) {
@@ -54,13 +59,17 @@ class SEED {
         }
         return SSBOX;
     }();
+
     static uint32_t g(uint32_t x) {
         return SSBOX[0][x & 0xff] ^ SSBOX[1][x >> 8 & 0xff] ^ SSBOX[2][x >> 16 & 0xff] ^ SSBOX[3][x >> 24];
     }
+
     uint32_t k[32];
+
 public:
     static constexpr size_t BLOCK_SIZE = 16;
     static constexpr size_t KEY_SIZE = 16;
+
     SEED(uint8_t const *mk) {
         uint32_t t0, t1;
         uint32_t k0 = GET_BE<uint32_t>(mk +  0);
@@ -82,6 +91,7 @@ public:
             q1 = t1;
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t0, t1;
         uint32_t l0 = GET_BE<uint32_t>(src +  0);
@@ -111,6 +121,7 @@ public:
         PUT_BE(dst +  8, l0);
         PUT_BE(dst + 12, l1);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t t0, t1;
         uint32_t l0 = GET_BE<uint32_t>(src +  0);

@@ -1,5 +1,7 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 class Blowfish {
     uint32_t P[18] = {
         0x243F6A88L, 0x85A308D3L, 0x13198A2EL, 0x03707344L,
@@ -8,6 +10,7 @@ class Blowfish {
         0xC0AC29B7L, 0xC97C50DDL, 0x3F84D5B5L, 0xB5470917L,
         0x9216D5D9L, 0x8979FB1BL,
     };
+
     uint32_t S[4][256] = {
         0xD1310BA6L, 0x98DFB5ACL, 0x2FFD72DBL, 0xD01ADFB7L,
         0xB8E1AFEDL, 0x6A267E96L, 0xBA7C9045L, 0xF12C7F99L,
@@ -266,9 +269,11 @@ class Blowfish {
         0x90D4F869L, 0xA65CDEA0L, 0x3F09252DL, 0xC208E69FL,
         0xB74E6132L, 0xCE77E25BL, 0x578FDFE3L, 0x3AC372E6L,
     };
+
 public:
     static constexpr size_t BLOCK_SIZE = 8;
     static constexpr size_t KEY_SIZE = 16; // MIN: 4, MAX: 56
+
     Blowfish(uint8_t const *key, size_t len = 16) {
         uint8_t buf[72];
         for (int i = 0; i < 72; i++) {
@@ -284,6 +289,7 @@ public:
             ((uint32_t *)P)[i++] = GET_BE<uint32_t>(itr + 4);
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);
@@ -297,6 +303,7 @@ public:
         PUT_BE(dst    , R);
         PUT_BE(dst + 4, L);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         uint32_t L = GET_BE<uint32_t>(src    );
         uint32_t R = GET_BE<uint32_t>(src + 4);

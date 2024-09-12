@@ -1,9 +1,12 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 union RijndaelWord {
     uint32_t w;
     uint8_t b[4];
 };
+
 class RijndaelBase {
 protected:
     // Rijndael's Galois Field multiplication
@@ -15,6 +18,7 @@ protected:
         }
         return p;
     };
+
     static constexpr auto RC = []() {
         std::array<uint8_t, 30> RC = {};
         uint8_t s = 1;
@@ -24,6 +28,7 @@ protected:
         }
         return RC;
     }();
+
     static constexpr auto RECIP = []() {
         std::array<uint8_t, 256> RECIP = {};
         uint8_t s = 1, c = 1;
@@ -34,6 +39,7 @@ protected:
         }
         return RECIP;
     }();
+
     static constexpr auto S_BOX = []() {
         std::array<uint8_t, 256> S_BOX = {};
         for (int i = 0; i < 256; i++) {
@@ -44,6 +50,7 @@ protected:
         }
         return S_BOX;
     }();
+
     static constexpr auto I_BOX = []() {
         std::array<uint8_t, 256> I_BOX = {};
         for (int i = 0; i < 256; i++) {
@@ -54,6 +61,7 @@ protected:
         }
         return I_BOX;
     }();
+
     // Generate LUT for MixColumns step
     static constexpr auto generate_MCT = [](RijndaelWord poly) {
         std::array<std::array<RijndaelWord, 256>, 4> MCT = {};
@@ -67,12 +75,14 @@ protected:
         }
         return MCT;
     };
+
     static constexpr auto E_MCT = generate_MCT({.b = {0x02, 0x01, 0x01, 0x03}});
     static constexpr auto D_MCT = generate_MCT({.b = {0x0e, 0x09, 0x0d, 0x0b}});
 };
-template <int K, int B, int R = std::max(K, B) + 6>
+
+template<int K, int B, int R = std::max(K, B) + 6>
     requires (K >= 4 && K <= 8) && (B >= 4 && B <= 8)
-class RijndaelTmpl: public RijndaelBase {
+class RijndaelTmpl : public RijndaelBase {
     static void mix_clmns_enc(RijndaelWord *q) {
         FOR_(i, 0, i + 1, i < B, {
             q[i].w =
@@ -82,6 +92,7 @@ class RijndaelTmpl: public RijndaelBase {
                 E_MCT[3][q[i].b[3]].w;
         });
     }
+
     static void mix_clmns_dec(RijndaelWord *q) {
         FOR_(i, 0, i + 1, i < B, {
             q[i].w =
@@ -91,6 +102,7 @@ class RijndaelTmpl: public RijndaelBase {
                 D_MCT[3][q[i].b[3]].w;
         });
     }
+
     static void sub_shift_enc(RijndaelWord *q) {
         RijndaelWord t[B];
         FOR_(i, 0, i + 1, i < B, {
@@ -103,6 +115,7 @@ class RijndaelTmpl: public RijndaelBase {
             q[i].b[3] = S_BOX[t[(i + 843) % B].b[3]];
         });
     }
+
     static void sub_shift_dec(RijndaelWord *q) {
         RijndaelWord t[B];
         FOR_(i, 0, i + 1, i < B, {
@@ -115,15 +128,19 @@ class RijndaelTmpl: public RijndaelBase {
             q[i].b[3] = S_BOX[t[(i + 837) % B].b[3]];
         });
     }
+
     static void add_round_key(RijndaelWord *q, RijndaelWord const *k) {
         FOR_(i, 0, i + 1, i < B, {
             q[i].w ^= k[i].w;
         });
     }
+
     RijndaelWord rk[R + 1][B];
+
 public:
     static constexpr size_t BLOCK_SIZE = B * 4;
     static constexpr size_t KEY_SIZE = K * 4;
+
     RijndaelTmpl(const uint8_t *mk) {
         memcpy((RijndaelWord *)rk, mk, K * 4);
         for (int i = K; i < (R + 1) * B; ++i) {
@@ -143,6 +160,7 @@ public:
             ((RijndaelWord *)rk)[i].w = ((RijndaelWord *)rk)[i - K].w ^ t.w;
         }
     }
+
     void encrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelWord q[B];
         memcpy(q, src, B * 4);
@@ -157,6 +175,7 @@ public:
         add_round_key(q, rk[round]);
         memcpy(dst, q, B * 4);
     }
+
     void decrypt(uint8_t const *src, uint8_t *dst) const {
         RijndaelWord q[B];
         memcpy(q, src, B * 4);
@@ -172,6 +191,7 @@ public:
         memcpy(dst, q, B * 4);
     }
 };
+
 using AES128 = RijndaelTmpl<4, 4>;
 using AES192 = RijndaelTmpl<6, 4>;
 using AES256 = RijndaelTmpl<8, 4>;

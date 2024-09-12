@@ -1,8 +1,10 @@
-#!/bin/bash
+#!/usr/bin/bash
+
 if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <path to cipher binary>"
     exit 1
 fi
+
 algs=(
     "AES128" "AES192" "AES256"
     "ARIA128" "ARIA192" "ARIA256"
@@ -43,20 +45,11 @@ civs=(
     16 16 16
     8 16 8
 )
-modes=(
-    "OFB" "CTR" "CFB"
-    "CBC" "PCBC" "ECB"
-)
+
 big_file=$(mktemp)
 big_size=123456789
 head -c $big_size /dev/urandom >$big_file
-tmp_file=$(mktemp)
-tmp_size=+01234567
-head -c $tmp_size /dev/urandom >$tmp_file
-tmp_hash=$(
-    cat $tmp_file |
-        md5sum | cut -d' ' -f1
-)
+
 for i in ${!algs[@]}; do
     alg=${algs[$i]}
     key=$(head -c ${keys[$i]} /dev/urandom | od -An -tx1 | tr -d ' \n')

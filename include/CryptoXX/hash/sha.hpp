@@ -1,17 +1,22 @@
 #pragma once
+
 #include "CryptoXX/utils.hpp"
+
 #define FF0(x, y, z) ((x) & ((y) ^ (z)) ^ (z))
 #define FF1(x, y, z) ((x) ^ (y) ^ (z))
 #define FF2(x, y, z) ((x) & (y) | (z) & ((x) | (y)))
 #define FF3(x, y, z) ((x) ^ (y) ^ (z))
+
 #define KK0 0x5A827999U
 #define KK1 0x6ED9EBA1U
 #define KK2 0x8F1BBCDCU
 #define KK3 0xCA62C1D6U
+
 #define GGR(N, a, b, c, d, e, w, i) do {                 \
     e = ROTL(a,  5) + FF##N(b, c, d) + e + KK##N + w[i]; \
     b = ROTL(b, 30);                                     \
 } while (0)
+
 #define GGS(N, a, b, c, d, e, w, i)                      \
     FOR_(j, i, j + 5, j < i + 20, {                      \
         GGR(N, a, b, c, d, e, w, j    );                 \
@@ -20,7 +25,8 @@
         GGR(N, c, d, e, a, b, w, j + 3);                 \
         GGR(N, b, c, d, e, a, w, j + 4);                 \
     })
-template <bits_t R>
+
+template<bits_t R>
 class SHA {
     void compress(uint32_t *w) {
         uint32_t a = h[0];
@@ -39,21 +45,25 @@ class SHA {
         h[3] += d;
         h[4] += e;
     }
+
     uint32_t lo = 0;
     uint32_t hi = 0;
     uint32_t h[5] = {
         0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
     };
+
 public:
     static constexpr size_t BLOCK_SIZE = 64;
     static constexpr size_t DIGEST_SIZE = 20;
     static constexpr bool LAZY = false;
+
     void input(uint8_t const *blk) {
         uint32_t w[80];
         READB_BE(w, blk, 64);
         (lo += 64 * 8) < 64 * 8 && ++hi;
         compress(w);
     }
+
     void final(uint8_t const *src, size_t len, uint8_t *dst) {
         uint32_t w[80];
         memset(w, 0, 64);
@@ -70,8 +80,10 @@ public:
         WRITEB_BE(dst, h, 20);
     }
 };
+
 using SHA0 = SHA<0>;
 using SHA1 = SHA<1>;
+
 #undef FF0
 #undef FF1
 #undef FF2
