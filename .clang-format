@@ -1,21 +1,21 @@
 Language: Cpp
 BasedOnStyle: Google
 BreakBeforeBraces: Attach
-BreakConstructorInitializers: AfterColon
-BreakInheritanceList: AfterColon
-SpaceBeforeCtorInitializerColon: false
-SpaceBeforeInheritanceColon: false
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
 SpaceBeforeRangeBasedForLoopColon: true # Precede the colon with a space when and only when it is used as an operator
-SpaceAfterTemplateKeyword: true # To be determined
+SpaceAfterTemplateKeyword: false # To be determined
 ColumnLimit: 0
 UseTab: Never # To be determined
 IndentWidth: 4
 AccessModifierOffset: -4
 IndentCaseLabels: false
-SeparateDefinitionBlocks: Never
-EmptyLineBeforeAccessModifier: Never
-MaxEmptyLinesToKeep: 0
+SeparateDefinitionBlocks: Always
+EmptyLineBeforeAccessModifier: Always
 InsertBraces: true
+FixNamespaceComments: false
 DerivePointerAlignment: false
 ReferenceAlignment: Right
 PointerAlignment: Right
@@ -26,3 +26,4 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: Empty
 LineEnding: LF
 InsertNewlineAtEOF: true
+IncludeBlocks: Preserve
