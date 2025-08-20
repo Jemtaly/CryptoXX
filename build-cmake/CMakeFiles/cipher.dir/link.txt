@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/cipher.dir/link.d CMakeFiles/cipher.dir/samples/cipher.cpp.o -o bin/cipher

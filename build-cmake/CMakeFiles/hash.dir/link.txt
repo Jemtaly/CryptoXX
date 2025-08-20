@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/hash.dir/link.d CMakeFiles/hash.dir/samples/hash.cpp.o -o bin/hash

@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/runner/work/CryptoXX/CryptoXX/build-cmake",
+  "command": "/usr/bin/c++  -I/home/runner/work/CryptoXX/CryptoXX/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -o CMakeFiles/hash.dir/samples/hash.cpp.o -c /home/runner/work/CryptoXX/CryptoXX/samples/hash.cpp",
+  "file": "/home/runner/work/CryptoXX/CryptoXX/samples/hash.cpp",
+  "output": "CMakeFiles/hash.dir/samples/hash.cpp.o"
+},
+{
+  "directory": "/home/runner/work/CryptoXX/CryptoXX/build-cmake",
+  "command": "/usr/bin/c++  -I/home/runner/work/CryptoXX/CryptoXX/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -o CMakeFiles/cipher.dir/samples/cipher.cpp.o -c /home/runner/work/CryptoXX/CryptoXX/samples/cipher.cpp",
+  "file": "/home/runner/work/CryptoXX/CryptoXX/samples/cipher.cpp",
+  "output": "CMakeFiles/cipher.dir/samples/cipher.cpp.o"
+},
+{
+  "directory": "/home/runner/work/CryptoXX/CryptoXX/build-cmake",
+  "command": "/usr/bin/c++  -I/home/runner/work/CryptoXX/CryptoXX/include -O3 -DNDEBUG -std=c++20 -Wall -Wextra -o CMakeFiles/unit_tests.dir/tests/test_hash.cpp.o -c /home/runner/work/CryptoXX/CryptoXX/tests/test_hash.cpp",
+  "file": "/home/runner/work/CryptoXX/CryptoXX/tests/test_hash.cpp",
+  "output": "CMakeFiles/unit_tests.dir/tests/test_hash.cpp.o"
+}
+]
