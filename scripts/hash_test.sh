@@ -39,6 +39,13 @@ for i in ${!algs[@]}; do
     ssl=${ssls[$i]}
     if [[ $ssl != "" ]]; then
         echo -n "Comparing $alg with openssl ... "
+        
+        # Check if OpenSSL supports this hash algorithm first
+        if ! echo "test" | openssl dgst -$ssl >/dev/null 2>&1; then
+            echo "SKIP (OpenSSL doesn't support $ssl)"
+            continue
+        fi
+        
         beg_time=$(date +%s.%N)
         ssl_hash=$(
             cat $big_file |
@@ -46,6 +53,7 @@ for i in ${!algs[@]}; do
         )
         end_time=$(date +%s.%N)
         ssl_time=$(echo "$end_time - $beg_time" | bc)
+        
         beg_time=$(date +%s.%N)
         alg_hash=$(
             cat $big_file |

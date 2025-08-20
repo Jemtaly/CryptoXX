@@ -1,0 +1,64 @@
+name: CI - Build and Test Crypto Modules
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, clang++]
+      fail-fast: false  # Continue testing other compilers even if one fails
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential clang openssl bc
+        
+    - name: Verify build environment
+      run: |
+        echo "=== Build Environment Information ==="
+        echo "Compiler: ${{ matrix.compiler }}"
+        ${{ matrix.compiler }} --version
+        echo "---"
+        openssl version
+        echo "---" 
+        bc --version
+        echo "==================================="
+        
+    - name: Build project
+      run: |
+        # Override compiler in Makefile
+        make CXX=${{ matrix.compiler }}
+      
+    - name: Verify binaries were created
+      run: |
+        ls -la build/
+        file build/hash build/cipher
+      
+    - name: Run hash tests
+      run: |
+        # Make test scripts executable (in case they weren't)
+        chmod +x scripts/*.sh
+        
+        echo "Running hash algorithm tests..."
+        scripts/hash_test.sh build/hash
+        echo "✅ Hash tests passed successfully"
+        
+    - name: Run cipher tests  
+      run: |
+        echo "Running cipher algorithm tests..."
+        scripts/cipher_test.sh build/cipher
+        echo "✅ Cipher tests passed successfully"
+        
+    - name: Clean up
+      run: make clean
