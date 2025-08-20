@@ -1,5 +1,7 @@
 # CryptoXX
 
+[![CI - Build and Test](https://github.com/Jemtaly/CryptoXX/actions/workflows/ci.yml/badge.svg)](https://github.com/Jemtaly/CryptoXX/actions/workflows/ci.yml)
+
 A modern, high-speed, easy-to-use object-oriented C++ cryptographic library, which aims to use the object-oriented features of C++ to simplify the steps of using, and make cryptographic algorithms modular, so that different cryptographic algorithms have a unified interface, thereby improving the convenience of implementation (scalability) and flexibility of use.
 
 Algorithms are highly optimized (while ensuring readability), and several algorithms run more efficiently than classic cryptographic libraries such as OpenSSL.
@@ -56,6 +58,20 @@ make
 ```sh
 make test
 ```
+
+### Continuous Integration / 持续集成
+
+This project uses GitHub Actions for automatic building and testing. The CI pipeline:
+- Builds the project with both GCC and Clang compilers
+- Runs comprehensive test suites for hash and cipher algorithms
+- Verifies compatibility with OpenSSL for cross-validation
+- Automatically runs on all pushes and pull requests
+
+本项目使用 GitHub Actions 进行自动构建和测试。CI 流水线会：
+- 使用 GCC 和 Clang 编译器构建项目
+- 运行哈希和密码算法的综合测试套件  
+- 验证与 OpenSSL 的兼容性以进行交叉验证
+- 在所有推送和拉取请求时自动运行
 
 ### Usage / 使用
 
