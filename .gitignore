@@ -1,1 +1,35 @@
+# Build directories
 build/
+build-*/
+bin/
+out/
+
+# CMake files
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+compile_commands.json
+CTestTestfile.cmake
+cmake_uninstall.cmake
+*Config.cmake
+*ConfigVersion.cmake
+
+# IDE files
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+*.tmp
+test_*.txt
+
+# Backup files
+*.bak
+*.orig

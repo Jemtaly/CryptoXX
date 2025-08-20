@@ -45,32 +45,80 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 
 ## Compiling and running the sample program / 编译并运行示例程序
 
-### Compile / 编译
+### Build Systems / 构建系统
 
+CryptoXX provides two modern build systems:
+
+**Enhanced Makefile (Recommended for simple builds):**
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
-make
+make help              # Show available options
+make                   # Build release version
+make debug             # Build debug version
+```
+
+**CMake (Recommended for cross-platform development):**
+```sh
+git clone https://github.com/Jemtaly/CryptoXX
+cd CryptoXX
+cmake -B build
+cmake --build build --parallel
 ```
 
 ### Test / 测试
 
+**With Makefile:**
 ```sh
-make test
+make test              # Run all tests
+make test-hash         # Run hash tests only
+make test-cipher       # Run cipher tests only
 ```
+
+**With CMake:**
+```sh
+cd build
+make test-all          # Run all tests
+# or
+ctest --verbose        # Use CTest
+```
+
+### Advanced Build Options / 高级构建选项
+
+**Makefile build types:**
+```sh
+make release           # Optimized release build (default)
+make debug             # Debug with symbols
+make relwithdebinfo    # Release with debug info
+make minsizerel        # Size-optimized build
+```
+
+**CMake with options:**
+```sh
+cmake -B build \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DENABLE_SANITIZERS=ON \
+    -DENABLE_STATIC_ANALYSIS=ON
+```
+
+For detailed build system documentation, see [docs/BUILD.md](docs/BUILD.md).
 
 ### Continuous Integration / 持续集成
 
 This project uses GitHub Actions for automatic building and testing. The CI pipeline:
-- Builds the project with both GCC and Clang compilers
-- Runs comprehensive test suites for hash and cipher algorithms
+- Builds with both GCC and Clang compilers across multiple configurations
+- Tests both Makefile and CMake build systems
+- Runs comprehensive test suites for hash and cipher algorithms  
 - Verifies compatibility with OpenSSL for cross-validation
+- Includes code quality checks and static analysis
 - Automatically runs on all pushes and pull requests
 
 本项目使用 GitHub Actions 进行自动构建和测试。CI 流水线会：
-- 使用 GCC 和 Clang 编译器构建项目
+- 使用 GCC 和 Clang 编译器进行多种配置的构建
+- 测试 Makefile 和 CMake 两种构建系统
 - 运行哈希和密码算法的综合测试套件  
 - 验证与 OpenSSL 的兼容性以进行交叉验证
+- 包含代码质量检查和静态分析
 - 在所有推送和拉取请求时自动运行
 
 ### Usage / 使用
