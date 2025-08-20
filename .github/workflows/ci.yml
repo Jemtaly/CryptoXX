@@ -51,32 +51,14 @@ jobs:
         chmod +x scripts/*.sh
         
         echo "Running hash algorithm tests..."
-        set +e  # Don't exit on first error
         scripts/hash_test.sh build/hash
-        hash_exit_code=$?
-        
-        if [ $hash_exit_code -eq 0 ]; then
-          echo "✅ Hash tests passed successfully"
-        else
-          echo "⚠️ Hash tests completed with some failures (likely due to OpenSSL compatibility)"
-        fi
+        echo "✅ Hash tests passed successfully"
         
     - name: Run cipher tests  
       run: |
         echo "Running cipher algorithm tests..."
-        set +e  # Don't exit on first error
         scripts/cipher_test.sh build/cipher
-        cipher_exit_code=$?
-        
-        if [ $cipher_exit_code -eq 0 ]; then
-          echo "✅ Cipher tests passed successfully"
-        else
-          echo "⚠️ Cipher tests completed with some failures (likely due to OpenSSL compatibility)"
-          echo "This is expected for algorithms like SEED on newer OpenSSL versions"
-        fi
-        
-        # CI passes as long as compilation succeeded and core functionality works
-        echo "Build and core functionality verified successfully"
+        echo "✅ Cipher tests passed successfully"
         
     - name: Clean up
       run: make clean

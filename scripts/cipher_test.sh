@@ -66,6 +66,13 @@ for i in ${!algs[@]}; do
         end_time=$(date +%s.%N)
         enc_time=$(echo "$end_time - $beg_time" | bc)
         beg_time=$(date +%s.%N)
+        
+        # Check if OpenSSL supports this cipher first
+        if ! echo "test" | openssl enc -$ssl-ecb -K $key >/dev/null 2>&1; then
+            echo "SKIP (OpenSSL doesn't support $ssl-ecb)"
+            continue
+        fi
+        
         ssl_hash=$(
             cat $big_file |
                 openssl enc -$ssl-ecb -K $key |
@@ -73,6 +80,7 @@ for i in ${!algs[@]}; do
         )
         end_time=$(date +%s.%N)
         ssl_time=$(echo "$end_time - $beg_time" | bc)
+        
         if [[ $enc_hash == $ssl_hash ]]; then
             echo "OK ($enc_time vs $ssl_time)"
         else
