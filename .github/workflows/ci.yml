@@ -48,27 +48,15 @@ jobs:
         ls -la build/
         file build/hash build/cipher
       
-    - name: Run hash tests
+    - name: Run tests
       run: |
         # Make test scripts executable (in case they weren't)
         chmod +x scripts/*.sh
         
-        echo "Running hash algorithm tests..."
-        scripts/hash_test.sh build/hash
-        echo "✅ Hash tests passed successfully"
-        
-    - name: Run cipher tests  
-      run: |
-        echo "Running cipher algorithm tests..."
-        scripts/cipher_test.sh build/cipher
-        echo "✅ Cipher tests passed successfully"
-        
-    - name: Run all tests with ctest
-      run: |
         echo "Running all tests with ctest..."
         cd build
         ctest --verbose
-        echo "✅ All ctest tests passed successfully"
+        echo "✅ All tests passed successfully"
         
     - name: Clean up
       run: rm -rf build
