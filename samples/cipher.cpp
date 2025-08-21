@@ -33,20 +33,22 @@
 
 #define BUFSIZE 8192  // Same with OpenSSL default buffer size
 
-char **Argv;
-int Argc, Argi;
-
-bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
+void read_bin(std::string const &name, size_t len, char const *hex, uint8_t *bin) {
+    if (hex == nullptr) {
+        throw std::runtime_error("No " + name + " specified.");
+    }
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
             bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 0 & 0xf) << (i % 2 ? 0 : 4);
         } else if (hex[i] >= 'a' && hex[i] <= 'f' || hex[i] >= 'A' && hex[i] <= 'F') {
             bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 9 & 0xf) << (i % 2 ? 0 : 4);
         } else {
-            return false;
+            throw std::runtime_error("Invalid character in " + name + ", should be a " + std::to_string(len) + "-byte hex string.");
         }
     }
-    return hex[len * 2] == '\0';
+    if (hex[len * 2] != '\0') {
+        throw std::runtime_error("Invalid length of " + name + ", should be a " + std::to_string(len) + "-byte hex string.");
+    }
 }
 
 void print_hex(uint8_t const *bin, size_t len) {
@@ -56,293 +58,262 @@ void print_hex(uint8_t const *bin, size_t len) {
     printf("\n");
 }
 
-void read_arg(std::string const &arg, uint8_t *dst, size_t len) {
-    if (Argi == Argc) {
-        throw std::runtime_error("No " + arg + " specified.");
-    }
-    if (not hex2bin(len, Argv[Argi++], dst)) {
-        throw std::runtime_error("Invalid " + arg + ", should be a " + std::to_string(len) + "-byte hex string.");
-    }
-}
-
-// encrypt single block of data from command line arguments, and print the result (in hex format)
-template<typename BlockCipher>
-void bc_enc() {
-    uint8_t key[BlockCipher::KEY_SIZE];
-    read_arg("key", key, BlockCipher::KEY_SIZE);
-    uint8_t msg[BlockCipher::BLOCK_SIZE];
-    read_arg("message", msg, BlockCipher::BLOCK_SIZE);
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.");
-    }
-    BlockCipher(key).encrypt(msg, msg);
-    print_hex(msg, BlockCipher::BLOCK_SIZE);
-}
-
-// decrypt single block of data from command line arguments, and print the result (in hex format)
-template<typename BlockCipher>
-void bc_dec() {
-    uint8_t key[BlockCipher::KEY_SIZE];
-    read_arg("key", key, BlockCipher::KEY_SIZE);
-    uint8_t msg[BlockCipher::BLOCK_SIZE];
-    read_arg("message", msg, BlockCipher::BLOCK_SIZE);
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.");
-    }
-    BlockCipher(key).decrypt(msg, msg);
-    print_hex(msg, BlockCipher::BLOCK_SIZE);
-}
-
-// encrypt/decrypt data with block cipher mode of operation from stdin to stdout
-template<typename BlockCipherCrypter>
-void bc_cry() {
-    uint8_t key[BlockCipherCrypter::KEY_SIZE];
-    read_arg("key", key, BlockCipherCrypter::KEY_SIZE);
-    uint8_t civ[BlockCipherCrypter::CIV_SIZE];
-    if (BlockCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
-        read_arg("iv", civ, BlockCipherCrypter::CIV_SIZE);
-    }
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.");
-    }
-    BlockCipherCrypter bcc(civ, key);
-    uint8_t src[BUFSIZE], dst[BUFSIZE + BlockCipherCrypter::BLOCK_SIZE];
-    size_t read;
-    while ((read = fread(src, 1, BUFSIZE, stdin)) == BUFSIZE) {
-        fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, stdout);
-    }
-    fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
-    if (uint8_t *end = bcc.fflush(dst)) {
-        fwrite(dst, 1, end - (uint8_t *)dst, stdout);
-    } else {
-        fprintf(stderr, "Warning: Error occurred while flushing cipher.\n");
-    }
-}
-
-// encrypt/decrypt data with stream cipher from stdin to stdout
-template<typename StreamCipherCrypter>
-void sc_cry() {
-    uint8_t key[StreamCipherCrypter::KEY_SIZE];
-    read_arg("key", key, StreamCipherCrypter::KEY_SIZE);
-    uint8_t civ[StreamCipherCrypter::CIV_SIZE];
-    if (StreamCipherCrypter::CIV_SIZE != 0 || Argi < Argc) {
-        read_arg("iv", civ, StreamCipherCrypter::CIV_SIZE);
-    }
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.");
-    }
-    StreamCipherCrypter scc(civ, key);
-    uint8_t src[BUFSIZE], dst[BUFSIZE];
-    size_t read;
-    while ((read = fread(src, 1, BUFSIZE, stdin)) == BUFSIZE) {
-        fwrite(dst, 1, scc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, stdout);
-    }
-    fwrite(dst, 1, scc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
-}
-
-// generate pseudo-random data with stream cipher from stdin to stdout
-template<typename PseudoRandomGenerator>
-void pr_gen() {
-    uint8_t key[PseudoRandomGenerator::KEY_SIZE];
-    read_arg("key", key, PseudoRandomGenerator::KEY_SIZE);
-    uint8_t civ[PseudoRandomGenerator::CIV_SIZE];
-    if (PseudoRandomGenerator::CIV_SIZE != 0 || Argi < Argc) {
-        read_arg("iv", civ, PseudoRandomGenerator::CIV_SIZE);
-    }
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments.");
-    }
-    PseudoRandomGenerator prg(civ, key);
-    uint8_t dst[BUFSIZE];
-    while (true) {
-        prg.generate(dst, dst + BUFSIZE);
-        fwrite(dst, 1, BUFSIZE, stdout);
-    }
-}
-
 constexpr uint32_t hash(char const *str) {
     return *str ? *str + hash(str + 1) * 16777619UL : 2166136261UL;
 }
 
-template<typename BlockCipher>
-void bc_select() {
-    if (Argi == Argc) {
-        throw std::runtime_error("No mode specified.");
-    }
-    switch (hash(Argv[Argi++])) {
-    case hash("ECBEnc"):
-        bc_cry<ECBEncrypter<BlockCipher>>();
-        break;
-    case hash("ECBDec"):
-        bc_cry<ECBDecrypter<BlockCipher>>();
-        break;
-    case hash("CBCEnc"):
-        bc_cry<CBCEncrypter<BlockCipher>>();
-        break;
-    case hash("CBCDec"):
-        bc_cry<CBCDecrypter<BlockCipher>>();
-        break;
-    case hash("PCBCEnc"):
-        bc_cry<PCBCEncrypter<BlockCipher>>();
-        break;
-    case hash("PCBCDec"):
-        bc_cry<PCBCDecrypter<BlockCipher>>();
-        break;
-    case hash("CFBEnc"):
-        sc_cry<CFBEncrypter<BlockCipher>>();
-        break;
-    case hash("CFBDec"):
-        sc_cry<CFBDecrypter<BlockCipher>>();
-        break;
-    case hash("OFBEnc"):
-        sc_cry<OFBEncrypter<BlockCipher>>();
-        break;
-    case hash("OFBDec"):
-        sc_cry<OFBDecrypter<BlockCipher>>();
-        break;
-    case hash("OFBGen"):
-        pr_gen<OFBGenerator<BlockCipher>>();
-        break;
-    case hash("CTREnc"):
-        sc_cry<CTREncrypter<BlockCipher>>();
-        break;
-    case hash("CTRDec"):
-        sc_cry<CTRDecrypter<BlockCipher>>();
-        break;
-    case hash("CTRGen"):
-        pr_gen<CTRGenerator<BlockCipher>>();
-        break;
-    case hash("Enc"):
-        bc_enc<BlockCipher>();
-        break;
-    case hash("Dec"):
-        bc_dec<BlockCipher>();
-        break;
-    default:
-        throw std::runtime_error("Invalid mode.");
-    }
-}
+class ArgsHandler {
+public:
+    char **argv;
+    int argc;
+    int argi = 1;
 
-template<typename StreamCipher>
-void sc_select() {
-    if (Argi == Argc) {
-        throw std::runtime_error("No mode specified.");
+    char const *next_arg() {
+        if (argi == argc) {
+            return nullptr;
+        }
+        return argv[argi++];
     }
-    switch (hash(Argv[Argi++])) {
-    case hash("Enc"):
-        sc_cry<StreamCipherEncrypter<StreamCipher>>();
-        break;
-    case hash("Dec"):
-        sc_cry<StreamCipherDecrypter<StreamCipher>>();
-        break;
-    case hash("Gen"):
-        pr_gen<PseudoRandomGenerator<StreamCipher>>();
-        break;
-    default:
-        throw std::runtime_error("Invalid mode.");
-    }
-}
 
-void alg_select() {
-    if (Argi == Argc) {
-        throw std::runtime_error("No algorithm specified.");
+    // encrypt single block of data from command line arguments, and print the result (in hex format)
+    template<typename BlockCipher>
+    void block_cipher_encrypt() {
+        auto key_arg = next_arg();
+        uint8_t key[BlockCipher::KEY_SIZE];
+        read_bin("key", BlockCipher::KEY_SIZE, key_arg, key);
+        auto msg_arg = next_arg();
+        uint8_t msg[BlockCipher::BLOCK_SIZE];
+        read_bin("message", BlockCipher::BLOCK_SIZE, msg_arg, msg);
+        if (next_arg()) {
+            throw std::runtime_error("Too many arguments.");
+        }
+        BlockCipher(key).encrypt(msg, msg);
+        print_hex(msg, BlockCipher::BLOCK_SIZE);
     }
-    switch (hash(Argv[Argi++])) {
-    case hash("AES128"):
-        bc_select<AES128>();
-        break;
-    case hash("AES192"):
-        bc_select<AES192>();
-        break;
-    case hash("AES256"):
-        bc_select<AES256>();
-        break;
-    case hash("Twofish128"):
-        bc_select<Twofish128>();
-        break;
-    case hash("Twofish192"):
-        bc_select<Twofish192>();
-        break;
-    case hash("Twofish256"):
-        bc_select<Twofish256>();
-        break;
-    case hash("Serpent128"):
-        bc_select<Serpent128>();
-        break;
-    case hash("Serpent192"):
-        bc_select<Serpent192>();
-        break;
-    case hash("Serpent256"):
-        bc_select<Serpent256>();
-        break;
-    case hash("Camellia128"):
-        bc_select<Camellia128>();
-        break;
-    case hash("Camellia192"):
-        bc_select<Camellia192>();
-        break;
-    case hash("Camellia256"):
-        bc_select<Camellia256>();
-        break;
-    case hash("ARIA128"):
-        bc_select<ARIA128>();
-        break;
-    case hash("ARIA192"):
-        bc_select<ARIA192>();
-        break;
-    case hash("ARIA256"):
-        bc_select<ARIA256>();
-        break;
-    case hash("SM4"):
-        bc_select<SM4>();
-        break;
-    case hash("CAST128"):
-        bc_select<CAST128>();
-        break;
-    case hash("CAST256"):
-        bc_select<CAST256>();
-        break;
-    case hash("DES"):
-        bc_select<DES>();
-        break;
-    case hash("TDES2K"):
-        bc_select<TDES2K>();
-        break;
-    case hash("TDES3K"):
-        bc_select<TDES3K>();
-        break;
-    case hash("Blowfish"):
-        bc_select<Blowfish>();
-        break;
-    case hash("IDEA"):
-        bc_select<IDEA>();
-        break;
-    case hash("SEED"):
-        bc_select<SEED>();
-        break;
-    case hash("ChaCha20"):
-        sc_select<ChaCha20>();
-        break;
-    case hash("Salsa20"):
-        sc_select<Salsa20>();
-        break;
-    case hash("RC4"):
-        sc_select<RC4>();
-        break;
-    case hash("ZUC"):
-        sc_select<ZUC>();
-        break;
-    default:
-        throw std::runtime_error("Invalid algorithm.");
+
+    // decrypt single block of data from command line arguments, and print the result (in hex format)
+    template<typename BlockCipher>
+    void block_cipher_decrypt() {
+        auto key_arg = next_arg();
+        uint8_t key[BlockCipher::KEY_SIZE];
+        read_bin("key", BlockCipher::KEY_SIZE, key_arg, key);
+        auto msg_arg = next_arg();
+        uint8_t msg[BlockCipher::BLOCK_SIZE];
+        read_bin("message", BlockCipher::BLOCK_SIZE, msg_arg, msg);
+        if (next_arg()) {
+            throw std::runtime_error("Too many arguments.");
+        }
+        BlockCipher(key).decrypt(msg, msg);
+        print_hex(msg, BlockCipher::BLOCK_SIZE);
     }
-}
+
+    // encrypt/decrypt data with block cipher mode of operation from stdin to stdout
+    template<typename BlockCipherCrypter>
+    void block_cipher_mode_perform() {
+        auto key_arg = next_arg();
+        uint8_t key[BlockCipherCrypter::KEY_SIZE];
+        read_bin("key", BlockCipherCrypter::KEY_SIZE, key_arg, key);
+        auto civ_arg = next_arg();
+        uint8_t civ[BlockCipherCrypter::CIV_SIZE];
+        if (BlockCipherCrypter::CIV_SIZE != 0 || civ_arg) {
+            read_bin("iv", BlockCipherCrypter::CIV_SIZE, civ_arg, civ);
+        }
+        if (next_arg()) {
+            throw std::runtime_error("Too many arguments.");
+        }
+        BlockCipherCrypter bcc(civ, key);
+        uint8_t src[BUFSIZE], dst[BUFSIZE + BlockCipherCrypter::BLOCK_SIZE];
+        size_t read;
+        while ((read = fread(src, 1, BUFSIZE, stdin)) == BUFSIZE) {
+            fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, stdout);
+        }
+        fwrite(dst, 1, bcc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
+        if (uint8_t *end = bcc.fflush(dst)) {
+            fwrite(dst, 1, end - (uint8_t *)dst, stdout);
+        } else {
+            fprintf(stderr, "Warning: Error occurred while flushing cipher.\n");
+        }
+    }
+
+    // encrypt/decrypt data with stream cipher from stdin to stdout
+    template<typename StreamCipherCrypter>
+    void stream_cipher_mode_perform() {
+        auto key_arg = next_arg();
+        uint8_t key[StreamCipherCrypter::KEY_SIZE];
+        read_bin("key", StreamCipherCrypter::KEY_SIZE, key_arg, key);
+        auto civ_arg = next_arg();
+        uint8_t civ[StreamCipherCrypter::CIV_SIZE];
+        if (StreamCipherCrypter::CIV_SIZE != 0 || civ_arg) {
+            read_bin("iv", StreamCipherCrypter::CIV_SIZE, civ_arg, civ);
+        }
+        if (next_arg()) {
+            throw std::runtime_error("Too many arguments.");
+        }
+        StreamCipherCrypter scc(civ, key);
+        uint8_t src[BUFSIZE], dst[BUFSIZE];
+        size_t read;
+        while ((read = fread(src, 1, BUFSIZE, stdin)) == BUFSIZE) {
+            fwrite(dst, 1, scc.update(dst, src, (uint8_t *)src + BUFSIZE) - (uint8_t *)dst, stdout);
+        }
+        fwrite(dst, 1, scc.update(dst, src, (uint8_t *)src + read) - (uint8_t *)dst, stdout);
+    }
+
+    // generate pseudo-random data with stream cipher from stdin to stdout
+    template<typename PseudoRandomGenerator>
+    void stream_cipher_mode_generate() {
+        auto key_arg = next_arg();
+        uint8_t key[PseudoRandomGenerator::KEY_SIZE];
+        read_bin("key", PseudoRandomGenerator::KEY_SIZE, key_arg, key);
+        auto civ_arg = next_arg();
+        uint8_t civ[PseudoRandomGenerator::CIV_SIZE];
+        if (PseudoRandomGenerator::CIV_SIZE != 0 || civ_arg) {
+            read_bin("iv", PseudoRandomGenerator::CIV_SIZE, civ_arg, civ);
+        }
+        if (next_arg()) {
+            throw std::runtime_error("Too many arguments.");
+        }
+        PseudoRandomGenerator prg(civ, key);
+        uint8_t dst[BUFSIZE];
+        while (true) {
+            prg.generate(dst, dst + BUFSIZE);
+            fwrite(dst, 1, BUFSIZE, stdout);
+        }
+    }
+
+    template<typename BlockCipher>
+    void block_cipher_select_mode() {
+        auto mode = next_arg();
+        if (mode == nullptr) {
+            throw std::runtime_error("No mode specified.");
+        }
+        switch (hash(mode)) {
+        case hash("ECBEnc"):
+            return block_cipher_mode_perform<ECBEncrypter<BlockCipher>>();
+        case hash("ECBDec"):
+            return block_cipher_mode_perform<ECBDecrypter<BlockCipher>>();
+        case hash("CBCEnc"):
+            return block_cipher_mode_perform<CBCEncrypter<BlockCipher>>();
+        case hash("CBCDec"):
+            return block_cipher_mode_perform<CBCDecrypter<BlockCipher>>();
+        case hash("PCBCEnc"):
+            return block_cipher_mode_perform<PCBCEncrypter<BlockCipher>>();
+        case hash("PCBCDec"):
+            return block_cipher_mode_perform<PCBCDecrypter<BlockCipher>>();
+        case hash("CFBEnc"):
+            return stream_cipher_mode_perform<CFBEncrypter<BlockCipher>>();
+        case hash("CFBDec"):
+            return stream_cipher_mode_perform<CFBDecrypter<BlockCipher>>();
+        case hash("OFBEnc"):
+            return stream_cipher_mode_perform<OFBEncrypter<BlockCipher>>();
+        case hash("OFBDec"):
+            return stream_cipher_mode_perform<OFBDecrypter<BlockCipher>>();
+        case hash("OFBGen"):
+            return stream_cipher_mode_generate<OFBGenerator<BlockCipher>>();
+        case hash("CTREnc"):
+            return stream_cipher_mode_perform<CTREncrypter<BlockCipher>>();
+        case hash("CTRDec"):
+            return stream_cipher_mode_perform<CTRDecrypter<BlockCipher>>();
+        case hash("CTRGen"):
+            return stream_cipher_mode_generate<CTRGenerator<BlockCipher>>();
+        case hash("Enc"):
+            return block_cipher_encrypt<BlockCipher>();
+        case hash("Dec"):
+            return block_cipher_decrypt<BlockCipher>();
+        default:
+            throw std::runtime_error("Invalid mode.");
+        }
+    }
+
+    template<typename StreamCipher>
+    void stream_cipher_select_mode() {
+        auto mode = next_arg();
+        if (mode == nullptr) {
+            throw std::runtime_error("No mode specified.");
+        }
+        switch (hash(mode)) {
+        case hash("Enc"):
+            return stream_cipher_mode_perform<StreamCipherEncrypter<StreamCipher>>();
+        case hash("Dec"):
+            return stream_cipher_mode_perform<StreamCipherDecrypter<StreamCipher>>();
+        case hash("Gen"):
+            return stream_cipher_mode_generate<PseudoRandomGenerator<StreamCipher>>();
+        default:
+            throw std::runtime_error("Invalid mode.");
+        }
+    }
+
+    void select_algorithm() {
+        auto algorithm = next_arg();
+        if (algorithm == nullptr) {
+            throw std::runtime_error("No algorithm specified.");
+        }
+        switch (hash(algorithm)) {
+        case hash("AES128"):
+            return block_cipher_select_mode<AES128>();
+        case hash("AES192"):
+            return block_cipher_select_mode<AES192>();
+        case hash("AES256"):
+            return block_cipher_select_mode<AES256>();
+        case hash("Twofish128"):
+            return block_cipher_select_mode<Twofish128>();
+        case hash("Twofish192"):
+            return block_cipher_select_mode<Twofish192>();
+        case hash("Twofish256"):
+            return block_cipher_select_mode<Twofish256>();
+        case hash("Serpent128"):
+            return block_cipher_select_mode<Serpent128>();
+        case hash("Serpent192"):
+            return block_cipher_select_mode<Serpent192>();
+        case hash("Serpent256"):
+            return block_cipher_select_mode<Serpent256>();
+        case hash("Camellia128"):
+            return block_cipher_select_mode<Camellia128>();
+        case hash("Camellia192"):
+            return block_cipher_select_mode<Camellia192>();
+        case hash("Camellia256"):
+            return block_cipher_select_mode<Camellia256>();
+        case hash("ARIA128"):
+            return block_cipher_select_mode<ARIA128>();
+        case hash("ARIA192"):
+            return block_cipher_select_mode<ARIA192>();
+        case hash("ARIA256"):
+            return block_cipher_select_mode<ARIA256>();
+        case hash("SM4"):
+            return block_cipher_select_mode<SM4>();
+        case hash("CAST128"):
+            return block_cipher_select_mode<CAST128>();
+        case hash("CAST256"):
+            return block_cipher_select_mode<CAST256>();
+        case hash("DES"):
+            return block_cipher_select_mode<DES>();
+        case hash("TDES2K"):
+            return block_cipher_select_mode<TDES2K>();
+        case hash("TDES3K"):
+            return block_cipher_select_mode<TDES3K>();
+        case hash("Blowfish"):
+            return block_cipher_select_mode<Blowfish>();
+        case hash("IDEA"):
+            return block_cipher_select_mode<IDEA>();
+        case hash("SEED"):
+            return block_cipher_select_mode<SEED>();
+        case hash("ChaCha20"):
+            return stream_cipher_select_mode<ChaCha20>();
+        case hash("Salsa20"):
+            return stream_cipher_select_mode<Salsa20>();
+        case hash("RC4"):
+            return stream_cipher_select_mode<RC4>();
+        case hash("ZUC"):
+            return stream_cipher_select_mode<ZUC>();
+        default:
+            throw std::runtime_error("Invalid algorithm.");
+        }
+    }
+};
 
 int main(int argc, char **argv) {
-    Argv = argv;
-    Argc = argc;
-    Argi = 1;
     try {
-        alg_select();
+        ArgsHandler handler(argv, argc);
+        handler.select_algorithm();
     } catch (std::exception const &e) {
         fprintf(stderr,
                 "Error: %s\n"

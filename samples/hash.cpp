@@ -21,20 +21,22 @@
 
 #define BUFSIZE 8192  // Same with OpenSSL default buffer size
 
-char **Argv;
-int Argc, Argi;
-
-bool hex2bin(size_t len, char const *hex, uint8_t *bin) {
+void read_bin(std::string const &name, size_t len, char const *hex, uint8_t *bin) {
+    if (hex == nullptr) {
+        throw std::runtime_error("No " + name + " specified.");
+    }
     for (size_t i = 0; i < len * 2; ++i) {
         if (hex[i] >= '0' && hex[i] <= '9') {
             bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 0 & 0xf) << (i % 2 ? 0 : 4);
         } else if (hex[i] >= 'a' && hex[i] <= 'f' || hex[i] >= 'A' && hex[i] <= 'F') {
             bin[i / 2] = bin[i / 2] & (i % 2 ? 0xf0 : 0x0f) | (hex[i] + 9 & 0xf) << (i % 2 ? 0 : 4);
         } else {
-            return false;
+            throw std::runtime_error("Invalid character in " + name + ", should be a " + std::to_string(len) + "-byte hex string.");
         }
     }
-    return hex[len * 2] == '\0';
+    if (hex[len * 2] != '\0') {
+        throw std::runtime_error("Invalid length of " + name + ", should be a " + std::to_string(len) + "-byte hex string.");
+    }
 }
 
 void print_hex(uint8_t const *bin, size_t len) {
@@ -44,174 +46,160 @@ void print_hex(uint8_t const *bin, size_t len) {
     printf("\n");
 }
 
-void read_arg(std::string const &arg, uint8_t *dst, size_t len) {
-    if (Argi == Argc) {
-        throw std::runtime_error("No " + arg + " specified.");
-    }
-    if (not hex2bin(len, Argv[Argi++], dst)) {
-        throw std::runtime_error("Invalid " + arg + ", should be a " + std::to_string(len) + "-byte hex string.");
-    }
-}
-
-// calculate checksum from stdin, output to stdout in hex
-template<typename HashWrapper, typename... Args>
-void h_cksum(Args &&...args) {
-    HashWrapper hw(std::forward<Args>(args)...);
-    uint8_t buf[BUFSIZE];
-    size_t read;
-    while ((read = fread(buf, 1, BUFSIZE, stdin)) == BUFSIZE) {
-        hw.update(buf, (uint8_t *)buf + BUFSIZE);
-    }
-    hw.update(buf, (uint8_t *)buf + read);
-    uint8_t digest[HashWrapper::DIGEST_SIZE];
-    hw.digest(digest);
-    print_hex(digest, HashWrapper::DIGEST_SIZE);
-}
-
 constexpr uint32_t hash(char const *str) {
     return *str ? *str + hash(str + 1) * 16777619UL : 2166136261UL;
 }
 
-template<typename Hash>
-void h_select() {
-    if (Argi == Argc) {
-        h_cksum<HashWrapper<Hash>>();
-    } else {
-        int len;
-        try {
-            len = std::stoi(Argv[Argi++]);
-        } catch (std::exception const &e) {
-            throw std::runtime_error("Key length should be an integer.");
-        }
-        if (len < 0) {
-            throw std::runtime_error("Invalid key length, required: 0 <= len.");
-        }
-        uint8_t bin[len];
-        if (len != 0 || Argi < Argc) {
-            read_arg("key", bin, len);
-        }
-        if (Argi < Argc) {
-            throw std::runtime_error("Too many arguments.");
-        }
-        h_cksum<HMACWrapper<Hash>>((uint8_t *)bin, len);
-    }
-}
+class ArgsHandler {
+public:
+    char **argv;
+    int argc;
+    int argi = 1;
 
-template<typename Hash>
-void b_select() {
-    if (Argi == Argc) {
-        h_cksum<HashWrapper<Hash>>();
-    } else {
-        int len;
-        try {
-            len = std::stoi(Argv[Argi++]);
-        } catch (std::exception const &e) {
-            throw std::runtime_error("Key length should be an integer.");
+    char const *next_arg() {
+        if (argi == argc) {
+            return nullptr;
         }
-        if (len < 0 || len > Hash::BLOCK_SIZE) {
-            throw std::runtime_error("Invalid key length, required: 0 <= len <= " + std::to_string(Hash::BLOCK_SIZE) + ".");
-        }
-        uint8_t bin[len];
-        if (len != 0 || Argi < Argc) {
-            read_arg("key", bin, len);
-        }
-        if (Argi < Argc) {
-            throw std::runtime_error("Too many arguments.");
-        }
-        h_cksum<HashWrapper<Hash>>((uint8_t *)bin, len);
+        return argv[argi++];
     }
-}
 
-template<typename Hash>
-void c_select() {
-    if (Argi < Argc) {
-        throw std::runtime_error("Too many arguments, the algorithm does not require a key.");
+    // calculate checksum from stdin, output to stdout in hex
+    template<typename HashWrapper, typename... Args>
+    void hash_mode_perform(Args &&...args) {
+        HashWrapper hw(std::forward<Args>(args)...);
+        uint8_t buf[BUFSIZE];
+        size_t read;
+        while ((read = fread(buf, 1, BUFSIZE, stdin)) == BUFSIZE) {
+            hw.update(buf, (uint8_t *)buf + BUFSIZE);
+        }
+        hw.update(buf, (uint8_t *)buf + read);
+        uint8_t digest[HashWrapper::DIGEST_SIZE];
+        hw.digest(digest);
+        print_hex(digest, HashWrapper::DIGEST_SIZE);
     }
-    h_cksum<HashWrapper<Hash>>();
-}
 
-void alg_select() {
-    if (Argi == Argc) {
-        throw std::runtime_error("No algorithm specified.");
+    template<typename Hash>
+    void hash_or_hmac_select_mode() {
+        auto len_arg = next_arg();
+        if (len_arg == nullptr) {
+            return hash_mode_perform<HashWrapper<Hash>>();
+        } else {
+            int len;
+            try {
+                len = std::stoi(len_arg);
+            } catch (std::exception const &e) {
+                throw std::runtime_error("Key length should be an integer.");
+            }
+            if (len < 0) {
+                throw std::runtime_error("Invalid key length, required: 0 <= len.");
+            }
+            auto key_arg = next_arg();
+            uint8_t key[len];
+            if (len != 0 || key_arg) {
+                read_bin("key", len, key_arg, key);
+            }
+            if (next_arg()) {
+                throw std::runtime_error("Too many arguments.");
+            }
+            return hash_mode_perform<HMACWrapper<Hash>>((uint8_t *)key, len);
+        }
     }
-    switch (hash(Argv[Argi++])) {
-    case hash("MD5"):
-        h_select<MD5>();
-        break;
-    case hash("SHA0"):
-        h_select<SHA0>();
-        break;
-    case hash("SHA1"):
-        h_select<SHA1>();
-        break;
-    case hash("SHA224"):
-        h_select<SHA224>();
-        break;
-    case hash("SHA256"):
-        h_select<SHA256>();
-        break;
-    case hash("SHA384"):
-        h_select<SHA384>();
-        break;
-    case hash("SHA512"):
-        h_select<SHA512>();
-        break;
-    case hash("SHA3-224"):
-        h_select<SHA3<224>>();
-        break;
-    case hash("SHA3-256"):
-        h_select<SHA3<256>>();
-        break;
-    case hash("SHA3-384"):
-        h_select<SHA3<384>>();
-        break;
-    case hash("SHA3-512"):
-        h_select<SHA3<512>>();
-        break;
-    case hash("SHAKE128"):
-        h_select<SHAKE<128, 256>>();
-        break;
-    case hash("SHAKE256"):
-        h_select<SHAKE<256, 512>>();
-        break;
-    case hash("SM3"):
-        h_select<SM3>();
-        break;
-    case hash("Whirlpool"):
-        h_select<Whirlpool>();
-        break;
-    case hash("BLAKE2b384"):
-        b_select<BLAKE2b384>();
-        break;
-    case hash("BLAKE2b512"):
-        b_select<BLAKE2b512>();
-        break;
-    case hash("BLAKE2s256"):
-        b_select<BLAKE2s256>();
-        break;
-    case hash("BLAKE2s224"):
-        b_select<BLAKE2s224>();
-        break;
-    case hash("BLAKE3"):
-        c_select<BLAKE3>();
-        break;
-    case hash("CRC32"):
-        c_select<CRC32>();
-        break;
-    case hash("CRC64"):
-        c_select<CRC64>();
-        break;
-    default:
-        throw std::runtime_error("Invalid algorithm.");
+
+    template<typename Hash>
+    void hash_or_mac_select_mode() {
+        auto len_arg = next_arg();
+        if (len_arg == nullptr) {
+            return hash_mode_perform<HashWrapper<Hash>>();
+        } else {
+            int len;
+            try {
+                len = std::stoi(len_arg);
+            } catch (std::exception const &e) {
+                throw std::runtime_error("Key length should be an integer.");
+            }
+            if (len < 0 || len > Hash::BLOCK_SIZE) {
+                throw std::runtime_error("Invalid key length, required: 0 <= len <= " + std::to_string(Hash::BLOCK_SIZE) + ".");
+            }
+            auto key_arg = next_arg();
+            uint8_t key[len];
+            if (len != 0 || key_arg) {
+                read_bin("key", len, key_arg, key);
+            }
+            if (next_arg()) {
+                throw std::runtime_error("Too many arguments.");
+            }
+            return hash_mode_perform<HashWrapper<Hash>>((uint8_t *)key, len);
+        }
     }
-}
+
+    template<typename Hash>
+    void hash_select_mode() {
+        if (next_arg()) {
+            throw std::runtime_error("Too many arguments, the algorithm does not require a key.");
+        }
+        return hash_mode_perform<HashWrapper<Hash>>();
+    }
+
+    void select_algorithm() {
+        auto algorithm = next_arg();
+        if (algorithm == nullptr) {
+            throw std::runtime_error("No algorithm specified.");
+        }
+        switch (hash(algorithm)) {
+        case hash("MD5"):
+            return hash_or_hmac_select_mode<MD5>();
+        case hash("SHA0"):
+            return hash_or_hmac_select_mode<SHA0>();
+        case hash("SHA1"):
+            return hash_or_hmac_select_mode<SHA1>();
+        case hash("SHA224"):
+            return hash_or_hmac_select_mode<SHA224>();
+        case hash("SHA256"):
+            return hash_or_hmac_select_mode<SHA256>();
+        case hash("SHA384"):
+            return hash_or_hmac_select_mode<SHA384>();
+        case hash("SHA512"):
+            return hash_or_hmac_select_mode<SHA512>();
+        case hash("SHA3-224"):
+            return hash_or_hmac_select_mode<SHA3<224>>();
+        case hash("SHA3-256"):
+            return hash_or_hmac_select_mode<SHA3<256>>();
+        case hash("SHA3-384"):
+            return hash_or_hmac_select_mode<SHA3<384>>();
+        case hash("SHA3-512"):
+            return hash_or_hmac_select_mode<SHA3<512>>();
+        case hash("SHAKE128"):
+            return hash_or_hmac_select_mode<SHAKE<128, 256>>();
+        case hash("SHAKE256"):
+            return hash_or_hmac_select_mode<SHAKE<256, 512>>();
+        case hash("SM3"):
+            return hash_or_hmac_select_mode<SM3>();
+        case hash("Whirlpool"):
+            return hash_or_hmac_select_mode<Whirlpool>();
+        case hash("BLAKE2b384"):
+            return hash_or_mac_select_mode<BLAKE2b384>();
+        case hash("BLAKE2b512"):
+            return hash_or_mac_select_mode<BLAKE2b512>();
+        case hash("BLAKE2s256"):
+            return hash_or_mac_select_mode<BLAKE2s256>();
+        case hash("BLAKE2s224"):
+            return hash_or_mac_select_mode<BLAKE2s224>();
+        case hash("BLAKE3"):
+            return hash_select_mode<BLAKE3>();
+        case hash("CRC32"):
+            return hash_select_mode<CRC32>();
+        case hash("CRC64"):
+            return hash_select_mode<CRC64>();
+        default:
+            throw std::runtime_error("Invalid algorithm.");
+        }
+    }
+};
 
 int main(int argc, char **argv) {
-    Argv = argv;
-    Argc = argc;
-    Argi = 1;
     try {
-        alg_select();
+        ArgsHandler handler(argv, argc);
+        handler.select_algorithm();
     } catch (std::exception const &e) {
         fprintf(stderr,
                 "Error: %s\n"
