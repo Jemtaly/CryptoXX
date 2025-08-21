@@ -50,13 +50,17 @@ Algorithms are highly optimized (while ensuring readability), and several algori
 ```sh
 git clone https://github.com/Jemtaly/CryptoXX
 cd CryptoXX
+mkdir build
+cd build
+cmake ..
 make
 ```
 
 ### Test / 测试
 
 ```sh
-make test
+# From the build directory
+ctest
 ```
 
 ### Continuous Integration / 持续集成
