@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Set optimization flags to match original Makefile
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
 set(HEADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SAMPLES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/samples")
 set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
