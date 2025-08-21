@@ -15,6 +15,7 @@ algs=(
     "Serpent128" "Serpent192" "Serpent256"
     "CAST128" "CAST256" "IDEA"
 )
+
 ssls=(
     "aes-128" "aes-192" "aes-256"
     "aria-128" "aria-192" "aria-256"
@@ -25,6 +26,7 @@ ssls=(
     "" "" ""
     "" "" ""
 )
+
 keys=(
     16 24 32
     16 24 32
@@ -35,6 +37,7 @@ keys=(
     16 24 32
     16 32 16
 )
+
 civs=(
     16 16 16
     16 16 16
@@ -50,53 +53,58 @@ big_file=$(mktemp)
 big_size=123456789
 head -c $big_size /dev/urandom >$big_file
 
+error_count=0
+
 for i in ${!algs[@]}; do
     alg=${algs[$i]}
     key=$(head -c ${keys[$i]} /dev/urandom | od -An -tx1 | tr -d ' \n')
     civ=$(head -c ${civs[$i]} /dev/urandom | od -An -tx1 | tr -d ' \n')
     ssl=${ssls[$i]}
-    if [[ $ssl != "" ]]; then
-        echo -n "Comparing $alg with openssl ... "
-        beg_time=$(date +%s.%N)
-        enc_hash=$(
-            cat $big_file |
-                "$@" $alg "ECBEnc" $key |
-                md5sum | cut -d' ' -f1
-        )
-        end_time=$(date +%s.%N)
-        enc_time=$(echo "$end_time - $beg_time" | bc)
-        beg_time=$(date +%s.%N)
-        
-        # Check if OpenSSL supports this cipher first
-        if ! echo "test" | openssl enc -$ssl-ecb -K $key >/dev/null 2>&1; then
-            echo "SKIP (OpenSSL doesn't support $ssl-ecb)"
-            continue
-        fi
-        
-        ssl_hash=$(
-            cat $big_file |
-                openssl enc -$ssl-ecb -K $key |
-                md5sum | cut -d' ' -f1
-        )
-        end_time=$(date +%s.%N)
-        ssl_time=$(echo "$end_time - $beg_time" | bc)
-        
-        if [[ $enc_hash == $ssl_hash ]]; then
-            echo "OK ($enc_time vs $ssl_time)"
-        else
-            echo "FAIL"
-            exit 1
-        fi
+
+    echo -n "Testing $alg with CryptoXX ... "
+    beg_time=$(date +%s.%N)
+    enc_hash=$(
+        cat $big_file |
+            "$@" $alg "ECBEnc" $key |
+            md5sum | cut -d' ' -f1
+    )
+    end_time=$(date +%s.%N)
+    enc_time=$(echo "$end_time - $beg_time" | bc)
+    echo "Done ($enc_time)"
+
+    if [[ $ssl == "" ]]; then
+        echo "Not supported by openssl, skipping..."
+        continue
+    elif ! echo "test" | openssl enc -$ssl-ecb -K $key >/dev/null 2>&1; then
+        echo "Something went wrong with openssl, skipping..."
+        continue
+    fi
+
+    echo -n "Testing $alg with openssl ... "
+    beg_time=$(date +%s.%N)
+    ssl_hash=$(
+        cat $big_file |
+            openssl enc -$ssl-ecb -K $key |
+            md5sum | cut -d' ' -f1
+    )
+    end_time=$(date +%s.%N)
+    ssl_time=$(echo "$end_time - $beg_time" | bc)
+    echo "Done ($ssl_time)"
+
+    echo -n "Comparing hashes ... "
+    if [[ $enc_hash == $ssl_hash ]]; then
+        echo "OK"
     else
-        echo -n "Testing $alg (not supported by openssl) ... "
-        beg_time=$(date +%s.%N)
-        enc_hash=$(
-            cat $big_file |
-                "$@" $alg "ECBEnc" $key |
-                md5sum | cut -d' ' -f1
-        )
-        end_time=$(date +%s.%N)
-        enc_time=$(echo "$end_time - $beg_time" | bc)
-        echo "Done ($enc_time)"
+        echo "FAIL"
+        echo "Expected: $ssl_hash"
+        echo "Got: $alg_hash"
+        ((error_count++))
     fi
 done
+
+if [[ $error_count -ne 0 ]]; then
+    echo "There were $error_count errors."
+    exit 1
+else
+    echo "All tests passed successfully."
+fi
