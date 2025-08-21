@@ -34,3 +34,13 @@ add_test(
     NAME cipher_test
     COMMAND ${SCRIPTS_DIR}/cipher_test.sh $<TARGET_FILE:cipher>
 )
+
+add_test(
+    NAME hash_reconstruction_test
+    COMMAND ${SCRIPTS_DIR}/hash_reconstruction_test.sh $<TARGET_FILE:hash>
+)
+
+add_test(
+    NAME cipher_reconstruction_test
+    COMMAND ${SCRIPTS_DIR}/cipher_quick_test.sh $<TARGET_FILE:cipher>
+)
