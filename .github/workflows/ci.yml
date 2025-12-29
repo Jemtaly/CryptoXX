@@ -24,34 +24,23 @@ jobs:
           echo "=== Build Environment Information ==="
           echo "Compiler: ${{ matrix.compiler }}"
           ${{ matrix.compiler }} --version
-          echo "---"
+          echo "-------------------------------------"
           openssl version
-          echo "---" 
+          echo "-------------------------------------"
           bc --version
-          echo "==================================="
+          echo "====================================="
 
       - name: Build project
         run: |
-          # Use CMake build system with specified compiler
           mkdir build
           cd build
           cmake -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} ..
           make
 
-      - name: Verify binaries were created
-        run: |
-          ls -la build/
-          file build/hash build/cipher
-
       - name: Run tests
         run: |
-          # Make test scripts executable (in case they weren't)
-          chmod +x scripts/*.sh
-
-          echo "Running all tests with ctest..."
           cd build
           ctest --verbose
-          echo "All tests passed successfully"
 
       - name: Clean up
         run: rm -rf build

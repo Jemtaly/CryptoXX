@@ -26,11 +26,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 enable_testing()
 
 add_test(
-    NAME hash_test
-    COMMAND ${SCRIPTS_DIR}/hash_test.sh $<TARGET_FILE:hash>
+    NAME test_hash
+    COMMAND ${SCRIPTS_DIR}/test_hash $<TARGET_FILE:hash>
 )
 
 add_test(
-    NAME cipher_test
-    COMMAND ${SCRIPTS_DIR}/cipher_test.sh $<TARGET_FILE:cipher>
+    NAME test_cipher
+    COMMAND ${SCRIPTS_DIR}/test_cipher $<TARGET_FILE:cipher>
 )
